@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:battleship_game/state/game_controller.dart';
 import 'package:battleship_game/state/multiplayer_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,10 +19,10 @@ class _MainMenuScreenState extends State<MainMenuScreen>
   int enemyCount = 1;
   String botSpeed = 'NORMAL';
   bool isMuted = false;
+  BotDifficulty botDifficulty = BotDifficulty.normal;
+
   final TextEditingController _nameController = TextEditingController();
-
   late AnimationController _animController;
-
   final mpCtrl = Get.put(MultiplayerController());
 
   @override
@@ -354,7 +355,6 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                     ],
                   ),
                   const Divider(color: AppColors.ink, thickness: 2, height: 25),
-
                   if (!mpCtrl.isConnected.value && !mpCtrl.isHosting.value)
                     _buildSetupUI(ipInput, myName)
                   else
@@ -365,6 +365,30 @@ class _MainMenuScreenState extends State<MainMenuScreen>
           ),
         ),
       ),
+    );
+  }
+
+  Widget _diffBtn(BotDifficulty diff, String label) {
+    bool isSel = botDifficulty == diff;
+    return Expanded(
+      child: InkWell(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            setState(() => botDifficulty = diff);
+          },
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+                color: isSel ? AppColors.ink : Colors.transparent,
+                border: Border.all(color: AppColors.ink),
+                borderRadius: BorderRadius.circular(4)),
+            child: Text(label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    color: isSel ? Colors.white : AppColors.ink,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold)),
+          )),
     );
   }
 
@@ -387,7 +411,6 @@ class _MainMenuScreenState extends State<MainMenuScreen>
           ),
         ),
         const SizedBox(height: 20),
-
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -430,7 +453,6 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                 ],
               ),
             ),
-
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 15),
               child: SizedBox(
@@ -438,7 +460,6 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                 child: VerticalDivider(color: AppColors.ink, thickness: 0.5),
               ),
             ),
-
             Expanded(
               child: Column(
                 children: [
@@ -473,7 +494,6 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                     ),
                   ),
                   const SizedBox(height: 10),
-
                   if (mpCtrl.discoveredLobbies.isNotEmpty)
                     ...mpCtrl.discoveredLobbies
                         .map(
@@ -532,7 +552,6 @@ class _MainMenuScreenState extends State<MainMenuScreen>
             ),
           ],
         ),
-
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 15),
           child: Row(
@@ -557,7 +576,6 @@ class _MainMenuScreenState extends State<MainMenuScreen>
             ],
           ),
         ),
-
         Row(
           children: [
             Expanded(
@@ -643,9 +661,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
             ],
           ),
         ),
-
         const SizedBox(height: 15),
-
         Container(
           constraints: const BoxConstraints(maxHeight: 180),
           child: ListView.separated(
@@ -664,9 +680,8 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(
-                    color: isMe
-                        ? AppColors.ink
-                        : AppColors.ink.withOpacity(0.2),
+                    color:
+                        isMe ? AppColors.ink : AppColors.ink.withOpacity(0.2),
                     width: isMe ? 2 : 1,
                   ),
                 ),
@@ -714,9 +729,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
             },
           ),
         ),
-
         const SizedBox(height: 20),
-
         Row(
           children: [
             Expanded(
@@ -843,14 +856,12 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                       ],
                     ),
                   ),
-
                   Container(
                     width: 2,
                     height: double.infinity,
                     color: AppColors.ink.withOpacity(0.3),
                     margin: const EdgeInsets.symmetric(vertical: 40),
                   ),
-
                   Expanded(
                     flex: 5,
                     child: Center(
@@ -959,7 +970,6 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                                 ],
                               ),
                               const SizedBox(height: 16),
-
                               Container(
                                 decoration: BoxDecoration(
                                   color: Colors.white,
@@ -996,7 +1006,6 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                                 ),
                               ),
                               const SizedBox(height: 16),
-
                               Container(
                                 padding: const EdgeInsets.all(16),
                                 decoration: BoxDecoration(
@@ -1030,6 +1039,25 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                                       ],
                                     ),
                                     const SizedBox(height: 12),
+                                    Text('difficulty'.tr,
+                                        style: const TextStyle(
+                                            color: AppColors.ink,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12)),
+                                    const SizedBox(height: 6),
+                                    Row(
+                                      children: [
+                                        _diffBtn(
+                                            BotDifficulty.easy, 'diff_easy'.tr),
+                                        const SizedBox(width: 6),
+                                        _diffBtn(BotDifficulty.normal,
+                                            'diff_normal'.tr),
+                                        const SizedBox(width: 6),
+                                        _diffBtn(
+                                            BotDifficulty.hard, 'diff_hard'.tr),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
                                     Column(
                                       children: [
                                         Text(
@@ -1060,9 +1088,9 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                                             Container(
                                               padding:
                                                   const EdgeInsets.symmetric(
-                                                    horizontal: 16,
-                                                    vertical: 4,
-                                                  ),
+                                                horizontal: 16,
+                                                vertical: 4,
+                                              ),
                                               decoration: BoxDecoration(
                                                 color: Colors.white,
                                                 border: Border.all(
@@ -1102,18 +1130,19 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                                     ElevatedButton.icon(
                                       onPressed: () {
                                         HapticFeedback.heavyImpact();
+                                        Get.find<GameController>()
+                                            .botDifficulty = botDifficulty;
                                         Get.toNamed(
                                           '/placement',
                                           arguments: {
                                             'enemyCount': enemyCount,
-                                            'playerName':
-                                                _nameController.text
+                                            'playerName': _nameController.text
                                                     .trim()
                                                     .isEmpty
                                                 ? "COMMANDER"
                                                 : _nameController.text
-                                                      .trim()
-                                                      .toUpperCase(),
+                                                    .trim()
+                                                    .toUpperCase(),
                                             'botSpeed': botSpeed,
                                           },
                                         );
@@ -1148,7 +1177,6 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                                 ),
                               ),
                               const SizedBox(height: 12),
-
                               Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
@@ -1225,7 +1253,6 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                   ),
                 ],
               ),
-
               Positioned(
                 bottom: 8,
                 left: 16,
