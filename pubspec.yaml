@@ -1,0 +1,44 @@
+name: battleship_game
+description: "A Paper Battleship Multiplayer Game."
+
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.2.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # --- UI & State Management ---
+  cupertino_icons: ^1.0.8
+  get: ^4.6.6
+  google_fonts: ^6.2.1
+
+  # --- Network & Multiplayer ---
+  socket_io_client: ^3.1.4
+  network_info_plus: ^7.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^4.0.0
+
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/
+    - assets/icon.png
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon.png"
+  min_sdk_android: 21
+  remove_alpha_ios: true
