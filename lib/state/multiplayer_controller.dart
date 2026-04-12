@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:network_info_plus/network_info_plus.dart';
+import 'game_controller.dart' show AssistLevel, GameController;
 
 class MultiplayerController extends GetxController {
   ServerSocket? _server;
@@ -19,6 +19,11 @@ class MultiplayerController extends GetxController {
   var discoveredLobbies = <Map<String, String>>[].obs;
   var lobbyPlayers = <Map<String, dynamic>>[].obs;
   String currentMyName = "";
+
+  var currentAssistLevel = AssistLevel.standard.obs;
+
+  var currentColumns = 8.obs;
+  var currentRows = 6.obs;
 
   @override
   void onInit() {
@@ -36,7 +41,7 @@ class MultiplayerController extends GetxController {
       _server = await ServerSocket.bind(InternetAddress.anyIPv4, 4545);
       isHosting.value = true;
       lobbyPlayers.assignAll([
-        {'name': myName, 'ip': myIp.value, 'isHost': true},
+        {'name': myName, 'ip': myIp.value, 'isHost': true}
       ]);
 
       _udpSocket = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 4546);
@@ -48,9 +53,8 @@ class MultiplayerController extends GetxController {
       });
 
       _broadcastPresence(myName);
-      HapticFeedback.heavyImpact();
     } catch (e) {
-      Get.snackbar("Error", "Failed to start host: $e");
+      Get.snackbar("Error", "Lobby failed: $e");
     }
   }
 
@@ -58,22 +62,18 @@ class MultiplayerController extends GetxController {
     while (isHosting.value) {
       String msg = "BATTLESHIP_LOBBY|$name|${myIp.value}";
       _udpSocket?.send(
-        utf8.encode(msg),
-        InternetAddress("255.255.255.255"),
-        4546,
-      );
+          utf8.encode(msg), InternetAddress("255.255.255.255"), 4546);
       await Future.delayed(const Duration(seconds: 2));
     }
   }
 
   Future<void> scanForLobbies() async {
+    HapticFeedback.mediumImpact();
     isScanning.value = true;
     discoveredLobbies.clear();
     try {
-      RawDatagramSocket scanner = await RawDatagramSocket.bind(
-        InternetAddress.anyIPv4,
-        4546,
-      );
+      RawDatagramSocket scanner =
+          await RawDatagramSocket.bind(InternetAddress.anyIPv4, 4546);
       scanner.listen((RawSocketEvent event) {
         Datagram? dg = scanner.receive();
         if (dg != null) {
@@ -86,9 +86,10 @@ class MultiplayerController extends GetxController {
           }
         }
       });
-      await Future.delayed(const Duration(seconds: 4));
+      await Future.delayed(const Duration(seconds: 5));
       scanner.close();
-    } finally {
+      isScanning.value = false;
+    } catch (e) {
       isScanning.value = false;
     }
   }
@@ -96,17 +97,14 @@ class MultiplayerController extends GetxController {
   Future<void> joinBattle(String hostIp, String myName) async {
     currentMyName = myName;
     try {
-      Socket socket = await Socket.connect(
-        hostIp,
-        4545,
-        timeout: const Duration(seconds: 5),
-      );
+      Socket socket = await Socket.connect(hostIp, 4545,
+          timeout: const Duration(seconds: 5));
       _clientSockets.add(socket);
       isConnected.value = true;
       _sendToSocket(socket, {'type': 'JOIN_REQUEST', 'name': myName});
       _setupSocketListener(socket);
     } catch (e) {
-      Get.snackbar("Error", "Connection failed");
+      Get.snackbar("Connection Failed", "Cannot find Host at $hostIp");
     }
   }
 
@@ -114,7 +112,36 @@ class MultiplayerController extends GetxController {
     socket.listen((data) {
       String message = utf8.decode(data);
       _handleIncomingMessage(message, socket);
-    }, onDone: () => leaveLobby());
+    }, onDone: () {
+      _clientSockets.remove(socket);
+      if (!isHosting.value) {
+        isConnected.value = false;
+        Get.snackbar("Disconnected", "Lost connection to Host");
+      }
+    });
+  }
+
+  void updateAssistLevel(AssistLevel level) {
+    currentAssistLevel.value = level;
+    broadcastMessage({
+      'type': 'LOBBY_UPDATE',
+      'players': lobbyPlayers.toList(),
+      'assistLevel': level.index
+    });
+  }
+
+  // ✅ เปลี่ยนกฎใน Lobby (เรียกใช้โดย Host)
+  void updateLobbySettings(AssistLevel level, int cols, int rows) {
+    currentAssistLevel.value = level;
+    currentColumns.value = cols;
+    currentRows.value = rows;
+    broadcastMessage({
+      'type': 'LOBBY_UPDATE',
+      'players': lobbyPlayers.toList(),
+      'assistLevel': level.index,
+      'columns': cols,
+      'rows': rows
+    });
   }
 
   void _handleIncomingMessage(String raw, Socket sender) {
@@ -124,22 +151,47 @@ class MultiplayerController extends GetxController {
         lobbyPlayers.add({
           'name': data['name'],
           'ip': sender.remoteAddress.address,
-          'isHost': false,
+          'isHost': false
         });
         broadcastMessage({
           'type': 'LOBBY_UPDATE',
           'players': lobbyPlayers.toList(),
+          'assistLevel': currentAssistLevel.value.index,
+          'columns': currentColumns.value,
+          'rows': currentRows.value
         });
       }
       if (data['type'] == 'LOBBY_UPDATE') {
-        lobbyPlayers.assignAll(
-          List<Map<String, dynamic>>.from(data['players']),
-        );
+        lobbyPlayers
+            .assignAll(List<Map<String, dynamic>>.from(data['players']));
+        if (data['assistLevel'] != null)
+          currentAssistLevel.value = AssistLevel.values[data['assistLevel']];
+        if (data['columns'] != null) currentColumns.value = data['columns'];
+        if (data['rows'] != null) currentRows.value = data['rows'];
       }
       if (data['type'] == 'START_GAME') {
-        Get.toNamed('/battle');
+        Get.find<GameController>().assistLevel =
+            AssistLevel.values[data['assistLevel']];
+        Get.toNamed('/placement', arguments: {
+          'mode': 'LAN', 'playerName': currentMyName, 'isHost': isHosting.value,
+          'opponents':
+              lobbyPlayers.where((p) => p['name'] != currentMyName).toList(),
+          'columns': currentColumns.value,
+          'rows': currentRows.value // ✅ ส่งขนาดตารางไปหน้าจัดวาง
+        });
       }
-    } catch (e) {}
+    } catch (e) {
+      print("Error parsing socket: $e");
+    }
+  }
+
+  void broadcastStart() {
+    if (isHosting.value) {
+      broadcastMessage({
+        'type': 'START_GAME',
+        'assistLevel': currentAssistLevel.value.index
+      });
+    }
   }
 
   void broadcastMessage(Map<String, dynamic> json) {
@@ -153,18 +205,26 @@ class MultiplayerController extends GetxController {
     s.write(jsonEncode(json));
   }
 
-  void broadcastStart() => broadcastMessage({'type': 'START_GAME'});
-
   void leaveLobby() {
+    HapticFeedback.mediumImpact();
     for (var s in _clientSockets) {
       s.destroy();
     }
     _clientSockets.clear();
-    _server?.close();
+    if (_server != null) {
+      _server!.close();
+      _server = null;
+    }
     _udpSocket?.close();
     isHosting.value = false;
     isConnected.value = false;
     lobbyPlayers.clear();
-    discoveredLobbies.clear();
+    _getIp();
+  }
+
+  @override
+  void onClose() {
+    leaveLobby();
+    super.onClose();
   }
 }

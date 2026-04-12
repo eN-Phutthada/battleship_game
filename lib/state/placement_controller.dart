@@ -7,24 +7,25 @@ import 'game_controller.dart';
 enum PlacementTool { land, turret, ship }
 
 class PlacementController extends GetxController {
-  final int columns = 8;
-  final int rows = 6;
+  // --- Grid Config ---
+  int columns = 8;
+  int rows = 6;
   int get gridSize => columns * rows;
 
+  // --- Game State ---
   Map<int, Cell> board = {};
   List<ShipData> myShips = [];
+  List<int> unplacedShips = [];
 
+  // --- Resources (Calculated) ---
+  int maxLand = 12;
+  int maxTurrets = 3;
+  List<int> fleetDefinition = [4, 3, 2, 1, 1];
+
+  // --- UI State ---
   int enemyCount = 1;
   String playerName = "COMMANDER";
-
   PlacementTool currentTool = PlacementTool.land;
-
-  final int maxLand = 12;
-  final int maxTurrets = 3;
-
-  List<int> unplacedShips = [4, 3, 2, 1, 1];
-  int get placedShipsCount => 5 - unplacedShips.length;
-
   int selectedShipSize = 4;
   bool isHorizontal = true;
   int placedLand = 0;
@@ -33,25 +34,46 @@ class PlacementController extends GetxController {
   String validationMessage = "";
   bool isBoardValid = false;
 
+  int get placedShipsCount => fleetDefinition.length - unplacedShips.length;
+
   @override
   void onInit() {
     super.onInit();
+    _setupGridConfigs();
     _initEmptyBoard();
+  }
+
+  void _setupGridConfigs() {
     if (Get.arguments != null) {
+      columns = Get.arguments['columns'] ?? 8;
+      rows = Get.arguments['rows'] ?? 6;
       enemyCount = Get.arguments['enemyCount'] ?? 1;
       playerName = Get.arguments['playerName'] ?? "COMMANDER";
+    }
+
+    maxLand = (gridSize * 0.25).floor();
+    maxTurrets = (maxLand / 4).ceil();
+
+    if (gridSize <= 48) {
+      fleetDefinition = [4, 3, 2, 1, 1];
+    } else if (gridSize <= 80) {
+      fleetDefinition = [5, 4, 3, 3, 2, 2];
+    } else {
+      fleetDefinition = [5, 4, 4, 3, 3, 2, 2, 1, 1];
     }
   }
 
   void _initEmptyBoard() {
     board = {for (var i = 0; i < gridSize; i++) i: Cell()};
     myShips.clear();
-    unplacedShips = [4, 3, 2, 1, 1];
+    unplacedShips = List.from(fleetDefinition);
     placedLand = 0;
     placedTurrets = 0;
-    selectedShipSize = 4;
+    selectedShipSize = unplacedShips.isNotEmpty ? unplacedShips.first : 0;
     _validateBoard();
   }
+
+  // --- UI Actions ---
 
   void setTool(PlacementTool tool) {
     currentTool = tool;
@@ -88,221 +110,374 @@ class PlacementController extends GetxController {
       }
     });
     myShips.clear();
-    unplacedShips = [4, 3, 2, 1, 1];
-    selectedShipSize = 4;
+    unplacedShips =
+        List.from(fleetDefinition); // ✅ แก้บัคใช้ค่าแมนนวลเวลาเปลี่ยนขนาดกระดาน
+    selectedShipSize = unplacedShips.isNotEmpty ? unplacedShips.first : 0;
     _validateBoard();
     update();
   }
 
-  void autoDeploy() {
-    HapticFeedback.heavyImpact();
-    _initEmptyBoard();
-    Random r = Random();
-    List<List<int>> islandPatterns = [
-      [0, 1, 2, 8, 9, 10, 5, 6, 13, 14, 21, 22],
-      [32, 33, 34, 35, 40, 41, 42, 43, 44, 45, 46, 47],
-      [0, 8, 16, 1, 9, 17, 2, 10, 18, 3, 11, 19],
-      [6, 7, 14, 15, 22, 23, 30, 31, 38, 39, 46, 47],
-    ];
-    List<int> selectedLand = islandPatterns[r.nextInt(islandPatterns.length)];
-    for (int idx in selectedLand) {
-      board[idx]!.terrain = Terrain.land;
-      placedLand++;
-    }
-    List<int> availableLand = List.from(selectedLand)..shuffle();
-    for (int i = 0; i < maxTurrets; i++) {
-      board[availableLand[i]]!.entity = Entity.turret;
-      placedTurrets++;
-    }
-    List<int> fleet = [4, 3, 2, 1, 1];
-    for (int size in fleet) {
-      bool placed = false;
-      int attempts = 0;
-      while (!placed && attempts < 100) {
-        attempts++;
-        bool isHoriz = r.nextBool();
-        int startPos = r.nextInt(gridSize);
-        int rr = startPos ~/ columns;
-        int cc = startPos % columns;
-        List<int> target = [];
-        bool canPlace = true;
-        for (int i = 0; i < size; i++) {
-          if (isHoriz) {
-            if (cc + i >= columns) {
-              canPlace = false;
-              break;
-            }
-            target.add(rr * columns + (cc + i));
-          } else {
-            if (rr + i >= rows) {
-              canPlace = false;
-              break;
-            }
-            target.add((rr + i) * columns + cc);
-          }
-        }
-        if (canPlace) {
-          for (int pos in target) {
-            if (board[pos]!.terrain != Terrain.water ||
-                board[pos]!.entity != Entity.none) {
-              canPlace = false;
-              break;
-            }
-          }
-        }
-        if (canPlace) {
-          String newShipId =
-              'ship_${DateTime.now().microsecondsSinceEpoch}_$size';
-          myShips.add(ShipData(id: newShipId, size: size, positions: target));
-          for (int pos in target) {
-            board[pos]!.entity = Entity.ship;
-            board[pos]!.shipId = newShipId;
-          }
-          placed = true;
-        }
-      }
-    }
-    unplacedShips.clear();
-    _validateBoard();
-    update();
-  }
+  // --- Placement Logic ---
 
   void handleTap(int index) {
-    Cell cell = board[index]!;
     bool actionSuccess = false;
-    if (currentTool == PlacementTool.land) {
-      if (cell.terrain == Terrain.water &&
-          placedLand < maxLand &&
-          cell.entity == Entity.none) {
-        cell.terrain = Terrain.land;
-        placedLand++;
-        actionSuccess = true;
-      } else if (cell.terrain == Terrain.land) {
-        if (cell.entity == Entity.turret) placedTurrets--;
-        cell.entity = Entity.none;
-        cell.terrain = Terrain.water;
-        placedLand--;
-        actionSuccess = true;
-      }
-    } else if (currentTool == PlacementTool.turret) {
-      if (cell.terrain == Terrain.land) {
-        if (cell.entity == Entity.none && placedTurrets < maxTurrets) {
-          cell.entity = Entity.turret;
-          placedTurrets++;
-          actionSuccess = true;
-        } else if (cell.entity == Entity.turret) {
-          cell.entity = Entity.none;
-          placedTurrets--;
-          actionSuccess = true;
-        }
-      }
-    } else if (currentTool == PlacementTool.ship) {
-      actionSuccess = _placeShipLogic(index);
+    switch (currentTool) {
+      case PlacementTool.land:
+        actionSuccess = _toggleLand(index);
+        break;
+      case PlacementTool.turret:
+        actionSuccess = _toggleTurret(index);
+        break;
+      case PlacementTool.ship:
+        actionSuccess = _placeShipLogic(index);
+        break;
     }
+
     if (actionSuccess) HapticFeedback.lightImpact();
     _validateBoard();
     update();
   }
 
-  bool _placeShipLogic(int index) {
-    if (!unplacedShips.contains(selectedShipSize)) return false;
-    List<int> targetCells = [];
-    int r = index ~/ columns;
-    int c = index % columns;
-    for (int i = 0; i < selectedShipSize; i++) {
-      if (isHorizontal) {
-        if (c + i >= columns) return false;
-        targetCells.add(r * columns + (c + i));
-      } else {
-        if (r + i >= rows) return false;
-        targetCells.add((r + i) * columns + c);
-      }
+  bool _toggleLand(int index) {
+    Cell cell = board[index]!;
+    if (cell.terrain == Terrain.water &&
+        placedLand < maxLand &&
+        cell.entity == Entity.none) {
+      cell.terrain = Terrain.land;
+      placedLand++;
+      return true;
+    } else if (cell.terrain == Terrain.land) {
+      if (cell.entity == Entity.turret) placedTurrets--;
+      cell.entity = Entity.none;
+      cell.terrain = Terrain.water;
+      placedLand--;
+      return true;
     }
+    return false;
+  }
+
+  bool _toggleTurret(int index) {
+    Cell cell = board[index]!;
+    if (cell.terrain != Terrain.land) return false;
+
+    if (cell.entity == Entity.none && placedTurrets < maxTurrets) {
+      cell.entity = Entity.turret;
+      placedTurrets++;
+      return true;
+    } else if (cell.entity == Entity.turret) {
+      cell.entity = Entity.none;
+      placedTurrets--;
+      return true;
+    }
+    return false;
+  }
+
+  bool _placeShipLogic(int index, {bool isAuto = false}) {
+    // ✅ [FIX] ถอนเรือ หากกดโดนช่องที่มีเรืออยู่แล้ว
+    if (!isAuto && board[index]!.entity == Entity.ship) {
+      _removeShip(board[index]!.shipId!);
+      return true;
+    }
+
+    if (!unplacedShips.contains(selectedShipSize)) return false;
+
+    List<int> targetCells = _calculateShipOccupancy(index, selectedShipSize);
+    if (targetCells.isEmpty) return false;
+
     for (int pos in targetCells) {
       if (board[pos]!.terrain != Terrain.water ||
-          board[pos]!.entity != Entity.none)
+          board[pos]!.entity != Entity.none) {
         return false;
+      }
+      if (_hasAdjacentShip(pos)) {
+        return false;
+      }
     }
-    String newShipId = 'ship_${DateTime.now().millisecondsSinceEpoch}';
-    myShips.add(
-      ShipData(id: newShipId, size: selectedShipSize, positions: targetCells),
-    );
+
+    final newShipId = 'ship_${DateTime.now().microsecondsSinceEpoch}';
+    myShips.add(ShipData(
+        id: newShipId, size: selectedShipSize, positions: targetCells));
+
     for (int pos in targetCells) {
       board[pos]!.entity = Entity.ship;
       board[pos]!.shipId = newShipId;
     }
+
     unplacedShips.remove(selectedShipSize);
     if (unplacedShips.isNotEmpty) selectedShipSize = unplacedShips.first;
+
     return true;
   }
 
-  void _validateBoard() {
-    if (placedLand != maxLand) {
-      validationMessage = 'req_land'.trParams({
-        'count': (maxLand - placedLand).toString(),
-      });
-      isBoardValid = false;
+  // ✅ ฟังก์ชันถอนเรือ (นำเรือกลับเข้าคลัง)
+  void _removeShip(String shipId) {
+    ShipData? shipToRemove;
+    try {
+      shipToRemove = myShips.firstWhere((s) => s.id == shipId);
+    } catch (e) {
       return;
     }
-    if (placedTurrets != maxTurrets) {
-      validationMessage = 'req_turret'.trParams({
-        'count': (maxTurrets - placedTurrets).toString(),
-      });
-      isBoardValid = false;
-      return;
+
+    // เคลียร์กระดาน
+    for (int pos in shipToRemove.positions) {
+      board[pos]!.entity = Entity.none;
+      board[pos]!.shipId = null;
     }
-    if (unplacedShips.isNotEmpty) {
-      validationMessage = 'req_ship'.tr;
-      isBoardValid = false;
-      return;
-    }
-    if (!_checkIslandCount()) {
-      validationMessage = 'req_island'.tr;
-      isBoardValid = false;
-      return;
-    }
-    validationMessage = 'all_ready'.tr;
-    isBoardValid = true;
+
+    // นำเรือเข้าคลังและเรียงลำดับใหม่
+    myShips.remove(shipToRemove);
+    unplacedShips.add(shipToRemove.size);
+    unplacedShips.sort((a, b) => b.compareTo(a)); // ให้เรือใหญ่สุดขึ้นก่อน
+    selectedShipSize = unplacedShips.first;
   }
 
-  bool _checkIslandCount() {
-    List<int> landIndexes = [];
-    board.forEach((idx, cell) {
-      if (cell.terrain == Terrain.land) landIndexes.add(idx);
-    });
-    List<int> unvisited = List.from(landIndexes);
-    int islandCount = 0;
-    while (unvisited.isNotEmpty) {
-      islandCount++;
-      if (islandCount > 2) return false;
-      List<int> queue = [unvisited.first];
-      unvisited.remove(unvisited.first);
-      while (queue.isNotEmpty) {
-        int current = queue.removeAt(0);
-        List<int> neighbors = [];
-        if (current >= columns) neighbors.add(current - columns);
-        if (current < gridSize - columns) neighbors.add(current + columns);
-        if (current % columns != 0) neighbors.add(current - 1);
-        if (current % columns != columns - 1) neighbors.add(current + 1);
-        for (int n in neighbors) {
-          if (unvisited.contains(n)) {
-            queue.add(n);
-            unvisited.remove(n);
+  bool _hasAdjacentShip(int pos) {
+    int r = pos ~/ columns;
+    int c = pos % columns;
+
+    for (int dr = -1; dr <= 1; dr++) {
+      for (int dc = -1; dc <= 1; dc++) {
+        if (dr == 0 && dc == 0) continue;
+        int nr = r + dr;
+        int nc = c + dc;
+
+        if (nr >= 0 && nr < rows && nc >= 0 && nc < columns) {
+          int neighborPos = nr * columns + nc;
+          if (board[neighborPos]?.entity == Entity.ship) {
+            return true;
           }
         }
       }
     }
+    return false;
+  }
+
+  List<int> _calculateShipOccupancy(int index, int size) {
+    List<int> cells = [];
+    int r = index ~/ columns;
+    int c = index % columns;
+
+    for (int i = 0; i < size; i++) {
+      int nextR = isHorizontal ? r : r + i;
+      int nextC = isHorizontal ? c + i : c;
+
+      if (nextR >= rows || nextC >= columns) return []; // Out of bounds
+      cells.add(nextR * columns + nextC);
+    }
+    return cells;
+  }
+
+  // --- Validation Logic ---
+
+  void _validateBoard() {
+    if (placedLand != maxLand) {
+      validationMessage =
+          'req_land'.trParams({'count': (maxLand - placedLand).toString()});
+      isBoardValid = false;
+    } else if (placedTurrets != maxTurrets) {
+      validationMessage = 'req_turret'
+          .trParams({'count': (maxTurrets - placedTurrets).toString()});
+      isBoardValid = false;
+    } else if (unplacedShips.isNotEmpty) {
+      validationMessage = 'req_ship'.tr;
+      isBoardValid = false;
+    } else if (!_checkIslandCount()) {
+      validationMessage = 'req_island'.tr;
+      isBoardValid = false;
+    } else {
+      validationMessage = 'all_ready'.tr;
+      isBoardValid = true;
+    }
+  }
+
+  bool _checkIslandCount() {
+    List<int> landIndexes = board.entries
+        .where((e) => e.value.terrain == Terrain.land)
+        .map((e) => e.key)
+        .toList();
+    if (landIndexes.isEmpty) return true;
+
+    List<int> unvisited = List.from(landIndexes);
+    int islandCount = 0;
+
+    while (unvisited.isNotEmpty) {
+      islandCount++;
+      if (islandCount > 2) return false;
+
+      List<int> queue = [unvisited.first];
+      unvisited.remove(unvisited.first);
+
+      while (queue.isNotEmpty) {
+        int current = queue.removeAt(0);
+        int r = current ~/ columns;
+        int c = current % columns;
+
+        List<int> potentialNeighbors = [];
+        if (r > 0) potentialNeighbors.add(current - columns);
+        if (r < rows - 1) potentialNeighbors.add(current + columns);
+        if (c > 0) potentialNeighbors.add(current - 1);
+        if (c < columns - 1) potentialNeighbors.add(current + 1);
+
+        for (int neighbor in potentialNeighbors) {
+          if (unvisited.contains(neighbor)) {
+            queue.add(neighbor);
+            unvisited.remove(neighbor);
+          }
+        }
+      }
+    }
+    return true;
+  }
+
+  // --- Auto Deploy (Procedural) ---
+
+  void autoDeploy() {
+    HapticFeedback.heavyImpact();
+    Random r = Random();
+    int maxBoardAttempts = 50;
+    bool deploymentSuccess = false;
+
+    for (int attempt = 0; attempt < maxBoardAttempts; attempt++) {
+      _initEmptyBoard();
+
+      // 1. วางแผ่นดิน
+      int totalLandNeeded = maxLand;
+      int numIslands = r.nextBool() ? 1 : 2;
+      List<int> allPlacedLand = [];
+
+      for (int island = 0; island < numIslands; island++) {
+        int sizeToBuild = (island == 0 && numIslands == 2)
+            ? r.nextInt(totalLandNeeded ~/ 2) + 3
+            : totalLandNeeded;
+        totalLandNeeded -= sizeToBuild;
+        _generateSingleIsland(sizeToBuild, allPlacedLand, r);
+      }
+
+      int expandAttempts = 0;
+      while (allPlacedLand.length < maxLand && expandAttempts < 200) {
+        if (!_expandLand(allPlacedLand, r)) expandAttempts++;
+      }
+
+      if (allPlacedLand.length < maxLand) continue;
+      placedLand = maxLand;
+
+      // 2. วางป้อมปืน
+      List<int> landPool = List.from(allPlacedLand)..shuffle(r);
+      for (int i = 0; i < maxTurrets; i++) {
+        board[landPool[i]]!.entity = Entity.turret;
+        placedTurrets++;
+      }
+
+      // 3. วางกองเรือ (แบบ Smart Scan)
+      bool shipsPlaced = true;
+      for (int size in List.from(unplacedShips)) {
+        selectedShipSize = size;
+        if (!_autoPlaceShip(size, r)) {
+          shipsPlaced = false;
+          break; // โละกระดานทิ้งทันทีถ้าวางเรือลำนี้ไม่ได้
+        }
+      }
+
+      if (shipsPlaced && _checkIslandCount()) {
+        deploymentSuccess = true;
+        break;
+      }
+    }
+
+    if (!deploymentSuccess) {
+      _initEmptyBoard();
+      Get.snackbar(
+        'Auto Deploy Failed',
+        'Area is too tight! Retrying...',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+
+    _validateBoard();
+    update();
+  }
+
+  // ✅ [FIX] ให้บอทสแกนหาช่องว่างก่อน ค่อยสุ่มวางเพื่อป้องกันลูปนรก
+  bool _autoPlaceShip(int size, Random r) {
+    List<Map<String, dynamic>> validSpots = [];
+
+    for (int pos = 0; pos < gridSize; pos++) {
+      for (bool horiz in [true, false]) {
+        isHorizontal = horiz;
+        List<int> targetCells = _calculateShipOccupancy(pos, size);
+        if (targetCells.isNotEmpty) {
+          bool canPlace = true;
+          for (int cell in targetCells) {
+            if (board[cell]!.terrain != Terrain.water ||
+                board[cell]!.entity != Entity.none ||
+                _hasAdjacentShip(cell)) {
+              canPlace = false;
+              break;
+            }
+          }
+          if (canPlace) validSpots.add({'pos': pos, 'horiz': horiz});
+        }
+      }
+    }
+
+    if (validSpots.isEmpty) return false;
+
+    var spot = validSpots[r.nextInt(validSpots.length)];
+    isHorizontal = spot['horiz'];
+    _placeShipLogic(spot['pos'], isAuto: true);
+    return true;
+  }
+
+  void _generateSingleIsland(int size, List<int> masterList, Random r) {
+    int seed;
+    do {
+      seed = r.nextInt(gridSize);
+    } while (board[seed]!.terrain == Terrain.land);
+
+    List<int> island = [seed];
+    board[seed]!.terrain = Terrain.land;
+    masterList.add(seed);
+
+    int failsafe = 0;
+    while (island.length < size && failsafe < 50) {
+      if (!_expandLand(island, r, masterList: masterList))
+        failsafe++;
+      else
+        failsafe = 0;
+    }
+  }
+
+  bool _expandLand(List<int> currentGroup, Random r, {List<int>? masterList}) {
+    if (currentGroup.isEmpty) return false;
+    int basePos = currentGroup[r.nextInt(currentGroup.length)];
+    int row = basePos ~/ columns;
+    int col = basePos % columns;
+
+    List<int> neighbors = [];
+    if (row > 0 && board[basePos - columns]!.terrain == Terrain.water)
+      neighbors.add(basePos - columns);
+    if (row < rows - 1 && board[basePos + columns]!.terrain == Terrain.water)
+      neighbors.add(basePos + columns);
+    if (col > 0 && board[basePos - 1]!.terrain == Terrain.water)
+      neighbors.add(basePos - 1);
+    if (col < columns - 1 && board[basePos + 1]!.terrain == Terrain.water)
+      neighbors.add(basePos + 1);
+
+    if (neighbors.isEmpty) return false;
+
+    int nextPos = neighbors[r.nextInt(neighbors.length)];
+    board[nextPos]!.terrain = Terrain.land;
+    currentGroup.add(nextPos);
+    masterList?.add(nextPos);
     return true;
   }
 
   void confirmPlacement() {
     if (isBoardValid) {
       HapticFeedback.heavyImpact();
-      final gameCtrl = Get.find<GameController>();
-      gameCtrl.startGame(board, myShips, enemyCount, playerName);
-      Future.delayed(const Duration(milliseconds: 100), () {
-        Get.offAllNamed('/game');
-      });
+      Get.find<GameController>()
+          .startGame(columns, rows, board, myShips, enemyCount, playerName);
+      Get.offAllNamed('/game');
     }
   }
 }

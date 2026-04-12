@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../utils/constants.dart';
-import '../models/game_models.dart';
 
 class AnimatedPaperBackground extends StatefulWidget {
   final Widget child;
@@ -161,51 +160,71 @@ Future<bool> showAbortDialog() async {
 class ConnectedShipPiece extends StatelessWidget {
   final int index;
   final String shipId;
-  final Map<int, Cell> board;
+  final Map<int, dynamic> board;
+  final int columns;
+
   const ConnectedShipPiece({
     super.key,
     required this.index,
     required this.shipId,
     required this.board,
+    required this.columns,
   });
+
   @override
   Widget build(BuildContext context) {
-    int cols = 8;
-    bool hasLeft = (index % cols != 0) && board[index - 1]?.shipId == shipId;
+    bool hasTop = board[index - columns]?.shipId == shipId;
+    bool hasBottom = board[index + columns]?.shipId == shipId;
+    bool hasLeft = (index % columns != 0) && board[index - 1]?.shipId == shipId;
     bool hasRight =
-        (index % cols != cols - 1) && board[index + 1]?.shipId == shipId;
-    bool hasTop = (index >= cols) && board[index - cols]?.shipId == shipId;
-    bool hasBottom =
-        (index < 48 - cols) && board[index + cols]?.shipId == shipId;
+        ((index + 1) % columns != 0) && board[index + 1]?.shipId == shipId;
+
     return Container(
       margin: EdgeInsets.only(
-        left: hasLeft ? 0 : 3,
-        right: hasRight ? 0 : 3,
-        top: hasTop ? 0 : 3,
-        bottom: hasBottom ? 0 : 3,
+        top: hasTop ? 0 : 4,
+        bottom: hasBottom ? 0 : 4,
+        left: hasLeft ? 0 : 4,
+        right: hasRight ? 0 : 4,
       ),
       decoration: BoxDecoration(
-        color: AppColors.ink.withOpacity(0.15),
-        border: Border(
-          left: hasLeft
-              ? BorderSide.none
-              : const BorderSide(color: AppColors.ink, width: 2.5),
-          right: hasRight
-              ? BorderSide.none
-              : const BorderSide(color: AppColors.ink, width: 2.5),
-          top: hasTop
-              ? BorderSide.none
-              : const BorderSide(color: AppColors.ink, width: 2.5),
-          bottom: hasBottom
-              ? BorderSide.none
-              : const BorderSide(color: AppColors.ink, width: 2.5),
-        ),
+        color: AppColors.ink,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(hasLeft || hasTop ? 0 : 4),
-          topRight: Radius.circular(hasRight || hasTop ? 0 : 4),
-          bottomLeft: Radius.circular(hasLeft || hasBottom ? 0 : 4),
-          bottomRight: Radius.circular(hasRight || hasBottom ? 0 : 4),
+          topLeft: Radius.circular(hasTop || hasLeft ? 0 : 8),
+          topRight: Radius.circular(hasTop || hasRight ? 0 : 8),
+          bottomLeft: Radius.circular(hasBottom || hasLeft ? 0 : 8),
+          bottomRight: Radius.circular(hasBottom || hasRight ? 0 : 8),
         ),
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            margin: EdgeInsets.only(
+              top: hasTop ? 0 : 4,
+              bottom: hasBottom ? 0 : 4,
+              left: hasLeft ? 0 : 4,
+              right: hasRight ? 0 : 4,
+            ),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.25),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(hasTop || hasLeft ? 0 : 4),
+                topRight: Radius.circular(hasTop || hasRight ? 0 : 4),
+                bottomLeft: Radius.circular(hasBottom || hasLeft ? 0 : 4),
+                bottomRight: Radius.circular(hasBottom || hasRight ? 0 : 4),
+              ),
+            ),
+          ),
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.ink, width: 1.5),
+            ),
+          ),
+        ],
       ),
     );
   }

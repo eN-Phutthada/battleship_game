@@ -14,8 +14,14 @@ class GameBoardScreen extends StatefulWidget {
 }
 
 class _GameBoardScreenState extends State<GameBoardScreen>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _radarController;
+
+  final TransformationController _transformCtrl = TransformationController();
+  late AnimationController _panController;
+  Animation<Matrix4>? _panAnimation;
+  BoxConstraints? _viewportConstraints;
+  int? _lastPanShotTime;
 
   @override
   void initState() {
@@ -24,12 +30,123 @@ class _GameBoardScreenState extends State<GameBoardScreen>
       vsync: this,
       duration: const Duration(seconds: 2),
     )..repeat();
+
+    _panController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400), // Default 400ms
+    );
+
+    _panController.addListener(() {
+      if (_panAnimation != null) {
+        _transformCtrl.value = _panAnimation!.value;
+      }
+    });
   }
 
   @override
   void dispose() {
     _radarController.dispose();
+    _transformCtrl.dispose();
+    _panController.dispose();
     super.dispose();
+  }
+
+  // ✅ ปรับแก้ Smart Pan ให้รับค่า gameController มาเพื่อเช็คความเร็ว
+  void _panToCell(int index, int cols, int rows, GameController game) {
+    if (_viewportConstraints == null) return;
+
+    // ✅ เช็คก่อนว่าปุ่ม Auto-Track (ไอคอนกล้อง) เปิดอยู่หรือไม่
+    if (!game.isAutoTrack) return;
+
+    double scale = _transformCtrl.value.getMaxScaleOnAxis();
+    if (scale <= 1.05) return;
+
+    double wv = _viewportConstraints!.maxWidth;
+    double hv = _viewportConstraints!.maxHeight;
+    double ar = (cols + 1) / (rows + 1);
+    double wg, hg;
+
+    if (wv / hv > ar) {
+      hg = hv;
+      wg = hg * ar;
+    } else {
+      wg = wv;
+      hg = wg / ar;
+    }
+
+    double offsetX = (wv - wg) / 2;
+    double offsetY = (hv - hg) / 2;
+
+    double cw = wg / (cols + 1);
+    double ch = hg / (rows + 1);
+
+    int br = index ~/ cols;
+    int bc = index % cols;
+    int gr = br + 1;
+    int gc = bc + 1;
+
+    double cx = offsetX + (gc + 0.5) * cw;
+    double cy = offsetY + (gr + 0.5) * ch;
+
+    double curTx = _transformCtrl.value.getTranslation().x;
+    double curTy = _transformCtrl.value.getTranslation().y;
+    double screenX = curTx + (cx * scale);
+    double screenY = curTy + (cy * scale);
+
+    double padding = 60.0;
+    bool isVisible = screenX >= padding &&
+        screenX <= wv - padding &&
+        screenY >= padding &&
+        screenY <= hv - padding;
+
+    if (isVisible) return;
+
+    double tx = (wv / 2) - (cx * scale);
+    double ty = (hv / 2) - (cy * scale);
+
+    double minTx = wv - (wv * scale);
+    double minTy = hv - (hv * scale);
+
+    tx = tx.clamp(minTx, 0.0);
+    ty = ty.clamp(minTy, 0.0);
+
+    Matrix4 targetMatrix = Matrix4.identity()
+      ..translate(tx, ty)
+      ..scale(scale);
+
+    _panController.stop();
+
+    // ✅ ปรับความเร็วการแพนกล้องให้ไวกว่าความเร็วการยิงของ Bot เสมอ (ป้องกันกล้องค้าง)
+    int panDurationMs = (game.botSpeedMs * 0.7)
+        .toInt(); // ใช้ 70% ของเวลาเพื่อให้กล้องหยุดก่อนกระสุนลง
+    if (panDurationMs > 600)
+      panDurationMs = 600; // ล็อกไม่ให้ช้าเกินไปถ้าเลือก Bot ช้าสุด
+
+    _panController.duration = Duration(milliseconds: panDurationMs);
+
+    _panAnimation = Matrix4Tween(
+      begin: _transformCtrl.value,
+      end: targetMatrix,
+    ).animate(
+        CurvedAnimation(parent: _panController, curve: Curves.easeInOutCubic));
+
+    _panController.forward(from: 0.0);
+  }
+
+  Widget _buildXIcon({Color color = AppColors.redPen}) {
+    return FractionallySizedBox(
+      widthFactor: 0.7,
+      heightFactor: 0.7,
+      child: FittedBox(child: Icon(Icons.close, color: color)),
+    );
+  }
+
+  Widget _buildOIcon({Color color = Colors.black54}) {
+    return FractionallySizedBox(
+      widthFactor: 0.5,
+      heightFactor: 0.5,
+      child: FittedBox(child: Icon(Icons.radio_button_unchecked, color: color)),
+    );
   }
 
   Widget _buildPaperPanel({required Widget child}) {
@@ -39,7 +156,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
         border: Border.all(color: AppColors.ink, width: 2),
         borderRadius: BorderRadius.circular(4),
         boxShadow: const [
-          BoxShadow(color: Colors.black12, offset: Offset(4, 4)),
+          BoxShadow(color: Colors.black12, offset: Offset(4, 4))
         ],
       ),
       child: child,
@@ -49,6 +166,16 @@ class _GameBoardScreenState extends State<GameBoardScreen>
   Widget _buildRadarThumb(PlayerData player, GameController game) {
     bool isMe = player.id == 0;
     bool isDead = player.isDefeated;
+
+    bool hideEnemyRadar = !isMe &&
+        (game.assistLevel == AssistLevel.hardcore ||
+            game.assistLevel == AssistLevel.realLife);
+
+    int aliveShips = player.ships.where((s) => !s.isSunk).length;
+    int aliveTurrets = player.board.values
+        .where((c) => c.entity == Entity.turret && !c.isRevealed)
+        .length;
+
     return GestureDetector(
       onTap: () {
         if (!isMe && !isDead) {
@@ -63,12 +190,10 @@ class _GameBoardScreenState extends State<GameBoardScreen>
         padding: const EdgeInsets.all(6),
         decoration: BoxDecoration(
           color: Colors.white,
-          border: Border.all(
-            color: isDead ? Colors.grey : AppColors.ink,
-            width: 2,
-          ),
+          border:
+              Border.all(color: isDead ? Colors.grey : AppColors.ink, width: 2),
           boxShadow: const [
-            BoxShadow(color: Colors.black12, offset: Offset(2, 2)),
+            BoxShadow(color: Colors.black12, offset: Offset(2, 2))
           ],
         ),
         child: Column(
@@ -86,40 +211,101 @@ class _GameBoardScreenState extends State<GameBoardScreen>
               ),
               overflow: TextOverflow.ellipsis,
             ),
-            Expanded(
-              child: Container(
-                margin: const EdgeInsets.only(top: 6),
-                decoration: BoxDecoration(
-                  border: Border.all(
-                    color: isDead ? Colors.grey : AppColors.ink,
-                    width: 1.5,
-                  ),
-                  color: isDead
-                      ? Colors.grey.withOpacity(0.2)
-                      : Colors.blue[50]!.withOpacity(0.3),
+            if (!isDead)
+              Padding(
+                padding: const EdgeInsets.only(top: 2, bottom: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.directions_boat,
+                        size: 10, color: AppColors.ink.withOpacity(0.7)),
+                    const SizedBox(width: 4),
+                    Text("$aliveShips",
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.ink.withOpacity(0.7))),
+                    const SizedBox(width: 10),
+                    Icon(Icons.fort,
+                        size: 10, color: AppColors.ink.withOpacity(0.7)),
+                    const SizedBox(width: 4),
+                    Text("$aliveTurrets",
+                        style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.ink.withOpacity(0.7))),
+                  ],
                 ),
-                child: GridView.builder(
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 8,
-                    crossAxisSpacing: 0.5,
-                    mainAxisSpacing: 0.5,
+              ),
+            Expanded(
+              child: Center(
+                child: AspectRatio(
+                  aspectRatio: game.columns / game.rows,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                          color: isDead ? Colors.grey : AppColors.ink,
+                          width: 1.5),
+                      color: isDead
+                          ? Colors.grey.withOpacity(0.2)
+                          : Colors.blue[50]!.withOpacity(0.3),
+                    ),
+                    child: GridView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: game.columns,
+                        crossAxisSpacing: 0,
+                        mainAxisSpacing: 0,
+                      ),
+                      itemCount: game.gridSize,
+                      itemBuilder: (ctx, i) {
+                        Cell cell = player.board[i]!;
+                        Color c = Colors.transparent;
+
+                        if (!hideEnemyRadar) {
+                          if (cell.isRevealed &&
+                              (cell.entity == Entity.ship ||
+                                  cell.entity == Entity.turret))
+                            c = AppColors.redPen;
+                          else if (isMe &&
+                              cell.entity != Entity.none &&
+                              !cell.isRevealed)
+                            c = AppColors.ink.withOpacity(0.5);
+                          else if (!isMe && cell.isRevealed) {
+                            if (cell.entity == Entity.none &&
+                                game.assistLevel == AssistLevel.casual)
+                              c = Colors.black87;
+                          }
+                        } else if (isMe) {
+                          if (cell.isRevealed &&
+                              (cell.entity == Entity.ship ||
+                                  cell.entity == Entity.turret))
+                            c = AppColors.redPen;
+                          else if (cell.entity != Entity.none &&
+                              !cell.isRevealed)
+                            c = AppColors.ink.withOpacity(0.5);
+                        }
+
+                        Widget marker = const SizedBox();
+                        if (hideEnemyRadar && !isMe) {
+                          String? manual =
+                              game.manualMarkers["${player.id}_$i"];
+                          if (manual == 'X')
+                            marker = _buildXIcon(color: Colors.red);
+                          if (manual == 'O')
+                            marker = _buildOIcon(color: Colors.black54);
+                        }
+
+                        return Container(
+                            decoration: BoxDecoration(
+                                color: c,
+                                border: Border.all(
+                                    color: AppColors.ink.withOpacity(0.1),
+                                    width: 0.5)),
+                            child: marker);
+                      },
+                    ),
                   ),
-                  itemCount: 48,
-                  itemBuilder: (ctx, i) {
-                    Cell cell = player.board[i]!;
-                    Color c = Colors.transparent;
-                    if (cell.isRevealed &&
-                        (cell.entity == Entity.ship ||
-                            cell.entity == Entity.turret)) {
-                      c = AppColors.redPen;
-                    } else if (isMe &&
-                        cell.entity != Entity.none &&
-                        !cell.isRevealed) {
-                      c = AppColors.ink.withOpacity(0.5);
-                    }
-                    return Container(color: c);
-                  },
                 ),
               ),
             ),
@@ -143,15 +329,27 @@ class _GameBoardScreenState extends State<GameBoardScreen>
           child: SafeArea(
             child: GetBuilder<GameController>(
               builder: (game) {
-                if (game.isDeploying || game.players.isEmpty) {
+                if (game.isDeploying || game.players.isEmpty)
                   return _buildLoadingScreen();
-                }
 
                 bool isMyTurn = game.players[game.currentPlayerIndex].id == 0;
                 PlayerData viewTarget = game.players.firstWhere(
                   (p) => p.id == game.selectedTargetId,
                   orElse: () => game.players[1],
                 );
+
+                if (game.activeShotAnimation != null) {
+                  int timestamp = game.activeShotAnimation!['timestamp'];
+                  if (timestamp != _lastPanShotTime &&
+                      game.activeShotAnimation!['targetId'] == viewTarget.id) {
+                    _lastPanShotTime = timestamp;
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      // ✅ ส่งตัวแปร game ไปด้วยเพื่อเช็ค isAutoTrack และ botSpeed
+                      _panToCell(game.activeShotAnimation!['index'],
+                          game.columns, game.rows, game);
+                    });
+                  }
+                }
 
                 return Stack(
                   children: [
@@ -161,11 +359,9 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           Expanded(
-                            flex: 2,
-                            child: _buildPaperPanel(
-                              child: _buildLeftSidebar(context, game),
-                            ),
-                          ),
+                              flex: 2,
+                              child: _buildPaperPanel(
+                                  child: _buildLeftSidebar(context, game))),
                           const SizedBox(width: 12),
                           Expanded(
                             flex: 5,
@@ -174,13 +370,20 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                                 _buildTargetHeader(viewTarget),
                                 const SizedBox(height: 8),
                                 Expanded(
-                                  child: _buildAnimatedPaperGrid(
-                                    game,
-                                    viewTarget,
-                                    isMyTurn,
-                                  ),
-                                ),
+                                    child: _buildAnimatedPaperGrid(
+                                        game, viewTarget, isMyTurn)),
                                 _buildAmmoStatus(game),
+                                if (game.assistLevel == AssistLevel.realLife &&
+                                    viewTarget.id != 0)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8.0),
+                                    child: Text('hint_reallife'.tr,
+                                        style: const TextStyle(
+                                            color: AppColors.ink,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                            fontStyle: FontStyle.italic)),
+                                  )
                               ],
                             ),
                           ),
@@ -223,13 +426,9 @@ class _GameBoardScreenState extends State<GameBoardScreen>
               return Transform.scale(
                 scale: 0.5 + (val * 1.5),
                 child: Opacity(
-                  opacity: 1.0 - val,
-                  child: const Icon(
-                    Icons.radar,
-                    color: AppColors.ink,
-                    size: 50,
-                  ),
-                ),
+                    opacity: 1.0 - val,
+                    child: const Icon(Icons.radar,
+                        color: AppColors.ink, size: 50)),
               );
             },
           ),
@@ -237,21 +436,17 @@ class _GameBoardScreenState extends State<GameBoardScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: AppColors.ink, width: 2),
-              boxShadow: const [
-                BoxShadow(color: Colors.black12, offset: Offset(4, 4)),
-              ],
-            ),
-            child: Text(
-              'simulating'.tr,
-              style: const TextStyle(
-                color: AppColors.ink,
-                fontSize: 18,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 2,
-              ),
-            ),
+                color: Colors.white,
+                border: Border.all(color: AppColors.ink, width: 2),
+                boxShadow: const [
+                  BoxShadow(color: Colors.black12, offset: Offset(4, 4))
+                ]),
+            child: Text('simulating'.tr,
+                style: const TextStyle(
+                    color: AppColors.ink,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 2)),
           ),
         ],
       ),
@@ -262,23 +457,21 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: AppColors.ink, width: 2),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, offset: Offset(2, 2)),
-        ],
-      ),
+          color: Colors.white,
+          border: Border.all(color: AppColors.ink, width: 2),
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: const [
+            BoxShadow(color: Colors.black12, offset: Offset(2, 2))
+          ]),
       child: Text(
         viewTarget.id == 0
             ? 'defending'.tr
             : 'targeting'.trParams({'name': viewTarget.name}),
         style: TextStyle(
-          color: viewTarget.id == 0 ? Colors.green[800] : AppColors.redPen,
-          fontSize: 16,
-          fontWeight: FontWeight.w900,
-          letterSpacing: 1.2,
-        ),
+            color: viewTarget.id == 0 ? Colors.green[800] : AppColors.redPen,
+            fontSize: 16,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 1.2),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
@@ -290,14 +483,11 @@ class _GameBoardScreenState extends State<GameBoardScreen>
       padding: const EdgeInsets.all(8.0),
       child: Column(
         children: [
-          Text(
-            'targets'.tr,
-            style: const TextStyle(
-              color: AppColors.ink,
-              fontWeight: FontWeight.w900,
-              fontSize: 16,
-            ),
-          ),
+          Text('targets'.tr,
+              style: const TextStyle(
+                  color: AppColors.ink,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16)),
           const Divider(color: AppColors.ink, thickness: 2),
           const SizedBox(height: 4),
           Expanded(
@@ -312,6 +502,14 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                 Color textColor = isSelected ? Colors.white : AppColors.ink;
                 if (isDead) textColor = Colors.grey;
 
+                bool hideEnemyRadar = p.id != 0 &&
+                    (game.assistLevel == AssistLevel.hardcore ||
+                        game.assistLevel == AssistLevel.realLife);
+                int aliveShips = p.ships.where((s) => !s.isSunk).length;
+                int aliveTurrets = p.board.values
+                    .where((c) => c.entity == Entity.turret && !c.isRevealed)
+                    .length;
+
                 return GestureDetector(
                   onTap: isDead ? null : () => game.selectTarget(p.id),
                   child: AnimatedContainer(
@@ -321,15 +519,13 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                     decoration: BoxDecoration(
                       color: bgColor,
                       border: Border.all(
-                        color: isDead ? Colors.grey : AppColors.ink,
-                        width: isSelected ? 2 : 1,
-                      ),
+                          color: isDead ? Colors.grey : AppColors.ink,
+                          width: isSelected ? 2 : 1),
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                color: AppColors.ink.withOpacity(0.4),
-                                offset: const Offset(3, 3),
-                              ),
+                                  color: AppColors.ink.withOpacity(0.4),
+                                  offset: const Offset(3, 3))
                             ]
                           : null,
                     ),
@@ -341,47 +537,106 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                               ? "${p.name} ☠️"
                               : (p.id == 0 ? 'me'.tr : p.name),
                           style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            color: textColor,
-                            fontSize: 13,
-                          ),
+                              fontWeight: FontWeight.w900,
+                              color: textColor,
+                              fontSize: 13),
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 6),
+                        if (!isDead)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.directions_boat,
+                                    size: 10,
+                                    color: isSelected
+                                        ? Colors.white70
+                                        : AppColors.ink.withOpacity(0.6)),
+                                const SizedBox(width: 2),
+                                Text("$aliveShips",
+                                    style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: isSelected
+                                            ? Colors.white70
+                                            : AppColors.ink.withOpacity(0.6))),
+                                const SizedBox(width: 8),
+                                Icon(Icons.fort,
+                                    size: 10,
+                                    color: isSelected
+                                        ? Colors.white70
+                                        : AppColors.ink.withOpacity(0.6)),
+                                const SizedBox(width: 2),
+                                Text("$aliveTurrets",
+                                    style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                        color: isSelected
+                                            ? Colors.white70
+                                            : AppColors.ink.withOpacity(0.6))),
+                              ],
+                            ),
+                          ),
                         AspectRatio(
-                          aspectRatio: 8 / 6,
+                          aspectRatio: game.columns / game.rows,
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              border: Border.all(
-                                color: isSelected
-                                    ? Colors.white
-                                    : AppColors.ink,
-                                width: 1,
-                              ),
-                            ),
+                                color: Colors.white,
+                                border: Border.all(
+                                    color: isSelected
+                                        ? Colors.white
+                                        : AppColors.ink,
+                                    width: 1)),
                             child: GridView.builder(
                               physics: const NeverScrollableScrollPhysics(),
                               gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 8,
-                                    crossAxisSpacing: 1,
-                                    mainAxisSpacing: 1,
-                                  ),
-                              itemCount: 48,
+                                  SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: game.columns,
+                                      crossAxisSpacing: 0,
+                                      mainAxisSpacing: 0),
+                              itemCount: game.gridSize,
                               itemBuilder: (ctx, i) {
                                 Cell cell = p.board[i]!;
                                 Color c = Colors.transparent;
-                                if (cell.isRevealed &&
-                                    (cell.entity == Entity.ship ||
-                                        cell.entity == Entity.turret)) {
-                                  c = AppColors.redPen;
-                                } else if (p.id == 0 &&
-                                    cell.entity != Entity.none &&
-                                    !cell.isRevealed) {
-                                  c = AppColors.ink.withOpacity(0.5);
+
+                                if (!hideEnemyRadar) {
+                                  if (cell.isRevealed &&
+                                      (cell.entity == Entity.ship ||
+                                          cell.entity == Entity.turret))
+                                    c = AppColors.redPen;
+                                  else if (p.id == 0 &&
+                                      cell.entity != Entity.none &&
+                                      !cell.isRevealed)
+                                    c = AppColors.ink.withOpacity(0.5);
+                                } else if (p.id == 0) {
+                                  if (cell.isRevealed &&
+                                      (cell.entity == Entity.ship ||
+                                          cell.entity == Entity.turret))
+                                    c = AppColors.redPen;
+                                  else if (cell.entity != Entity.none &&
+                                      !cell.isRevealed)
+                                    c = AppColors.ink.withOpacity(0.5);
                                 }
-                                return Container(color: c);
+
+                                Widget marker = const SizedBox();
+                                if (hideEnemyRadar && p.id != 0) {
+                                  String? manual =
+                                      game.manualMarkers["${p.id}_$i"];
+                                  if (manual == 'X')
+                                    marker = _buildXIcon(color: Colors.red);
+                                  if (manual == 'O')
+                                    marker = _buildOIcon(color: Colors.black54);
+                                }
+
+                                return Container(
+                                    decoration: BoxDecoration(
+                                        color: c,
+                                        border: Border.all(
+                                            color:
+                                                AppColors.ink.withOpacity(0.1),
+                                            width: 0.5)),
+                                    child: marker);
                               },
                             ),
                           ),
@@ -400,20 +655,18 @@ class _GameBoardScreenState extends State<GameBoardScreen>
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _buildSystemBtn(
-                  icon: Icons.map_outlined,
-                  color: AppColors.ink,
-                  onTap: () => _showGlobalRadar(context, game),
-                ),
+                    icon: Icons.map_outlined,
+                    color: AppColors.ink,
+                    onTap: () => _showGlobalRadar(context, game)),
                 _buildSystemBtn(
-                  icon: Icons.bug_report,
-                  color: game.isDevMode ? Colors.green[700]! : Colors.grey,
-                  onTap: game.toggleDevMode,
-                ),
+                    icon: Icons.bug_report,
+                    color: game.isDevMode ? Colors.green[700]! : Colors.grey,
+                    onTap: game.toggleDevMode),
                 _buildSystemBtn(
-                  icon: game.isAutoTrack ? Icons.videocam : Icons.videocam_off,
-                  color: game.isAutoTrack ? AppColors.ink : Colors.grey,
-                  onTap: game.toggleAutoTrack,
-                ),
+                    icon:
+                        game.isAutoTrack ? Icons.videocam : Icons.videocam_off,
+                    color: game.isAutoTrack ? AppColors.ink : Colors.grey,
+                    onTap: game.toggleAutoTrack),
               ],
             ),
           ),
@@ -423,36 +676,32 @@ class _GameBoardScreenState extends State<GameBoardScreen>
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: AppColors.ink, width: 1.5),
-                borderRadius: BorderRadius.circular(4),
-              ),
+                  color: Colors.white,
+                  border: Border.all(color: AppColors.ink, width: 1.5),
+                  borderRadius: BorderRadius.circular(4)),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(
-                    game.currentBotSpeed == BotSpeed.fast
-                        ? Icons.fast_forward
-                        : game.currentBotSpeed == BotSpeed.slow
-                        ? Icons.play_arrow
-                        : Icons.speed,
-                    color: AppColors.ink,
-                    size: 16,
-                  ),
+                      game.currentBotSpeed == BotSpeed.fast
+                          ? Icons.fast_forward
+                          : game.currentBotSpeed == BotSpeed.slow
+                              ? Icons.play_arrow
+                              : Icons.speed,
+                      color: AppColors.ink,
+                      size: 16),
                   const SizedBox(width: 6),
                   Text(
-                    game.currentBotSpeed == BotSpeed.fast
-                        ? 'speed_fast'.tr
-                        : game.currentBotSpeed == BotSpeed.slow
-                        ? 'speed_slow'.tr
-                        : 'speed_normal'.tr,
-                    style: const TextStyle(
-                      color: AppColors.ink,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 11,
-                    ),
-                  ),
+                      game.currentBotSpeed == BotSpeed.fast
+                          ? 'speed_fast'.tr
+                          : game.currentBotSpeed == BotSpeed.slow
+                              ? 'speed_slow'.tr
+                              : 'speed_normal'.tr,
+                      style: const TextStyle(
+                          color: AppColors.ink,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 11)),
                 ],
               ),
             ),
@@ -462,218 +711,216 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     );
   }
 
-  Widget _buildSystemBtn({
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildSystemBtn(
+      {required IconData icon,
+      required Color color,
+      required VoidCallback onTap}) {
     return IconButton(
-      icon: Icon(icon, color: color, size: 24),
-      onPressed: onTap,
-      splashRadius: 20,
-    );
+        icon: Icon(icon, color: color, size: 24),
+        onPressed: onTap,
+        splashRadius: 20);
   }
 
   Widget _buildAnimatedPaperGrid(
-    GameController game,
-    PlayerData targetPlayer,
-    bool isMyTurn,
-  ) {
-    return Center(
-      child: AspectRatio(
-        aspectRatio: 9 / 7,
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: AppColors.ink, width: 3),
-            color: AppColors.paper.withOpacity(0.9),
-            boxShadow: const [
-              BoxShadow(color: Colors.black26, offset: Offset(4, 4)),
-            ],
-          ),
-          child: GridView.builder(
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 9,
-            ),
-            itemCount: 63,
-            itemBuilder: (context, index) {
-              int r = index ~/ 9;
-              int c = index % 9;
-              if (r == 0 && c == 0) return const SizedBox();
-              if (r == 0) return GridHeaderCell('$c');
-              if (c == 0) return GridHeaderCell(String.fromCharCode(64 + r));
+      GameController game, PlayerData targetPlayer, bool isMyTurn) {
+    bool isMyBoard = targetPlayer.id == 0;
+    bool hideEnemyLand = !isMyBoard &&
+        (game.assistLevel == AssistLevel.hardcore ||
+            game.assistLevel == AssistLevel.realLife);
 
-              int boardIdx = (r - 1) * 8 + (c - 1);
-              Cell cell = targetPlayer.board[boardIdx]!;
-
-              return InkWell(
-                onTap: () {
-                  if (isMyTurn &&
-                      targetPlayer.id != 0 &&
-                      !targetPlayer.isDefeated) {
-                    game.toggleLockTarget(targetPlayer.id, boardIdx);
-                  }
-                },
-                splashColor: Colors.cyanAccent.withOpacity(0.4),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(4),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          _viewportConstraints = constraints;
+          return InteractiveViewer(
+            transformationController: _transformCtrl,
+            minScale: 1.0,
+            maxScale: 4.0,
+            boundaryMargin: EdgeInsets.zero,
+            child: Center(
+              child: AspectRatio(
+                aspectRatio: (game.columns + 1) / (game.rows + 1),
                 child: Container(
                   decoration: BoxDecoration(
-                    border: Border.all(
-                      color: AppColors.ink.withOpacity(0.2),
-                      width: 1.0,
-                    ),
-                    color:
-                        (cell.terrain == Terrain.land &&
-                            (!targetPlayer.isBot || cell.isRevealed))
-                        ? Colors.brown[300]!.withOpacity(0.6)
-                        : Colors.transparent,
+                      border: Border.all(
+                          color: AppColors.ink.withOpacity(0.5), width: 2.5),
+                      color: AppColors.paper.withOpacity(0.85)),
+                  child: GridView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: game.columns + 1),
+                    itemCount: (game.columns + 1) * (game.rows + 1),
+                    itemBuilder: (context, index) {
+                      int r = index ~/ (game.columns + 1);
+                      int c = index % (game.columns + 1);
+                      if (r == 0 && c == 0) return const SizedBox();
+                      if (r == 0) return GridHeaderCell('$c');
+                      if (c == 0)
+                        return GridHeaderCell(String.fromCharCode(64 + r));
+
+                      int boardIdx = (r - 1) * game.columns + (c - 1);
+                      Cell cell = targetPlayer.board[boardIdx]!;
+
+                      Color cellColor = (cell.terrain == Terrain.land &&
+                              (isMyBoard ||
+                                  (cell.isRevealed && !hideEnemyLand)))
+                          ? Colors.brown[300]!.withOpacity(0.6)
+                          : Colors.transparent;
+
+                      return InkWell(
+                        onTap: () {
+                          if (isMyTurn &&
+                              !isMyBoard &&
+                              !targetPlayer.isDefeated)
+                            game.toggleLockTarget(targetPlayer.id, boardIdx);
+                        },
+                        onLongPress: () {
+                          if (game.assistLevel == AssistLevel.realLife &&
+                              !isMyBoard)
+                            game.toggleManualMarker(targetPlayer.id, boardIdx);
+                        },
+                        splashColor: Colors.cyanAccent.withOpacity(0.3),
+                        child: Container(
+                            decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: AppColors.ink.withOpacity(0.2),
+                                    width: 1.0),
+                                color: cellColor),
+                            child: _buildCellGraphics(
+                                boardIdx, targetPlayer, game)),
+                      );
+                    },
                   ),
-                  child: _buildCellGraphics(boardIdx, targetPlayer, game),
                 ),
-              );
-            },
-          ),
-        ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }
 
   Widget _buildCellGraphics(
-    int index,
-    PlayerData targetPlayer,
-    GameController game,
-  ) {
+      int index, PlayerData targetPlayer, GameController game) {
     Cell cell = targetPlayer.board[index]!;
-    bool isEnemyBoard = targetPlayer.isBot;
+    bool isEnemyBoard = targetPlayer.id != 0;
     bool isMyBoard = !isEnemyBoard;
 
     bool isSunk = false;
     if (cell.shipId != null) {
-      final matchedShips = targetPlayer.ships.where((s) => s.id == cell.shipId);
-      if (matchedShips.isNotEmpty) {
-        isSunk = matchedShips.first.isSunk;
-      }
+      try {
+        isSunk =
+            targetPlayer.ships.firstWhere((s) => s.id == cell.shipId).isSunk;
+      } catch (e) {}
     }
 
     Widget baseContent = const SizedBox();
-    bool showBase =
-        isMyBoard ||
+    bool showBase = isMyBoard ||
         game.isDevMode ||
         (isEnemyBoard &&
             cell.isRevealed &&
-            (cell.entity == Entity.turret || isSunk));
+            (cell.entity == Entity.turret || isSunk) &&
+            game.assistLevel != AssistLevel.realLife &&
+            game.assistLevel != AssistLevel.hardcore);
 
     if (showBase && cell.entity != Entity.none) {
       if (cell.entity == Entity.turret) {
-        baseContent = const Icon(Icons.fort, color: AppColors.ink, size: 22);
+        baseContent = FractionallySizedBox(
+            widthFactor: 0.75,
+            heightFactor: 0.75,
+            child: FittedBox(child: Icon(Icons.fort, color: AppColors.ink)));
       } else if (cell.entity == Entity.ship) {
         baseContent = ConnectedShipPiece(
-          index: index,
-          shipId: cell.shipId!,
-          board: targetPlayer.board,
-        );
+            index: index,
+            shipId: cell.shipId!,
+            board: targetPlayer.board,
+            columns: game.columns);
       }
     }
 
     if (isEnemyBoard &&
         !cell.isRevealed &&
         game.isDevMode &&
-        cell.entity != Entity.none) {
+        cell.entity != Entity.none)
       baseContent = Opacity(opacity: 0.2, child: baseContent);
+
+    Widget manualMarker = const SizedBox();
+    if (game.assistLevel == AssistLevel.realLife && isEnemyBoard) {
+      String? marker = game.manualMarkers["${targetPlayer.id}_$index"];
+      if (marker == 'X')
+        manualMarker = _buildXIcon(color: Colors.redAccent);
+      else if (marker == 'O')
+        manualMarker = _buildOIcon(color: AppColors.ink.withOpacity(0.6));
     }
 
     Widget overlay = const SizedBox();
     if (cell.isRevealed) {
-      if (cell.entity == Entity.ship || cell.entity == Entity.turret) {
-        overlay = Center(
-          child: TweenAnimationBuilder(
-            key: ValueKey('hit_${targetPlayer.id}_$index'),
-            duration: const Duration(milliseconds: 700),
-            tween: Tween<double>(begin: 0.0, end: 1.0),
-            curve: Curves.elasticOut,
-            builder: (context, val, child) => Transform.scale(
-              scale: val,
-              child: Transform.rotate(
-                angle: -0.1,
-                child: const FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    'X',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: AppColors.redPen,
-                      fontSize: 26,
-                      fontWeight: FontWeight.w900,
-                      height: 1.0,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        );
-      } else {
-        bool isRecentMiss =
-            game.activeShotAnimation != null &&
-            game.activeShotAnimation!['index'] == index &&
-            game.activeShotAnimation!['targetId'] == targetPlayer.id;
+      bool isRecentAction = game.activeShotAnimation != null &&
+          game.activeShotAnimation!['index'] == index &&
+          game.activeShotAnimation!['targetId'] == targetPlayer.id;
+      bool isHitReal =
+          cell.entity == Entity.ship || cell.entity == Entity.turret;
+      bool showHit = isMyBoard ||
+          (game.assistLevel != AssistLevel.realLife) ||
+          isRecentAction;
+      bool showMiss = isMyBoard ||
+          (game.assistLevel == AssistLevel.casual) ||
+          isRecentAction;
 
-        if (isRecentMiss) {
-          overlay = Center(
-            child: TweenAnimationBuilder(
-              key: ValueKey('miss_${targetPlayer.id}_$index'),
-              duration: const Duration(milliseconds: 1500),
+      if ((isHitReal && showHit) || (!isHitReal && showMiss)) {
+        if (isRecentAction && game.assistLevel != AssistLevel.realLife) {
+          overlay = TweenAnimationBuilder(
+              key: ValueKey('anim_$index'),
               tween: Tween<double>(begin: 0.0, end: 1.0),
-              curve: Curves.easeInQuad,
+              duration: const Duration(milliseconds: 800),
               builder: (context, val, child) {
-                return Transform.scale(
-                  scale: 0.5 + (val * 0.3),
-                  child: Opacity(
-                    opacity: 1.0 - val,
-                    child: const FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        'O',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: AppColors.ink,
-                          fontSize: 20,
-                          fontWeight: FontWeight.w900,
-                          height: 1.0,
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          );
+                if (val < 0.5)
+                  return Transform.scale(
+                      scale: 0.5 + (val * 1.5),
+                      child:
+                          _buildOIcon(color: AppColors.ink.withOpacity(0.7)));
+                else {
+                  double popScale = 1.0 + sin((val - 0.5) * pi / 0.5) * 0.4;
+                  if (isHitReal)
+                    return Transform.scale(
+                        scale: popScale, child: _buildXIcon());
+                  else
+                    return Transform.scale(
+                        scale: popScale,
+                        child:
+                            _buildOIcon(color: AppColors.ink.withOpacity(0.7)));
+                }
+              });
+        } else {
+          if (isHitReal && showHit)
+            overlay = _buildXIcon();
+          else if (!isHitReal && showMiss)
+            overlay = _buildOIcon(color: AppColors.ink.withOpacity(0.7));
         }
       }
     }
 
     Widget actionAnim = const SizedBox();
-    bool isLocked = game.pendingShots.any(
-      (shot) =>
-          shot['targetId'] == targetPlayer.id && shot['cellIndex'] == index,
-    );
-
+    bool isLocked = game.pendingShots.any((shot) =>
+        shot['targetId'] == targetPlayer.id && shot['cellIndex'] == index);
     if (isLocked) {
       actionAnim = TweenAnimationBuilder(
-        key: ValueKey('lock_${targetPlayer.id}_$index'),
-        tween: Tween<double>(begin: 0.8, end: 1.1),
-        duration: const Duration(milliseconds: 600),
-        curve: Curves.easeInOut,
-        builder: (context, val, child) => Transform.scale(
-          scale: val,
-          child: const Icon(Icons.gps_not_fixed, color: Colors.cyan, size: 24),
-        ),
-      );
+          tween: Tween<double>(begin: 0.8, end: 1.1),
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOut,
+          builder: (context, val, child) => Transform.scale(
+              scale: val,
+              child: FractionallySizedBox(
+                  widthFactor: 0.8,
+                  heightFactor: 0.8,
+                  child: FittedBox(
+                      child: Icon(Icons.gps_not_fixed, color: Colors.cyan)))));
     }
 
     return Stack(
-      alignment: Alignment.center,
-      children: [baseContent, overlay, actionAnim],
-    );
+        alignment: Alignment.center,
+        children: [baseContent, manualMarker, overlay, actionAnim]);
   }
 
   Widget _buildAmmoStatus(GameController game) {
@@ -691,13 +938,12 @@ class _GameBoardScreenState extends State<GameBoardScreen>
       margin: const EdgeInsets.only(top: 12),
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: AppColors.ink, width: 2),
-        borderRadius: BorderRadius.circular(4),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, offset: Offset(2, 2)),
-        ],
-      ),
+          color: Colors.white,
+          border: Border.all(color: AppColors.ink, width: 2),
+          borderRadius: BorderRadius.circular(4),
+          boxShadow: const [
+            BoxShadow(color: Colors.black12, offset: Offset(2, 2))
+          ]),
       child: Column(
         children: [
           Wrap(
@@ -705,49 +951,31 @@ class _GameBoardScreenState extends State<GameBoardScreen>
             crossAxisAlignment: WrapCrossAlignment.center,
             spacing: 4,
             children: [
-              Text(
-                'ammo_ready'.tr,
-                style: const TextStyle(
-                  color: AppColors.ink,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
+              Text('ammo_ready'.tr,
+                  style: const TextStyle(
+                      color: AppColors.ink,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w900)),
               ...List.generate(
-                locked,
-                (i) => const Icon(
-                  Icons.rocket_launch,
-                  color: Colors.cyan,
-                  size: 20,
-                ),
-              ),
+                  locked,
+                  (i) => const Icon(Icons.rocket_launch,
+                      color: Colors.cyan, size: 20)),
               ...List.generate(
-                availBase,
-                (i) => const Icon(
-                  Icons.rocket_launch,
-                  color: AppColors.ink,
-                  size: 20,
-                ),
-              ),
+                  availBase,
+                  (i) => const Icon(Icons.rocket_launch,
+                      color: AppColors.ink, size: 20)),
               ...List.generate(
-                availBonus,
-                (i) => const Icon(
-                  Icons.rocket_launch,
-                  color: Colors.orange,
-                  size: 20,
-                ),
-              ),
+                  availBonus,
+                  (i) => const Icon(Icons.rocket_launch,
+                      color: Colors.orange, size: 20)),
             ],
           ),
           const SizedBox(height: 4),
-          Text(
-            'ammo_legend'.tr,
-            style: const TextStyle(
-              fontSize: 10,
-              color: Colors.grey,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          Text('ammo_legend'.tr,
+              style: const TextStyle(
+                  fontSize: 10,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -762,64 +990,49 @@ class _GameBoardScreenState extends State<GameBoardScreen>
         padding: const EdgeInsets.all(12),
         margin: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.cyan.withOpacity(0.05),
-          border: Border.all(color: Colors.cyan, width: 2),
-        ),
+            color: Colors.cyan.withOpacity(0.05),
+            border: Border.all(color: Colors.cyan, width: 2)),
         child: Column(
           children: [
-            Text(
-              'targets_locked'.tr,
-              style: const TextStyle(
-                color: Colors.cyan,
-                fontWeight: FontWeight.w900,
-                fontSize: 14,
-              ),
-            ),
+            Text('targets_locked'.tr,
+                style: const TextStyle(
+                    color: Colors.cyan,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 14)),
             const SizedBox(height: 4),
-            Text(
-              "${game.pendingShots.length} / ${game.remainingShotsInTurn}",
-              style: const TextStyle(
-                color: Colors.cyan,
-                fontWeight: FontWeight.w900,
-                fontSize: 28,
-                letterSpacing: 2,
-              ),
-            ),
+            Text("${game.pendingShots.length} / ${game.remainingShotsInTurn}",
+                style: const TextStyle(
+                    color: Colors.cyan,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 28,
+                    letterSpacing: 2)),
             const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      side: const BorderSide(color: Colors.cyan, width: 2),
-                    ),
-                    onPressed: game.cancelAllLocks,
-                    child: const Icon(Icons.close, color: Colors.cyan),
-                  ),
-                ),
+                    child: OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            side:
+                                const BorderSide(color: Colors.cyan, width: 2)),
+                        onPressed: game.cancelAllLocks,
+                        child: const Icon(Icons.close, color: Colors.cyan))),
                 const SizedBox(width: 8),
                 Expanded(
-                  flex: 2,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.redPen,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      elevation: 4,
-                    ),
-                    onPressed: game.confirmFire,
-                    child: Text(
-                      'fire_all'.tr,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 16,
-                        letterSpacing: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
+                    flex: 2,
+                    child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.redPen,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            elevation: 4),
+                        onPressed: game.confirmFire,
+                        child: Text('fire_all'.tr,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 16,
+                                letterSpacing: 1.5)))),
               ],
             ),
           ],
@@ -831,30 +1044,24 @@ class _GameBoardScreenState extends State<GameBoardScreen>
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         margin: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: isMyTurn
-              ? Colors.green[800]!.withOpacity(0.1)
-              : AppColors.redPen.withOpacity(0.1),
-          border: Border.all(
-            color: isMyTurn ? Colors.green[800]! : AppColors.redPen,
-            width: 2,
-          ),
-          boxShadow: const [
-            BoxShadow(color: Colors.white, offset: Offset(2, 2)),
-          ],
-        ),
+            color: isMyTurn
+                ? Colors.green[800]!.withOpacity(0.1)
+                : AppColors.redPen.withOpacity(0.1),
+            border: Border.all(
+                color: isMyTurn ? Colors.green[800]! : AppColors.redPen,
+                width: 2),
+            boxShadow: const [
+              BoxShadow(color: Colors.white, offset: Offset(2, 2))
+            ]),
         child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          child: Text(
-            game.statusMessage,
-            key: ValueKey(game.statusMessage),
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: isMyTurn ? Colors.green[800] : AppColors.redPen,
-              fontSize: 15,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ),
+            duration: const Duration(milliseconds: 300),
+            child: Text(game.statusMessage,
+                key: ValueKey(game.statusMessage),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                    color: isMyTurn ? Colors.green[800] : AppColors.redPen,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900))),
       );
     }
   }
@@ -865,9 +1072,9 @@ class _GameBoardScreenState extends State<GameBoardScreen>
         margin: const EdgeInsets.fromLTRB(8, 0, 8, 8),
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.grey[100],
-          border: Border.all(color: AppColors.ink.withOpacity(0.5), width: 1),
-        ),
+            color: Colors.grey[100],
+            border:
+                Border.all(color: AppColors.ink.withOpacity(0.5), width: 1)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -875,14 +1082,11 @@ class _GameBoardScreenState extends State<GameBoardScreen>
               children: [
                 const Icon(Icons.receipt_long, color: AppColors.ink, size: 16),
                 const SizedBox(width: 4),
-                Text(
-                  'battle_log'.tr,
-                  style: const TextStyle(
-                    color: AppColors.ink,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1,
-                  ),
-                ),
+                Text('battle_log'.tr,
+                    style: const TextStyle(
+                        color: AppColors.ink,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1)),
               ],
             ),
             const Divider(color: AppColors.ink, thickness: 1),
@@ -898,21 +1102,16 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                       duration: const Duration(milliseconds: 300),
                       curve: Curves.easeOut,
                       builder: (context, val, child) => Transform.translate(
-                        offset: Offset(val, 0),
-                        child: Opacity(
-                          opacity: 1.0 - (val / -10),
-                          child: Text(
-                            "> ${game.hitLogs[index]}",
-                            style: const TextStyle(
-                              color: AppColors.redPen,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w900,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ),
+                          offset: Offset(val, 0),
+                          child: Opacity(
+                              opacity: 1.0 - (val / -10),
+                              child: Text("> ${game.hitLogs[index]}",
+                                  style: const TextStyle(
+                                      color: AppColors.redPen,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w900),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis))),
                     ),
                   );
                 },
@@ -939,22 +1138,19 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 24),
                 decoration: const BoxDecoration(
-                  color: AppColors.paper,
-                  border: Border.symmetric(
-                    horizontal: BorderSide(color: AppColors.ink, width: 6),
-                  ),
-                  boxShadow: [BoxShadow(color: Colors.black54, blurRadius: 10)],
-                ),
-                child: Text(
-                  game.turnTransitionMessage,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: isMyTurn ? Colors.green[800] : AppColors.redPen,
-                    fontSize: 40,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 6,
-                  ),
-                ),
+                    color: AppColors.paper,
+                    border: Border.symmetric(
+                        horizontal: BorderSide(color: AppColors.ink, width: 6)),
+                    boxShadow: [
+                      BoxShadow(color: Colors.black54, blurRadius: 10)
+                    ]),
+                child: Text(game.turnTransitionMessage,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                        color: isMyTurn ? Colors.green[800] : AppColors.redPen,
+                        fontSize: 40,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 6)),
               ),
             );
           },
@@ -971,17 +1167,15 @@ class _GameBoardScreenState extends State<GameBoardScreen>
         child: Container(
           width: MediaQuery.of(context).size.width * 0.95,
           constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(context).size.height * 0.95,
-            maxWidth: 1200,
-          ),
+              maxHeight: MediaQuery.of(context).size.height * 0.95,
+              maxWidth: 1200),
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: AppColors.paper,
-            border: Border.all(color: AppColors.ink, width: 3),
-            boxShadow: const [
-              BoxShadow(color: Colors.black26, offset: Offset(8, 8)),
-            ],
-          ),
+              color: AppColors.paper,
+              border: Border.all(color: AppColors.ink, width: 3),
+              boxShadow: const [
+                BoxShadow(color: Colors.black26, offset: Offset(8, 8))
+              ]),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -989,25 +1183,18 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   const SizedBox(width: 32),
-                  Text(
-                    'global_radar'.tr,
-                    style: const TextStyle(
-                      color: AppColors.ink,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 2,
-                    ),
-                  ),
+                  Text('global_radar'.tr,
+                      style: const TextStyle(
+                          color: AppColors.ink,
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2)),
                   IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                    icon: const Icon(
-                      Icons.close,
-                      color: AppColors.ink,
-                      size: 28,
-                    ),
-                    onPressed: () => Get.back(),
-                  ),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                      icon: const Icon(Icons.close,
+                          color: AppColors.ink, size: 28),
+                      onPressed: () => Get.back()),
                 ],
               ),
               const Divider(color: AppColors.ink, thickness: 2, height: 8),
@@ -1015,12 +1202,11 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                 child: GridView.builder(
                   shrinkWrap: true,
                   padding: const EdgeInsets.symmetric(vertical: 4),
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 220,
-                    childAspectRatio: 0.85,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                  ),
+                  gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                      maxCrossAxisExtent: 220,
+                      childAspectRatio: game.columns / game.rows,
+                      crossAxisSpacing: 16,
+                      mainAxisSpacing: 16),
                   itemCount: game.players.length,
                   itemBuilder: (ctx, idx) =>
                       _buildRadarThumb(game.players[idx], game),

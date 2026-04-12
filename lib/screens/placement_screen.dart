@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../state/placement_controller.dart';
+
 import '../models/game_models.dart';
+import '../state/placement_controller.dart';
 import '../utils/constants.dart';
 import '../widgets/shared_widgets.dart';
 
@@ -28,17 +29,11 @@ class PlacementScreen extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Container(
+                      _buildSidebarContainer(
                         width: 80,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(color: AppColors.ink, width: 2),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
                         child: _buildLeftSidebar(ctrl),
                       ),
                       const SizedBox(width: 12),
-
                       Expanded(
                         flex: 6,
                         child: Column(
@@ -56,14 +51,8 @@ class PlacementScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 12),
-
-                      Container(
+                      _buildSidebarContainer(
                         width: 120,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          border: Border.all(color: AppColors.ink, width: 2),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
                         child: _buildRightSidebar(ctrl),
                       ),
                     ],
@@ -77,12 +66,24 @@ class PlacementScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildSidebarContainer(
+      {required double width, required Widget child}) {
+    return Container(
+      width: width,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: AppColors.ink, width: 2),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: child,
+    );
+  }
+
   Widget _buildLeftSidebar(PlacementController ctrl) {
     return Padding(
-      padding: const EdgeInsets.all(4.0),
+      padding: const EdgeInsets.symmetric(horizontal: 4.0, vertical: 8.0),
       child: Column(
         children: [
-          const SizedBox(height: 4),
           Text(
             'tools'.tr,
             style: const TextStyle(
@@ -93,28 +94,31 @@ class PlacementScreen extends StatelessWidget {
           const Divider(color: AppColors.ink, thickness: 1),
           Expanded(
             child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _verticalToolBtn(
-                    ctrl,
-                    Icons.landscape,
-                    "${'land'.tr}\n${ctrl.placedLand}/12",
-                    PlacementTool.land,
-                  ),
                   const SizedBox(height: 8),
-                  _verticalToolBtn(
-                    ctrl,
-                    Icons.fort,
-                    "${'turret'.tr}\n${ctrl.placedTurrets}/3",
-                    PlacementTool.turret,
+                  _buildToolButton(
+                    ctrl: ctrl,
+                    icon: Icons.landscape,
+                    label: "${'land'.tr}\n${ctrl.placedLand}/${ctrl.maxLand}",
+                    tool: PlacementTool.land,
                   ),
-                  const SizedBox(height: 8),
-                  _verticalToolBtn(
-                    ctrl,
-                    Icons.directions_boat,
-                    "${'fleet'.tr}\n${ctrl.placedShipsCount}/5",
-                    PlacementTool.ship,
+                  const SizedBox(height: 12),
+                  _buildToolButton(
+                    ctrl: ctrl,
+                    icon: Icons.fort,
+                    label:
+                        "${'turret'.tr}\n${ctrl.placedTurrets}/${ctrl.maxTurrets}",
+                    tool: PlacementTool.turret,
+                  ),
+                  const SizedBox(height: 12),
+                  _buildToolButton(
+                    ctrl: ctrl,
+                    icon: Icons.directions_boat,
+                    label:
+                        "${'fleet'.tr}\n${ctrl.placedShipsCount}/${ctrl.fleetDefinition.length}",
+                    tool: PlacementTool.ship,
                   ),
                 ],
               ),
@@ -125,13 +129,16 @@ class PlacementScreen extends StatelessWidget {
     );
   }
 
-  Widget _verticalToolBtn(
-    PlacementController ctrl,
-    IconData icon,
-    String label,
-    PlacementTool tool,
-  ) {
-    bool isSelected = ctrl.currentTool == tool;
+  Widget _buildToolButton({
+    required PlacementController ctrl,
+    required IconData icon,
+    required String label,
+    required PlacementTool tool,
+  }) {
+    final bool isSelected = ctrl.currentTool == tool;
+    final Color contentColor =
+        isSelected ? AppColors.ink : AppColors.ink.withOpacity(0.6);
+
     return GestureDetector(
       onTap: () => ctrl.setTool(tool),
       child: AnimatedContainer(
@@ -139,9 +146,8 @@ class PlacementScreen extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.ink.withOpacity(0.1)
-              : Colors.transparent,
+          color:
+              isSelected ? AppColors.ink.withOpacity(0.1) : Colors.transparent,
           border: Border.all(
             color: isSelected ? AppColors.ink : AppColors.ink.withOpacity(0.2),
             width: 2,
@@ -149,22 +155,15 @@ class PlacementScreen extends StatelessWidget {
           borderRadius: BorderRadius.circular(6),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              color: isSelected
-                  ? AppColors.ink
-                  : AppColors.ink.withOpacity(0.6),
-              size: 28,
-            ),
+            Icon(icon, color: contentColor, size: 28),
             const SizedBox(height: 4),
             Text(
               label,
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: isSelected
-                    ? AppColors.ink
-                    : AppColors.ink.withOpacity(0.6),
+                color: contentColor,
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
               ),
@@ -227,23 +226,25 @@ class PlacementScreen extends StatelessWidget {
             child: Wrap(
               spacing: 8.0,
               runSpacing: 4.0,
-              children: [4, 3, 2, 1].map((size) {
-                int count = ctrl.unplacedShips.where((s) => s == size).length;
-                bool isSelected = ctrl.selectedShipSize == size;
+              children: ctrl.fleetDefinition.toSet().map((size) {
+                final int count =
+                    ctrl.unplacedShips.where((s) => s == size).length;
+                final bool isSelected = ctrl.selectedShipSize == size;
+                final bool isAvailable = count > 0;
+
                 return GestureDetector(
-                  onTap: count > 0 ? () => ctrl.selectShip(size) : null,
+                  onTap: isAvailable ? () => ctrl.selectShip(size) : null,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: count == 0
+                      color: !isAvailable
                           ? Colors.grey.withOpacity(0.2)
                           : (isSelected ? AppColors.ink : Colors.white),
                       border: Border.all(
-                        color: count == 0 ? Colors.transparent : AppColors.ink,
+                        color:
+                            !isAvailable ? Colors.transparent : AppColors.ink,
                         width: 1.5,
                       ),
                       borderRadius: BorderRadius.circular(4),
@@ -251,7 +252,7 @@ class PlacementScreen extends StatelessWidget {
                     child: Text(
                       "L$size (x$count)",
                       style: TextStyle(
-                        color: count == 0
+                        color: !isAvailable
                             ? Colors.grey
                             : (isSelected ? Colors.white : AppColors.ink),
                         fontSize: 12,
@@ -274,6 +275,7 @@ class PlacementScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   AnimatedRotation(
                     turns: ctrl.isHorizontal ? 0 : 0.25,
@@ -303,9 +305,13 @@ class PlacementScreen extends StatelessWidget {
   }
 
   Widget _buildAnimatedPaperGrid(PlacementController ctrl) {
+    final int displayCols = ctrl.columns + 1;
+    final int displayRows = ctrl.rows + 1;
+    final int totalItems = displayCols * displayRows;
+
     return Center(
       child: AspectRatio(
-        aspectRatio: 9 / 7,
+        aspectRatio: displayCols / displayRows,
         child: Container(
           decoration: BoxDecoration(
             border: Border.all(
@@ -316,19 +322,21 @@ class PlacementScreen extends StatelessWidget {
           ),
           child: GridView.builder(
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 9,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: displayCols,
             ),
-            itemCount: 63,
+            itemCount: totalItems,
             itemBuilder: (ctx, index) {
-              int r = index ~/ 9;
-              int c = index % 9;
-              if (r == 0 && c == 0) return const SizedBox();
+              final int r = index ~/ displayCols;
+              final int c = index % displayCols;
+
+              if (r == 0 && c == 0) return const SizedBox.shrink();
               if (r == 0) return GridHeaderCell('$c');
               if (c == 0) return GridHeaderCell(String.fromCharCode(64 + r));
 
-              int boardIdx = (r - 1) * 8 + (c - 1);
-              Cell cell = ctrl.board[boardIdx]!;
+              final int boardIdx = (r - 1) * ctrl.columns + (c - 1);
+              final Cell? cell = ctrl.board[boardIdx];
+              if (cell == null) return const SizedBox.shrink();
 
               return InkWell(
                 onTap: () => ctrl.handleTap(boardIdx),
@@ -345,7 +353,9 @@ class PlacementScreen extends StatelessWidget {
                         ? Colors.brown[300]!.withOpacity(0.6)
                         : Colors.transparent,
                   ),
-                  child: Center(child: _buildCellContent(cell, boardIdx, ctrl)),
+                  child: Center(
+                    child: _buildCellContent(cell, boardIdx, ctrl),
+                  ),
                 ),
               );
             },
@@ -357,11 +367,11 @@ class PlacementScreen extends StatelessWidget {
 
   Widget _buildCellContent(Cell cell, int index, PlacementController ctrl) {
     if (cell.entity == Entity.turret) {
-      return AnimatedScale(
+      return const AnimatedScale(
         scale: 1.0,
-        duration: const Duration(milliseconds: 200),
+        duration: Duration(milliseconds: 200),
         curve: Curves.bounceOut,
-        child: const Icon(Icons.fort, color: AppColors.ink, size: 24),
+        child: Icon(Icons.fort, color: AppColors.ink, size: 24),
       );
     } else if (cell.entity == Entity.ship) {
       return AnimatedScale(
@@ -371,18 +381,18 @@ class PlacementScreen extends StatelessWidget {
           index: index,
           shipId: cell.shipId!,
           board: ctrl.board,
+          columns: ctrl.columns,
         ),
       );
     }
-    return const SizedBox();
+    return const SizedBox.shrink();
   }
 
   Widget _buildRightSidebar(PlacementController ctrl) {
     return Padding(
-      padding: const EdgeInsets.all(6.0),
+      padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 8.0),
       child: Column(
         children: [
-          const SizedBox(height: 2),
           Text(
             'command'.tr,
             style: const TextStyle(
@@ -391,78 +401,29 @@ class PlacementScreen extends StatelessWidget {
             ),
           ),
           const Divider(color: AppColors.ink, thickness: 1),
-          const SizedBox(height: 8),
-
           Expanded(
             child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
               child: Column(
                 children: [
-                  OutlinedButton(
+                  const SizedBox(height: 8),
+                  _buildCommandButton(
                     onPressed: ctrl.autoDeploy,
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      side: const BorderSide(color: AppColors.ink, width: 2),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      minimumSize: const Size(double.infinity, 0),
-                    ),
-                    child: Column(
-                      children: [
-                        const Icon(
-                          Icons.casino,
-                          color: AppColors.ink,
-                          size: 24,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'auto'.tr,
-                          style: const TextStyle(
-                            color: AppColors.ink,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
+                    icon: Icons.casino,
+                    label: 'auto'.tr,
+                    color: AppColors.ink,
                   ),
                   const SizedBox(height: 12),
-                  OutlinedButton(
+                  _buildCommandButton(
                     onPressed: ctrl.clearAll,
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      side: const BorderSide(color: AppColors.redPen, width: 2),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      minimumSize: const Size(double.infinity, 0),
-                    ),
-                    child: Column(
-                      children: [
-                        const Icon(
-                          Icons.delete_forever,
-                          color: AppColors.redPen,
-                          size: 24,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'clear'.tr,
-                          style: const TextStyle(
-                            color: AppColors.redPen,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
+                    icon: Icons.delete_forever,
+                    label: 'clear'.tr,
+                    color: AppColors.redPen,
                   ),
                 ],
               ),
             ),
           ),
-
           const SizedBox(height: 8),
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
@@ -479,6 +440,7 @@ class PlacementScreen extends StatelessWidget {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 padding: EdgeInsets.zero,
+                disabledBackgroundColor: Colors.grey.withOpacity(0.3),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -494,6 +456,41 @@ class PlacementScreen extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCommandButton({
+    required VoidCallback onPressed,
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    return OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        backgroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        side: BorderSide(color: color, width: 2),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        minimumSize: const Size(double.infinity, 0),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
             ),
           ),
         ],

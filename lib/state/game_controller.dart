@@ -9,9 +9,11 @@ enum BotSpeed { slow, normal, fast }
 
 enum BotDifficulty { easy, normal, hard }
 
+enum AssistLevel { casual, standard, hardcore, realLife }
+
 class GameController extends GetxController {
-  final int columns = 8;
-  final int rows = 6;
+  int columns = 8;
+  int rows = 6;
   int get gridSize => columns * rows;
 
   List<PlayerData> players = [];
@@ -38,6 +40,8 @@ class GameController extends GetxController {
   BotSpeed currentBotSpeed = BotSpeed.normal;
   BotDifficulty botDifficulty = BotDifficulty.normal;
 
+  AssistLevel assistLevel = AssistLevel.standard;
+
   int get botSpeedMs => currentBotSpeed == BotSpeed.slow
       ? 1500
       : (currentBotSpeed == BotSpeed.fast ? 400 : 1000);
@@ -60,8 +64,11 @@ class GameController extends GetxController {
     update();
   }
 
-  void startGame(Map<int, Cell> humanBoard, List<ShipData> humanShips,
-      int enemyCount, String pName) {
+  void startGame(int cols, int rws, Map<int, Cell> humanBoard,
+      List<ShipData> humanShips, int enemyCount, String pName) {
+    columns = cols;
+    rows = rws;
+
     players.clear();
     hitLogs.clear();
     isGameOver = false;
@@ -71,12 +78,12 @@ class GameController extends GetxController {
     pendingShots.clear();
     currentBotSpeed = BotSpeed.normal;
     isAutoTrack = true;
+    manualMarkers.clear();
 
     var human = PlayerData(id: 0, name: pName, isBot: false);
     human.board = _cloneBoard(humanBoard);
     human.ships = List.from(humanShips);
     players.add(human);
-
     update();
 
     Future.delayed(const Duration(milliseconds: 1500), () {
@@ -109,26 +116,102 @@ class GameController extends GetxController {
 
   void _generateBotBoard(PlayerData bot) {
     bot.board = {for (var i = 0; i < gridSize; i++) i: Cell()};
-    List<int> botLand = [0, 1, 2, 8, 9, 10, 5, 6, 13, 14, 21, 22];
-    for (int idx in botLand) bot.board[idx]!.terrain = Terrain.land;
-    bot.board[1]!.entity = Entity.turret;
-    bot.board[9]!.entity = Entity.turret;
-    bot.board[14]!.entity = Entity.turret;
-
-    List<int> fleet = [4, 3, 2, 1, 1];
     Random r = Random();
 
-    for (int size in fleet) {
+    // ✅ ปรับทรัพยากรบอทตามสัดส่วนพื้นที่ (เหมือน PlacementController)
+    int maxLand = (gridSize * 0.25).floor();
+    int maxTurrets = (maxLand / 4).ceil();
+    List<int> fleetDefinition = gridSize <= 48
+        ? [4, 3, 2, 1, 1]
+        : (gridSize <= 80 ? [5, 4, 3, 3, 2, 2] : [5, 4, 4, 3, 3, 2, 2, 1, 1]);
+
+    // สุ่มสร้างเกาะ (Procedural Generation)
+    int totalLandNeeded = maxLand;
+    int numIslands = r.nextBool() ? 1 : 2;
+    List<int> allPlacedLand = [];
+
+    for (int island = 0; island < numIslands; island++) {
+      int sizeToBuild = (island == 0 && numIslands == 2)
+          ? r.nextInt(totalLandNeeded ~/ 2) + 3
+          : totalLandNeeded;
+      totalLandNeeded -= sizeToBuild;
+
+      int seed;
+      do {
+        seed = r.nextInt(gridSize);
+      } while (bot.board[seed]!.terrain == Terrain.land);
+
+      List<int> islandGroup = [seed];
+      bot.board[seed]!.terrain = Terrain.land;
+      allPlacedLand.add(seed);
+
+      while (islandGroup.length < sizeToBuild) {
+        int basePos = islandGroup[r.nextInt(islandGroup.length)];
+        int row = basePos ~/ columns;
+        int col = basePos % columns;
+        List<int> neighbors = [];
+        if (row > 0 && bot.board[basePos - columns]!.terrain == Terrain.water)
+          neighbors.add(basePos - columns);
+        if (row < rows - 1 &&
+            bot.board[basePos + columns]!.terrain == Terrain.water)
+          neighbors.add(basePos + columns);
+        if (col > 0 && bot.board[basePos - 1]!.terrain == Terrain.water)
+          neighbors.add(basePos - 1);
+        if (col < columns - 1 &&
+            bot.board[basePos + 1]!.terrain == Terrain.water)
+          neighbors.add(basePos + 1);
+
+        if (neighbors.isEmpty) break;
+        int nextPos = neighbors[r.nextInt(neighbors.length)];
+        bot.board[nextPos]!.terrain = Terrain.land;
+        islandGroup.add(nextPos);
+        allPlacedLand.add(nextPos);
+      }
+    }
+
+    // เติมแผ่นดินให้ครบเผื่อชนขอบ
+    while (allPlacedLand.length < maxLand) {
+      int basePos = allPlacedLand[r.nextInt(allPlacedLand.length)];
+      int row = basePos ~/ columns;
+      int col = basePos % columns;
+      List<int> neighbors = [];
+      if (row > 0 && bot.board[basePos - columns]!.terrain == Terrain.water)
+        neighbors.add(basePos - columns);
+      if (row < rows - 1 &&
+          bot.board[basePos + columns]!.terrain == Terrain.water)
+        neighbors.add(basePos + columns);
+      if (col > 0 && bot.board[basePos - 1]!.terrain == Terrain.water)
+        neighbors.add(basePos - 1);
+      if (col < columns - 1 && bot.board[basePos + 1]!.terrain == Terrain.water)
+        neighbors.add(basePos + 1);
+
+      if (neighbors.isNotEmpty) {
+        int nextPos = neighbors[r.nextInt(neighbors.length)];
+        bot.board[nextPos]!.terrain = Terrain.land;
+        allPlacedLand.add(nextPos);
+      }
+    }
+
+    // วางป้อมปืน
+    allPlacedLand.shuffle();
+    for (int i = 0; i < maxTurrets; i++) {
+      bot.board[allPlacedLand[i]]!.entity = Entity.turret;
+    }
+
+    // วางกองเรือ
+    for (int size in fleetDefinition) {
       bool placed = false;
-      while (!placed) {
-        bool isHorizontal = r.nextBool();
+      int attempts = 0;
+      while (!placed && attempts < 150) {
+        attempts++;
+        bool isHoriz = r.nextBool();
         int startPos = r.nextInt(gridSize);
         int rr = startPos ~/ columns;
         int cc = startPos % columns;
         List<int> target = [];
         bool canPlace = true;
         for (int i = 0; i < size; i++) {
-          if (isHorizontal) {
+          if (isHoriz) {
             if (cc + i >= columns) {
               canPlace = false;
               break;
@@ -145,7 +228,10 @@ class GameController extends GetxController {
         if (canPlace) {
           for (int pos in target) {
             if (bot.board[pos]!.terrain != Terrain.water ||
-                bot.board[pos]!.entity != Entity.none) canPlace = false;
+                bot.board[pos]!.entity != Entity.none) {
+              canPlace = false;
+              break;
+            }
           }
         }
         if (canPlace) {
@@ -164,13 +250,12 @@ class GameController extends GetxController {
 
   bool canLockTarget(int targetPlayerId) {
     if (targetPlayerId == players[currentPlayerIndex].id) return false;
-    if (players.firstWhere((p) => p.id == targetPlayerId).isDefeated)
+    if (players.firstWhere((p) => p.id == targetPlayerId).isDefeated) {
       return false;
-
+    }
     int simulatedShotsThisTarget = (turnShotsFiredAt[targetPlayerId] ?? 0) +
         pendingShots.where((s) => s['targetId'] == targetPlayerId).length;
     int minShotsAtAnyTarget = 999;
-
     for (var p in players) {
       if (p.id != players[currentPlayerIndex].id && !p.isDefeated) {
         int s = (turnShotsFiredAt[p.id] ?? 0) +
@@ -185,7 +270,9 @@ class GameController extends GetxController {
     if (players[currentPlayerIndex].isBot ||
         isGameOver ||
         isTurnTransition ||
-        isWaitingTurnEnd) return;
+        isWaitingTurnEnd) {
+      return;
+    }
 
     int existingIndex = pendingShots.indexWhere(
         (s) => s['targetId'] == targetPlayerId && s['cellIndex'] == cellIndex);
@@ -195,8 +282,33 @@ class GameController extends GetxController {
       update();
       return;
     }
-
     if (pendingShots.length >= remainingShotsInTurn) return;
+
+    bool isRevealed = players
+        .firstWhere((p) => p.id == targetPlayerId)
+        .board[cellIndex]!
+        .isRevealed;
+    if (isRevealed) {
+      if (assistLevel == AssistLevel.casual) {
+        HapticFeedback.vibrate();
+        Get.snackbar('attention'.tr, 'casual_block'.tr,
+            backgroundColor: const Color(0xFFFDFBF7),
+            colorText: const Color(0xFFD32F2F),
+            borderColor: const Color(0xFFD32F2F),
+            borderWidth: 2,
+            borderRadius: 6,
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            icon: const Icon(Icons.warning_amber_rounded,
+                color: Color(0xFFD32F2F), size: 26),
+            snackPosition: SnackPosition.TOP,
+            boxShadows: [
+              const BoxShadow(color: Colors.black26, offset: Offset(2, 2))
+            ],
+            duration: const Duration(seconds: 2));
+        return;
+      }
+    }
 
     if (!canLockTarget(targetPlayerId)) {
       HapticFeedback.vibrate();
@@ -213,24 +325,21 @@ class GameController extends GetxController {
         selectedTargetId = nextTargetId;
         update();
       }
-      Get.snackbar(
-        'attention'.tr,
-        'distribute_shots'.tr,
-        backgroundColor: const Color(0xFFFDFBF7),
-        colorText: const Color(0xFFD32F2F),
-        borderColor: const Color(0xFFD32F2F),
-        borderWidth: 2,
-        borderRadius: 6,
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        icon: const Icon(Icons.warning_amber_rounded,
-            color: Color(0xFFD32F2F), size: 26),
-        snackPosition: SnackPosition.TOP,
-        boxShadows: [
-          const BoxShadow(color: Colors.black26, offset: Offset(2, 2))
-        ],
-        duration: const Duration(seconds: 2),
-      );
+      Get.snackbar('attention'.tr, 'distribute_shots'.tr,
+          backgroundColor: const Color(0xFFFDFBF7),
+          colorText: const Color(0xFFD32F2F),
+          borderColor: const Color(0xFFD32F2F),
+          borderWidth: 2,
+          borderRadius: 6,
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          icon: const Icon(Icons.warning_amber_rounded,
+              color: Color(0xFFD32F2F), size: 26),
+          snackPosition: SnackPosition.TOP,
+          boxShadows: [
+            const BoxShadow(color: Colors.black26, offset: Offset(2, 2))
+          ],
+          duration: const Duration(seconds: 2));
       return;
     }
 
@@ -247,15 +356,31 @@ class GameController extends GetxController {
 
   void confirmFire() async {
     if (pendingShots.isEmpty || isWaitingTurnEnd) return;
-
     List<Map<String, int>> shotsToFire = List.from(pendingShots);
     pendingShots.clear();
     update();
-
     for (var shot in shotsToFire) {
       _executeShoot(shot['targetId']!, shot['cellIndex']!);
       await Future.delayed(Duration(milliseconds: botSpeedMs ~/ 2));
     }
+  }
+
+  Map<String, String> manualMarkers = {};
+
+  void toggleManualMarker(int targetPlayerId, int cellIndex) {
+    if (assistLevel != AssistLevel.realLife) return;
+
+    HapticFeedback.selectionClick();
+    String key = "${targetPlayerId}_$cellIndex";
+
+    if (!manualMarkers.containsKey(key)) {
+      manualMarkers[key] = 'X';
+    } else if (manualMarkers[key] == 'X') {
+      manualMarkers[key] = 'O';
+    } else {
+      manualMarkers.remove(key);
+    }
+    update();
   }
 
   void _executeShoot(int targetPlayerId, int cellIndex) {
@@ -263,7 +388,6 @@ class GameController extends GetxController {
 
     var targetPlayer = players.firstWhere((p) => p.id == targetPlayerId);
     var cell = targetPlayer.board[cellIndex]!;
-
     bool wasRevealed = cell.isRevealed;
 
     cell.isRevealed = true;
@@ -288,13 +412,19 @@ class GameController extends GetxController {
       'timestamp': DateTime.now().millisecondsSinceEpoch
     };
     update();
-
     Future.delayed(const Duration(milliseconds: 800), () {
       if (activeShotAnimation?['index'] == cellIndex) {
         activeShotAnimation = null;
         update();
       }
     });
+
+    String coord =
+        "${String.fromCharCode(65 + (cellIndex ~/ columns))}${cellIndex % columns + 1}";
+
+    if (cell.terrain == Terrain.land && cell.entity == Entity.none) {
+      targetPlayer.bonusAmmo++;
+    }
 
     if (wasRevealed) {
       HapticFeedback.lightImpact();
@@ -304,54 +434,71 @@ class GameController extends GetxController {
         _addLog('wasted_shot_bot'.trParams({'shooter': shooterName}));
       }
     } else {
+      bool isShipSunk = false;
+      ShipData? hitShip;
       if (cell.entity == Entity.ship) {
-        HapticFeedback.heavyImpact();
-        ShipData hitShip =
-            targetPlayer.ships.firstWhere((s) => s.id == cell.shipId);
-        bool isShipSunk = hitShip.positions
+        hitShip = targetPlayer.ships.firstWhere((s) => s.id == cell.shipId);
+        isShipSunk = hitShip.positions
             .every((pos) => targetPlayer.board[pos]!.isRevealed);
-        if (isShipSunk) {
-          hitShip.isSunk = true;
-          if (isShooterMe) {
-            _addLog('log_sunk_me'.trParams(
-                {'target': targetName, 'size': hitShip.size.toString()}));
-          } else {
-            _addLog(isTargetMe
-                ? 'log_sunk_you'.trParams({'shooter': shooterName})
-                : 'log_sunk_enemy'
-                    .trParams({'shooter': shooterName, 'target': targetName}));
-          }
-        } else {
-          if (isShooterMe) {
-            _addLog('log_hit_me'.trParams({'target': targetName}));
-          } else {
-            _addLog(isTargetMe
-                ? 'log_hit_you'.trParams({'shooter': shooterName})
-                : 'log_hit_enemy'
-                    .trParams({'shooter': shooterName, 'target': targetName}));
-          }
-        }
-      } else if (cell.entity == Entity.turret) {
-        HapticFeedback.mediumImpact();
-        if (isShooterMe) {
-          _addLog('log_turret_me'.trParams({'target': targetName}));
-        } else {
-          _addLog(isTargetMe
-              ? 'log_turret_you'.trParams({'shooter': shooterName})
-              : 'log_turret_enemy'
-                  .trParams({'shooter': shooterName, 'target': targetName}));
-        }
-      } else {
-        HapticFeedback.lightImpact();
+        if (isShipSunk) hitShip.isSunk = true;
       }
 
-      if (cell.terrain == Terrain.land && cell.entity == Entity.none) {
-        targetPlayer.bonusAmmo++;
+      if (assistLevel == AssistLevel.realLife) {
+        HapticFeedback.heavyImpact();
+        if (isHit) {
+          _addLog('log_reallife_hit'
+              .trParams({'target': targetName, 'coord': coord}));
+        } else {
+          _addLog('log_reallife_miss'
+              .trParams({'target': targetName, 'coord': coord}));
+        }
+      } else if (assistLevel == AssistLevel.hardcore) {
+        HapticFeedback.heavyImpact();
+        if (isHit) {
+          _addLog('log_hardcore_hit'.trParams({'target': targetName}));
+        } else {
+          _addLog('log_hardcore_miss'.trParams({'target': targetName}));
+        }
+      } else {
+        if (cell.entity == Entity.ship) {
+          HapticFeedback.heavyImpact();
+          if (isShipSunk) {
+            if (isShooterMe) {
+              _addLog('log_sunk_me'.trParams(
+                  {'target': targetName, 'size': hitShip!.size.toString()}));
+            } else {
+              _addLog(isTargetMe
+                  ? 'log_sunk_you'.trParams({'shooter': shooterName})
+                  : 'log_sunk_enemy'.trParams(
+                      {'shooter': shooterName, 'target': targetName}));
+            }
+          } else {
+            if (isShooterMe) {
+              _addLog('log_hit_me'.trParams({'target': targetName}));
+            } else {
+              _addLog(isTargetMe
+                  ? 'log_hit_you'.trParams({'shooter': shooterName})
+                  : 'log_hit_enemy'.trParams(
+                      {'shooter': shooterName, 'target': targetName}));
+            }
+          }
+        } else if (cell.entity == Entity.turret) {
+          HapticFeedback.mediumImpact();
+          if (isShooterMe) {
+            _addLog('log_turret_me'.trParams({'target': targetName}));
+          } else {
+            _addLog(isTargetMe
+                ? 'log_turret_you'.trParams({'shooter': shooterName})
+                : 'log_turret_enemy'
+                    .trParams({'shooter': shooterName, 'target': targetName}));
+          }
+        } else {
+          HapticFeedback.lightImpact();
+        }
       }
     }
 
     _checkWinCondition();
-
     if (remainingShotsInTurn <= 0 && pendingShots.isEmpty && !isGameOver) {
       isWaitingTurnEnd = true;
       update();
@@ -444,9 +591,11 @@ class GameController extends GetxController {
     if (activePlayer.isBot) {
       selectedTargetId = 0;
     } else {
-      if (players
-          .firstWhere((p) => p.id == selectedTargetId, orElse: () => players[1])
-          .isDefeated) {
+      if (selectedTargetId == 0 ||
+          players
+              .firstWhere((p) => p.id == selectedTargetId,
+                  orElse: () => players[1])
+              .isDefeated) {
         var aliveEnemies = players.where((p) => p.isBot && !p.isDefeated);
         if (aliveEnemies.isNotEmpty) {
           selectedTargetId = aliveEnemies.first.id;
@@ -492,7 +641,9 @@ class GameController extends GetxController {
     if (isGameOver ||
         !players[currentPlayerIndex].isBot ||
         isTurnTransition ||
-        isWaitingTurnEnd) return;
+        isWaitingTurnEnd) {
+      return;
+    }
 
     int botId = players[currentPlayerIndex].id;
     List<PlayerData> validTargets =
@@ -515,25 +666,27 @@ class GameController extends GetxController {
               if (!ship.isSunk) {
                 int r = i ~/ columns;
                 int c = i % columns;
-                if (r > 0 && !target.board[i - columns]!.isRevealed)
+                if (r > 0 && !target.board[i - columns]!.isRevealed) {
                   available.add(i - columns);
-                if (r < rows - 1 && !target.board[i + columns]!.isRevealed)
+                }
+                if (r < rows - 1 && !target.board[i + columns]!.isRevealed) {
                   available.add(i + columns);
-                if (c > 0 && !target.board[i - 1]!.isRevealed)
+                }
+                if (c > 0 && !target.board[i - 1]!.isRevealed) {
                   available.add(i - 1);
-                if (c < columns - 1 && !target.board[i + 1]!.isRevealed)
+                }
+                if (c < columns - 1 && !target.board[i + 1]!.isRevealed) {
                   available.add(i + 1);
+                }
               }
             }
           }
         }
-
         if (available.isEmpty && botDifficulty != BotDifficulty.easy) {
           target.board.forEach((idx, cell) {
             if (!cell.isRevealed) available.add(idx);
           });
         }
-
         if (botDifficulty == BotDifficulty.easy) {
           available = List.generate(gridSize, (i) => i);
         }
@@ -552,7 +705,6 @@ class GameController extends GetxController {
       if (!isGameOver) _endTurn();
       return;
     }
-
     if (remainingShotsInTurn > 0 && !isGameOver && !isWaitingTurnEnd) {
       Future.delayed(Duration(milliseconds: botSpeedMs), _botLogic);
     }
