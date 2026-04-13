@@ -130,7 +130,6 @@ class MultiplayerController extends GetxController {
     });
   }
 
-  // ✅ เปลี่ยนกฎใน Lobby (เรียกใช้โดย Host)
   void updateLobbySettings(AssistLevel level, int cols, int rows) {
     currentAssistLevel.value = level;
     currentColumns.value = cols;
@@ -164,8 +163,9 @@ class MultiplayerController extends GetxController {
       if (data['type'] == 'LOBBY_UPDATE') {
         lobbyPlayers
             .assignAll(List<Map<String, dynamic>>.from(data['players']));
-        if (data['assistLevel'] != null)
+        if (data['assistLevel'] != null) {
           currentAssistLevel.value = AssistLevel.values[data['assistLevel']];
+        }
         if (data['columns'] != null) currentColumns.value = data['columns'];
         if (data['rows'] != null) currentRows.value = data['rows'];
       }
@@ -173,11 +173,13 @@ class MultiplayerController extends GetxController {
         Get.find<GameController>().assistLevel =
             AssistLevel.values[data['assistLevel']];
         Get.toNamed('/placement', arguments: {
-          'mode': 'LAN', 'playerName': currentMyName, 'isHost': isHosting.value,
+          'mode': 'LAN',
+          'playerName': currentMyName,
+          'isHost': isHosting.value,
           'opponents':
               lobbyPlayers.where((p) => p['name'] != currentMyName).toList(),
           'columns': currentColumns.value,
-          'rows': currentRows.value // ✅ ส่งขนาดตารางไปหน้าจัดวาง
+          'rows': currentRows.value
         });
       }
     } catch (e) {

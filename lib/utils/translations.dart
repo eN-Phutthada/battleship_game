@@ -149,6 +149,16 @@ class AppTranslations extends Translations {
           'log_hardcore_miss': '💦 Target Missed! (@target)',
           'log_reallife_hit': '🎯 Hit at Sector @coord (@target)',
           'log_reallife_miss': '💦 Miss at Sector @coord (@target)',
+
+          // --- ERRORS ---
+          'err_max_land': 'Maximum land blocks reached!',
+          'err_land_on_ship': 'Cannot place land over a ship!',
+          'err_turret_on_water': 'Turrets must be built on land!',
+          'err_max_turret': 'Maximum turrets reached!',
+          'err_ship_on_land': 'Ships must be placed on water!',
+          'err_ship_overlap': 'Ships cannot overlap each other!',
+          'err_ship_out_of_bounds':
+              'Ship placement out of bounds!\n🔄 Try rotating it.',
         },
 
         // ==========================================
@@ -296,10 +306,20 @@ class AppTranslations extends Translations {
           'log_hardcore_miss': '💦 ยิงพลาดเป้า! (@target)',
           'log_reallife_hit': '🎯 ยิงโดนเป้าหมายที่พิกัด @coord (@target)',
           'log_reallife_miss': '💦 ยิงพลาดเป้าที่พิกัด @coord (@target)',
+
+          // --- ERRORS ---
+          'err_max_land': 'สร้างแผ่นดินครบตามจำนวนที่กำหนดแล้ว!',
+          'err_land_on_ship': 'ไม่สามารถสร้างแผ่นดินทับกองเรือได้!',
+          'err_turret_on_water': 'ป้อมปืนต้องสร้างบนแผ่นดินเท่านั้น!',
+          'err_max_turret': 'สร้างป้อมปืนครบตามจำนวนที่กำหนดแล้ว!',
+          'err_ship_on_land': 'กองเรือต้องวางบนผืนน้ำเท่านั้น!',
+          'err_ship_overlap': 'ไม่สามารถวางกองเรือทับกันได้!',
+          'err_ship_out_of_bounds':
+              'กองเรือล้นออกนอกกระดาน!\n🔄 ลองกดปุ่มหมุนทิศทางดูนะ',
         },
 
         // ==========================================
-        // 🇪🇸 SPANISH (es_ES) - ADDED
+        // 🇪🇸 SPANISH (es_ES)
         // ==========================================
         'es_ES': {
           // --- COMMON ---
@@ -440,10 +460,20 @@ class AppTranslations extends Translations {
           'log_hardcore_miss': '💦 ¡Objetivo fallado! (@target)',
           'log_reallife_hit': '🎯 Impacto en Sector @coord (@target)',
           'log_reallife_miss': '💦 Fallo en Sector @coord (@target)',
+
+          // --- ERRORS ---
+          'err_max_land': '¡Límite máximo de bloques de tierra alcanzado!',
+          'err_land_on_ship': '¡No se puede colocar tierra sobre un barco!',
+          'err_turret_on_water': '¡Las torretas deben construirse en tierra!',
+          'err_max_turret': '¡Límite máximo de torretas alcanzado!',
+          'err_ship_on_land': '¡Los barcos deben colocarse en el agua!',
+          'err_ship_overlap': '¡Los barcos no pueden superponerse!',
+          'err_ship_out_of_bounds':
+              '¡Barco fuera de los límites!\n🔄 Intenta rotarlo.',
         },
 
         // ==========================================
-        // 🇯🇵 JAPANESE (ja_JP) - ADDED
+        // 🇯🇵 JAPANESE (ja_JP)
         // ==========================================
         'ja_JP': {
           // --- COMMON ---
@@ -574,6 +604,15 @@ class AppTranslations extends Translations {
           'log_hardcore_miss': '💦 ターゲットを外しました！ (@target)',
           'log_reallife_hit': '🎯 セクター @coord でヒット (@target)',
           'log_reallife_miss': '💦 セクター @coord でミス (@target)',
+
+          // --- ERRORS ---
+          'err_max_land': '陸地ブロックの最大数に達しました！',
+          'err_land_on_ship': '船の上に陸地を配置することはできません！',
+          'err_turret_on_water': '砲塔は陸地に配置する必要があります！',
+          'err_max_turret': '砲塔の最大数に達しました！',
+          'err_ship_on_land': '船は水上に配置する必要があります！',
+          'err_ship_overlap': '船を重ねて配置することはできません！',
+          'err_ship_out_of_bounds': '船がボードからはみ出しています！\n🔄 回転させてみてください。',
         },
       };
 }

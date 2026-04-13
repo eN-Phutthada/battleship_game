@@ -118,14 +118,12 @@ class GameController extends GetxController {
     bot.board = {for (var i = 0; i < gridSize; i++) i: Cell()};
     Random r = Random();
 
-    // ✅ ปรับทรัพยากรบอทตามสัดส่วนพื้นที่ (เหมือน PlacementController)
     int maxLand = (gridSize * 0.25).floor();
     int maxTurrets = (maxLand / 4).ceil();
     List<int> fleetDefinition = gridSize <= 48
         ? [4, 3, 2, 1, 1]
         : (gridSize <= 80 ? [5, 4, 3, 3, 2, 2] : [5, 4, 4, 3, 3, 2, 2, 1, 1]);
 
-    // สุ่มสร้างเกาะ (Procedural Generation)
     int totalLandNeeded = maxLand;
     int numIslands = r.nextBool() ? 1 : 2;
     List<int> allPlacedLand = [];
@@ -150,16 +148,20 @@ class GameController extends GetxController {
         int row = basePos ~/ columns;
         int col = basePos % columns;
         List<int> neighbors = [];
-        if (row > 0 && bot.board[basePos - columns]!.terrain == Terrain.water)
+        if (row > 0 && bot.board[basePos - columns]!.terrain == Terrain.water) {
           neighbors.add(basePos - columns);
+        }
         if (row < rows - 1 &&
-            bot.board[basePos + columns]!.terrain == Terrain.water)
+            bot.board[basePos + columns]!.terrain == Terrain.water) {
           neighbors.add(basePos + columns);
-        if (col > 0 && bot.board[basePos - 1]!.terrain == Terrain.water)
+        }
+        if (col > 0 && bot.board[basePos - 1]!.terrain == Terrain.water) {
           neighbors.add(basePos - 1);
+        }
         if (col < columns - 1 &&
-            bot.board[basePos + 1]!.terrain == Terrain.water)
+            bot.board[basePos + 1]!.terrain == Terrain.water) {
           neighbors.add(basePos + 1);
+        }
 
         if (neighbors.isEmpty) break;
         int nextPos = neighbors[r.nextInt(neighbors.length)];
@@ -169,21 +171,25 @@ class GameController extends GetxController {
       }
     }
 
-    // เติมแผ่นดินให้ครบเผื่อชนขอบ
     while (allPlacedLand.length < maxLand) {
       int basePos = allPlacedLand[r.nextInt(allPlacedLand.length)];
       int row = basePos ~/ columns;
       int col = basePos % columns;
       List<int> neighbors = [];
-      if (row > 0 && bot.board[basePos - columns]!.terrain == Terrain.water)
+      if (row > 0 && bot.board[basePos - columns]!.terrain == Terrain.water) {
         neighbors.add(basePos - columns);
+      }
       if (row < rows - 1 &&
-          bot.board[basePos + columns]!.terrain == Terrain.water)
+          bot.board[basePos + columns]!.terrain == Terrain.water) {
         neighbors.add(basePos + columns);
-      if (col > 0 && bot.board[basePos - 1]!.terrain == Terrain.water)
+      }
+      if (col > 0 && bot.board[basePos - 1]!.terrain == Terrain.water) {
         neighbors.add(basePos - 1);
-      if (col < columns - 1 && bot.board[basePos + 1]!.terrain == Terrain.water)
+      }
+      if (col < columns - 1 &&
+          bot.board[basePos + 1]!.terrain == Terrain.water) {
         neighbors.add(basePos + 1);
+      }
 
       if (neighbors.isNotEmpty) {
         int nextPos = neighbors[r.nextInt(neighbors.length)];
@@ -192,13 +198,11 @@ class GameController extends GetxController {
       }
     }
 
-    // วางป้อมปืน
     allPlacedLand.shuffle();
     for (int i = 0; i < maxTurrets; i++) {
       bot.board[allPlacedLand[i]]!.entity = Entity.turret;
     }
 
-    // วางกองเรือ
     for (int size in fleetDefinition) {
       bool placed = false;
       int attempts = 0;

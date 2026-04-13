@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../models/game_models.dart';
@@ -110,8 +111,7 @@ class PlacementController extends GetxController {
       }
     });
     myShips.clear();
-    unplacedShips =
-        List.from(fleetDefinition); // ✅ แก้บัคใช้ค่าแมนนวลเวลาเปลี่ยนขนาดกระดาน
+    unplacedShips = List.from(fleetDefinition);
     selectedShipSize = unplacedShips.isNotEmpty ? unplacedShips.first : 0;
     _validateBoard();
     update();
@@ -120,60 +120,84 @@ class PlacementController extends GetxController {
   // --- Placement Logic ---
 
   void handleTap(int index) {
-    bool actionSuccess = false;
     switch (currentTool) {
       case PlacementTool.land:
-        actionSuccess = _toggleLand(index);
+        _toggleLand(index);
         break;
       case PlacementTool.turret:
-        actionSuccess = _toggleTurret(index);
+        _toggleTurret(index);
         break;
       case PlacementTool.ship:
-        actionSuccess = _placeShipLogic(index);
+        _placeShipLogic(index);
         break;
     }
-
-    if (actionSuccess) HapticFeedback.lightImpact();
     _validateBoard();
     update();
   }
 
-  bool _toggleLand(int index) {
+  void _showError(String message) {
+    HapticFeedback.vibrate();
+    Get.snackbar(
+      'attention'.tr,
+      message,
+      backgroundColor: const Color(0xFFFDFBF7),
+      colorText: const Color(0xFFD32F2F),
+      borderColor: const Color(0xFFD32F2F),
+      borderWidth: 2,
+      margin: const EdgeInsets.all(16),
+      icon: const Icon(Icons.info_outline, color: Color(0xFFD32F2F), size: 28),
+      snackPosition: SnackPosition.TOP,
+      duration: const Duration(seconds: 3),
+      boxShadows: [
+        const BoxShadow(color: Colors.black26, offset: Offset(4, 4))
+      ],
+    );
+  }
+
+  void _toggleLand(int index) {
     Cell cell = board[index]!;
-    if (cell.terrain == Terrain.water &&
-        placedLand < maxLand &&
-        cell.entity == Entity.none) {
-      cell.terrain = Terrain.land;
-      placedLand++;
-      return true;
+    if (cell.terrain == Terrain.water && cell.entity == Entity.none) {
+      if (placedLand < maxLand) {
+        cell.terrain = Terrain.land;
+        placedLand++;
+        HapticFeedback.lightImpact();
+      } else {
+        _showError('err_max_land'.tr);
+      }
     } else if (cell.terrain == Terrain.land) {
       if (cell.entity == Entity.turret) placedTurrets--;
       cell.entity = Entity.none;
       cell.terrain = Terrain.water;
       placedLand--;
-      return true;
+      HapticFeedback.lightImpact();
+    } else if (cell.entity == Entity.ship) {
+      _showError('err_land_on_ship'.tr);
     }
-    return false;
   }
 
-  bool _toggleTurret(int index) {
+  void _toggleTurret(int index) {
     Cell cell = board[index]!;
-    if (cell.terrain != Terrain.land) return false;
+    if (cell.terrain != Terrain.land) {
+      _showError('err_turret_on_water'.tr);
+      return;
+    }
 
-    if (cell.entity == Entity.none && placedTurrets < maxTurrets) {
-      cell.entity = Entity.turret;
-      placedTurrets++;
-      return true;
+    if (cell.entity == Entity.none) {
+      if (placedTurrets < maxTurrets) {
+        cell.entity = Entity.turret;
+        placedTurrets++;
+        HapticFeedback.lightImpact();
+      } else {
+        _showError('err_max_turret'.tr);
+      }
     } else if (cell.entity == Entity.turret) {
       cell.entity = Entity.none;
       placedTurrets--;
-      return true;
+      HapticFeedback.lightImpact();
     }
-    return false;
   }
 
   bool _placeShipLogic(int index, {bool isAuto = false}) {
-    // ✅ [FIX] ถอนเรือ หากกดโดนช่องที่มีเรืออยู่แล้ว
     if (!isAuto && board[index]!.entity == Entity.ship) {
       _removeShip(board[index]!.shipId!);
       return true;
@@ -182,14 +206,18 @@ class PlacementController extends GetxController {
     if (!unplacedShips.contains(selectedShipSize)) return false;
 
     List<int> targetCells = _calculateShipOccupancy(index, selectedShipSize);
-    if (targetCells.isEmpty) return false;
+    if (targetCells.isEmpty) {
+      if (!isAuto) _showError('err_ship_out_of_bounds'.tr);
+      return false;
+    }
 
     for (int pos in targetCells) {
-      if (board[pos]!.terrain != Terrain.water ||
-          board[pos]!.entity != Entity.none) {
+      if (board[pos]!.terrain != Terrain.water) {
+        if (!isAuto) _showError('err_ship_on_land'.tr);
         return false;
       }
-      if (_hasAdjacentShip(pos)) {
+      if (board[pos]!.entity == Entity.ship) {
+        if (!isAuto) _showError('err_ship_overlap'.tr);
         return false;
       }
     }
@@ -206,10 +234,10 @@ class PlacementController extends GetxController {
     unplacedShips.remove(selectedShipSize);
     if (unplacedShips.isNotEmpty) selectedShipSize = unplacedShips.first;
 
+    if (!isAuto) HapticFeedback.lightImpact();
     return true;
   }
 
-  // ✅ ฟังก์ชันถอนเรือ (นำเรือกลับเข้าคลัง)
   void _removeShip(String shipId) {
     ShipData? shipToRemove;
     try {
@@ -218,38 +246,15 @@ class PlacementController extends GetxController {
       return;
     }
 
-    // เคลียร์กระดาน
     for (int pos in shipToRemove.positions) {
       board[pos]!.entity = Entity.none;
       board[pos]!.shipId = null;
     }
 
-    // นำเรือเข้าคลังและเรียงลำดับใหม่
     myShips.remove(shipToRemove);
     unplacedShips.add(shipToRemove.size);
-    unplacedShips.sort((a, b) => b.compareTo(a)); // ให้เรือใหญ่สุดขึ้นก่อน
+    unplacedShips.sort((a, b) => b.compareTo(a));
     selectedShipSize = unplacedShips.first;
-  }
-
-  bool _hasAdjacentShip(int pos) {
-    int r = pos ~/ columns;
-    int c = pos % columns;
-
-    for (int dr = -1; dr <= 1; dr++) {
-      for (int dc = -1; dc <= 1; dc++) {
-        if (dr == 0 && dc == 0) continue;
-        int nr = r + dr;
-        int nc = c + dc;
-
-        if (nr >= 0 && nr < rows && nc >= 0 && nc < columns) {
-          int neighborPos = nr * columns + nc;
-          if (board[neighborPos]?.entity == Entity.ship) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
   }
 
   List<int> _calculateShipOccupancy(int index, int size) {
@@ -261,7 +266,7 @@ class PlacementController extends GetxController {
       int nextR = isHorizontal ? r : r + i;
       int nextC = isHorizontal ? c + i : c;
 
-      if (nextR >= rows || nextC >= columns) return []; // Out of bounds
+      if (nextR >= rows || nextC >= columns) return [];
       cells.add(nextR * columns + nextC);
     }
     return cells;
@@ -340,7 +345,6 @@ class PlacementController extends GetxController {
     for (int attempt = 0; attempt < maxBoardAttempts; attempt++) {
       _initEmptyBoard();
 
-      // 1. วางแผ่นดิน
       int totalLandNeeded = maxLand;
       int numIslands = r.nextBool() ? 1 : 2;
       List<int> allPlacedLand = [];
@@ -361,20 +365,18 @@ class PlacementController extends GetxController {
       if (allPlacedLand.length < maxLand) continue;
       placedLand = maxLand;
 
-      // 2. วางป้อมปืน
       List<int> landPool = List.from(allPlacedLand)..shuffle(r);
       for (int i = 0; i < maxTurrets; i++) {
         board[landPool[i]]!.entity = Entity.turret;
         placedTurrets++;
       }
 
-      // 3. วางกองเรือ (แบบ Smart Scan)
       bool shipsPlaced = true;
       for (int size in List.from(unplacedShips)) {
         selectedShipSize = size;
         if (!_autoPlaceShip(size, r)) {
           shipsPlaced = false;
-          break; // โละกระดานทิ้งทันทีถ้าวางเรือลำนี้ไม่ได้
+          break;
         }
       }
 
@@ -397,7 +399,6 @@ class PlacementController extends GetxController {
     update();
   }
 
-  // ✅ [FIX] ให้บอทสแกนหาช่องว่างก่อน ค่อยสุ่มวางเพื่อป้องกันลูปนรก
   bool _autoPlaceShip(int size, Random r) {
     List<Map<String, dynamic>> validSpots = [];
 
@@ -409,8 +410,7 @@ class PlacementController extends GetxController {
           bool canPlace = true;
           for (int cell in targetCells) {
             if (board[cell]!.terrain != Terrain.water ||
-                board[cell]!.entity != Entity.none ||
-                _hasAdjacentShip(cell)) {
+                board[cell]!.entity != Entity.none) {
               canPlace = false;
               break;
             }
@@ -440,10 +440,11 @@ class PlacementController extends GetxController {
 
     int failsafe = 0;
     while (island.length < size && failsafe < 50) {
-      if (!_expandLand(island, r, masterList: masterList))
+      if (!_expandLand(island, r, masterList: masterList)) {
         failsafe++;
-      else
+      } else {
         failsafe = 0;
+      }
     }
   }
 
@@ -454,14 +455,18 @@ class PlacementController extends GetxController {
     int col = basePos % columns;
 
     List<int> neighbors = [];
-    if (row > 0 && board[basePos - columns]!.terrain == Terrain.water)
+    if (row > 0 && board[basePos - columns]!.terrain == Terrain.water) {
       neighbors.add(basePos - columns);
-    if (row < rows - 1 && board[basePos + columns]!.terrain == Terrain.water)
+    }
+    if (row < rows - 1 && board[basePos + columns]!.terrain == Terrain.water) {
       neighbors.add(basePos + columns);
-    if (col > 0 && board[basePos - 1]!.terrain == Terrain.water)
+    }
+    if (col > 0 && board[basePos - 1]!.terrain == Terrain.water) {
       neighbors.add(basePos - 1);
-    if (col < columns - 1 && board[basePos + 1]!.terrain == Terrain.water)
+    }
+    if (col < columns - 1 && board[basePos + 1]!.terrain == Terrain.water) {
       neighbors.add(basePos + 1);
+    }
 
     if (neighbors.isEmpty) return false;
 

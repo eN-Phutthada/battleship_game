@@ -33,7 +33,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
 
     _panController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 400), // Default 400ms
+      duration: const Duration(milliseconds: 400),
     );
 
     _panController.addListener(() {
@@ -51,11 +51,8 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     super.dispose();
   }
 
-  // ✅ ปรับแก้ Smart Pan ให้รับค่า gameController มาเพื่อเช็คความเร็ว
   void _panToCell(int index, int cols, int rows, GameController game) {
     if (_viewportConstraints == null) return;
-
-    // ✅ เช็คก่อนว่าปุ่ม Auto-Track (ไอคอนกล้อง) เปิดอยู่หรือไม่
     if (!game.isAutoTrack) return;
 
     double scale = _transformCtrl.value.getMaxScaleOnAxis();
@@ -116,12 +113,8 @@ class _GameBoardScreenState extends State<GameBoardScreen>
 
     _panController.stop();
 
-    // ✅ ปรับความเร็วการแพนกล้องให้ไวกว่าความเร็วการยิงของ Bot เสมอ (ป้องกันกล้องค้าง)
-    int panDurationMs = (game.botSpeedMs * 0.7)
-        .toInt(); // ใช้ 70% ของเวลาเพื่อให้กล้องหยุดก่อนกระสุนลง
-    if (panDurationMs > 600)
-      panDurationMs = 600; // ล็อกไม่ให้ช้าเกินไปถ้าเลือก Bot ช้าสุด
-
+    int panDurationMs = (game.botSpeedMs * 0.7).toInt();
+    if (panDurationMs > 600) panDurationMs = 600;
     _panController.duration = Duration(milliseconds: panDurationMs);
 
     _panAnimation = Matrix4Tween(
@@ -329,8 +322,9 @@ class _GameBoardScreenState extends State<GameBoardScreen>
           child: SafeArea(
             child: GetBuilder<GameController>(
               builder: (game) {
-                if (game.isDeploying || game.players.isEmpty)
+                if (game.isDeploying || game.players.isEmpty) {
                   return _buildLoadingScreen();
+                }
 
                 bool isMyTurn = game.players[game.currentPlayerIndex].id == 0;
                 PlayerData viewTarget = game.players.firstWhere(
@@ -344,7 +338,6 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                       game.activeShotAnimation!['targetId'] == viewTarget.id) {
                     _lastPanShotTime = timestamp;
                     WidgetsBinding.instance.addPostFrameCallback((_) {
-                      // ✅ ส่งตัวแปร game ไปด้วยเพื่อเช็ค isAutoTrack และ botSpeed
                       _panToCell(game.activeShotAnimation!['index'],
                           game.columns, game.rows, game);
                     });

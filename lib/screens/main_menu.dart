@@ -7,7 +7,6 @@ import 'package:get/get.dart';
 import '../utils/constants.dart';
 import '../widgets/shared_widgets.dart';
 
-// ✅ เพิ่ม Enum สำหรับจัดการขนาดพื้นที่รบ
 enum BoardSize { standard, large, huge }
 
 extension BoardSizeExt on BoardSize {
@@ -34,7 +33,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
   bool isMuted = false;
   BotDifficulty botDifficulty = BotDifficulty.normal;
   AssistLevel assistLevel = AssistLevel.standard;
-  BoardSize boardSize = BoardSize.standard; // ✅ ตัวแปรเก็บขนาดตาราง
+  BoardSize boardSize = BoardSize.standard;
 
   // --- Controllers ---
   final TextEditingController _nameController = TextEditingController();
@@ -322,7 +321,6 @@ class _MainMenuScreenState extends State<MainMenuScreen>
             onTap: () {
               if (mpCtrl.isHosting.value) {
                 HapticFeedback.lightImpact();
-                // ✅ อัปเดตทั้งกฎการเล่นและขนาดตารางไปพร้อมกัน
                 mpCtrl.updateLobbySettings(level, mpCtrl.currentColumns.value,
                     mpCtrl.currentRows.value);
               }
@@ -347,7 +345,6 @@ class _MainMenuScreenState extends State<MainMenuScreen>
     );
   }
 
-  // ✅ เพิ่มปุ่มเลือกขนาดตารางสำหรับโหมด Lobby
   Widget _lobbySizeBtn(BoardSize size) {
     bool isSel = mpCtrl.currentColumns.value == size.cols;
     return Expanded(
@@ -679,8 +676,6 @@ class _MainMenuScreenState extends State<MainMenuScreen>
           ],
         ),
         const SizedBox(height: 10),
-
-        // ✅ เพิ่มตัวเลือก Grid Size ในโหมด Network
         Row(
           children: [
             Text('grid_size'.tr,
@@ -707,7 +702,6 @@ class _MainMenuScreenState extends State<MainMenuScreen>
           ],
         ),
         const SizedBox(height: 10),
-
         Container(
           constraints: const BoxConstraints(maxHeight: 120),
           child: ListView.separated(
@@ -984,7 +978,6 @@ class _MainMenuScreenState extends State<MainMenuScreen>
             ],
           ),
           const Divider(color: AppColors.ink, height: 24, thickness: 1.5),
-
           Text('difficulty'.tr,
               style: const TextStyle(
                   color: AppColors.ink,
@@ -1004,7 +997,6 @@ class _MainMenuScreenState extends State<MainMenuScreen>
             ],
           ),
           const SizedBox(height: 16),
-
           Text('assist_level'.tr,
               style: const TextStyle(
                   color: AppColors.ink,
@@ -1028,8 +1020,6 @@ class _MainMenuScreenState extends State<MainMenuScreen>
             ],
           ),
           const SizedBox(height: 16),
-
-          // ✅ เพิ่ม Grid Size Row สำหรับโหมด Local
           Text('grid_size'.tr,
               style: const TextStyle(
                   color: AppColors.ink,
@@ -1050,7 +1040,6 @@ class _MainMenuScreenState extends State<MainMenuScreen>
             ],
           ),
           const SizedBox(height: 20),
-
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -1116,8 +1105,8 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                       'playerName': _nameController.text.trim().isEmpty
                           ? "COMMANDER"
                           : _nameController.text.trim().toUpperCase(),
-                      'columns': boardSize.cols, // ✅ ส่งคอลัมน์
-                      'rows': boardSize.rows, // ✅ ส่งแถว
+                      'columns': boardSize.cols,
+                      'rows': boardSize.rows,
                     });
                   },
                   icon: const Icon(Icons.rocket_launch, color: AppColors.paper),

@@ -6,9 +6,14 @@ import '../state/placement_controller.dart';
 import '../utils/constants.dart';
 import '../widgets/shared_widgets.dart';
 
-class PlacementScreen extends StatelessWidget {
+class PlacementScreen extends StatefulWidget {
   const PlacementScreen({super.key});
 
+  @override
+  State<PlacementScreen> createState() => _PlacementScreenState();
+}
+
+class _PlacementScreenState extends State<PlacementScreen> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -371,17 +376,26 @@ class PlacementScreen extends StatelessWidget {
         scale: 1.0,
         duration: Duration(milliseconds: 200),
         curve: Curves.bounceOut,
-        child: Icon(Icons.fort, color: AppColors.ink, size: 24),
+        child: FractionallySizedBox(
+          widthFactor: 0.75,
+          heightFactor: 0.75,
+          child: FittedBox(
+            child: Icon(Icons.fort, color: AppColors.ink),
+          ),
+        ),
       );
     } else if (cell.entity == Entity.ship) {
       return AnimatedScale(
         scale: 1.0,
         duration: const Duration(milliseconds: 300),
-        child: ConnectedShipPiece(
-          index: index,
-          shipId: cell.shipId!,
-          board: ctrl.board,
-          columns: ctrl.columns,
+        child: Transform.scale(
+          scale: 1.1,
+          child: ConnectedShipPiece(
+            index: index,
+            shipId: cell.shipId!,
+            board: ctrl.board,
+            columns: ctrl.columns,
+          ),
         ),
       );
     }
