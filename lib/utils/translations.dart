@@ -39,6 +39,7 @@ class AppTranslations extends Translations {
 
           // --- MULTIPLAYER LOBBY ---
           'network_battle': 'NETWORK BATTLE (PvP)',
+          'lan_desc': 'Play with friends on the same Wi-Fi (LAN)',
           'host_join': 'HOST / JOIN BATTLE',
           'coming_soon': 'Multiplayer module is currently under construction.',
           'network_lobby': 'NETWORK LOBBY',
@@ -147,8 +148,10 @@ class AppTranslations extends Translations {
           'log_turret_you': '🧨 Watch out! @shooter destroyed your turret!',
           'log_hardcore_hit': '🎯 Target Hit! (@target)',
           'log_hardcore_miss': '💦 Target Missed! (@target)',
-          'log_reallife_hit': '🎯 Hit at Sector @coord (@target)',
-          'log_reallife_miss': '💦 Miss at Sector @coord (@target)',
+          'log_reallife_hit': '🎯 [@shooter] Hit at @coord',
+          'log_reallife_miss': '💦 [@shooter] Miss at @coord',
+          'log_reallife_sunk': '💥 [@shooter] Sunk at @coord',
+          'log_reallife_land': '⛰️ [@shooter] Land at @coord',
 
           // --- ERRORS ---
           'err_max_land': 'Maximum land blocks reached!',
@@ -197,6 +200,7 @@ class AppTranslations extends Translations {
 
           // --- MULTIPLAYER LOBBY ---
           'network_battle': 'รบออนไลน์ (PvP)',
+          'lan_desc': 'เล่นกับเพื่อนผ่านวงแลน (Wi-Fi) เดียวกันเท่านั้น',
           'host_join': 'สร้าง / เข้าร่วมห้อง',
           'coming_soon': 'ระบบออนไลน์กำลังอยู่ในช่วงพัฒนา',
           'network_lobby': 'ห้องรอรบออนไลน์',
@@ -304,8 +308,10 @@ class AppTranslations extends Translations {
           'log_turret_you': '🧨 ระวัง! @shooter ทำลายป้อมปืนของคุณ!',
           'log_hardcore_hit': '🎯 ยิงโดนเป้าหมาย! (@target)',
           'log_hardcore_miss': '💦 ยิงพลาดเป้า! (@target)',
-          'log_reallife_hit': '🎯 ยิงโดนเป้าหมายที่พิกัด @coord (@target)',
-          'log_reallife_miss': '💦 ยิงพลาดเป้าที่พิกัด @coord (@target)',
+          'log_reallife_hit': '🎯 [@shooter] โดนเป้าหมายพิกัด @coord',
+          'log_reallife_miss': '💦 [@shooter] ไม่โดนพิกัด @coord',
+          'log_reallife_sunk': '💥 [@shooter] จมเป้าหมายพิกัด @coord',
+          'log_reallife_land': '⛰️ [@shooter] โดนดินพิกัด @coord',
 
           // --- ERRORS ---
           'err_max_land': 'สร้างแผ่นดินครบตามจำนวนที่กำหนดแล้ว!',
@@ -354,6 +360,7 @@ class AppTranslations extends Translations {
 
           // --- MULTIPLAYER LOBBY ---
           'network_battle': 'BATALLA EN RED (PvP)',
+          'lan_desc': 'Juega con amigos en la misma red Wi-Fi (LAN)',
           'host_join': 'CREAR / UNIRSE',
           'coming_soon': 'El módulo multijugador está en construcción.',
           'network_lobby': 'LOBBY DE RED',
@@ -458,8 +465,10 @@ class AppTranslations extends Translations {
           'log_turret_you': '🧨 ¡Cuidado! ¡@shooter destruyó tu torreta!',
           'log_hardcore_hit': '🎯 ¡Objetivo impactado! (@target)',
           'log_hardcore_miss': '💦 ¡Objetivo fallado! (@target)',
-          'log_reallife_hit': '🎯 Impacto en Sector @coord (@target)',
-          'log_reallife_miss': '💦 Fallo en Sector @coord (@target)',
+          'log_reallife_hit': '🎯 [@shooter] Impacto en @coord',
+          'log_reallife_miss': '💦 [@shooter] Fallo en @coord',
+          'log_reallife_sunk': '💥 [@shooter] Hundido en @coord',
+          'log_reallife_land': '⛰️ [@shooter] Tierra en @coord',
 
           // --- ERRORS ---
           'err_max_land': '¡Límite máximo de bloques de tierra alcanzado!',
@@ -508,6 +517,7 @@ class AppTranslations extends Translations {
 
           // --- MULTIPLAYER LOBBY ---
           'network_battle': 'ネットワークバトル (PvP)',
+          'lan_desc': '同じWi-Fiネットワークで友達と対戦 (LAN)',
           'host_join': '作成 / 参加',
           'coming_soon': 'マルチプレイヤーは現在開発中です。',
           'network_lobby': 'ネットワークロビー',
@@ -602,8 +612,10 @@ class AppTranslations extends Translations {
           'log_turret_you': '🧨 気をつけて！ @shooter があなたの砲塔を破壊しました！',
           'log_hardcore_hit': '🎯 ターゲットにヒット！ (@target)',
           'log_hardcore_miss': '💦 ターゲットを外しました！ (@target)',
-          'log_reallife_hit': '🎯 セクター @coord でヒット (@target)',
-          'log_reallife_miss': '💦 セクター @coord でミス (@target)',
+          'log_reallife_hit': '🎯 [@shooter] @coord でヒット',
+          'log_reallife_miss': '💦 [@shooter] @coord でミス',
+          'log_reallife_sunk': '💥 [@shooter] @coord で撃沈',
+          'log_reallife_land': '⛰️ [@shooter] @coord で陸地',
 
           // --- ERRORS ---
           'err_max_land': '陸地ブロックの最大数に達しました！',

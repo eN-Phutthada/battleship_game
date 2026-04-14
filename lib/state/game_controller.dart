@@ -416,8 +416,10 @@ class GameController extends GetxController {
       'timestamp': DateTime.now().millisecondsSinceEpoch
     };
     update();
+
     Future.delayed(const Duration(milliseconds: 800), () {
-      if (activeShotAnimation?['index'] == cellIndex) {
+      if (activeShotAnimation != null &&
+          activeShotAnimation!['index'] == cellIndex) {
         activeShotAnimation = null;
         update();
       }
@@ -430,74 +432,84 @@ class GameController extends GetxController {
       targetPlayer.bonusAmmo++;
     }
 
-    if (wasRevealed) {
-      HapticFeedback.lightImpact();
-      if (isShooterMe) {
-        _addLog('wasted_shot'.tr);
+    bool isShipSunk = false;
+    ShipData? hitShip;
+    if (cell.entity == Entity.ship) {
+      hitShip = targetPlayer.ships.firstWhere((s) => s.id == cell.shipId);
+      isShipSunk =
+          hitShip.positions.every((pos) => targetPlayer.board[pos]!.isRevealed);
+      if (isShipSunk) hitShip.isSunk = true;
+    }
+
+    if (assistLevel == AssistLevel.realLife) {
+      HapticFeedback.heavyImpact();
+      String shooterDisplay = isShooterMe ? 'you_tag'.tr : shooterName;
+
+      if (cell.terrain == Terrain.land && cell.entity == Entity.none) {
+        _addLog('log_reallife_land'
+            .trParams({'shooter': shooterDisplay, 'coord': coord}));
+      } else if (isShipSunk) {
+        _addLog('log_reallife_sunk'
+            .trParams({'shooter': shooterDisplay, 'coord': coord}));
+      } else if (isHit) {
+        _addLog('log_reallife_hit'
+            .trParams({'shooter': shooterDisplay, 'coord': coord}));
       } else {
-        _addLog('wasted_shot_bot'.trParams({'shooter': shooterName}));
+        _addLog('log_reallife_miss'
+            .trParams({'shooter': shooterDisplay, 'coord': coord}));
       }
     } else {
-      bool isShipSunk = false;
-      ShipData? hitShip;
-      if (cell.entity == Entity.ship) {
-        hitShip = targetPlayer.ships.firstWhere((s) => s.id == cell.shipId);
-        isShipSunk = hitShip.positions
-            .every((pos) => targetPlayer.board[pos]!.isRevealed);
-        if (isShipSunk) hitShip.isSunk = true;
-      }
-
-      if (assistLevel == AssistLevel.realLife) {
-        HapticFeedback.heavyImpact();
-        if (isHit) {
-          _addLog('log_reallife_hit'
-              .trParams({'target': targetName, 'coord': coord}));
+      if (wasRevealed) {
+        HapticFeedback.lightImpact();
+        if (isShooterMe) {
+          _addLog('wasted_shot'.tr);
         } else {
-          _addLog('log_reallife_miss'
-              .trParams({'target': targetName, 'coord': coord}));
-        }
-      } else if (assistLevel == AssistLevel.hardcore) {
-        HapticFeedback.heavyImpact();
-        if (isHit) {
-          _addLog('log_hardcore_hit'.trParams({'target': targetName}));
-        } else {
-          _addLog('log_hardcore_miss'.trParams({'target': targetName}));
+          _addLog('wasted_shot_bot'.trParams({'shooter': shooterName}));
         }
       } else {
-        if (cell.entity == Entity.ship) {
+        if (assistLevel == AssistLevel.hardcore) {
           HapticFeedback.heavyImpact();
-          if (isShipSunk) {
-            if (isShooterMe) {
-              _addLog('log_sunk_me'.trParams(
-                  {'target': targetName, 'size': hitShip!.size.toString()}));
-            } else {
-              _addLog(isTargetMe
-                  ? 'log_sunk_you'.trParams({'shooter': shooterName})
-                  : 'log_sunk_enemy'.trParams(
-                      {'shooter': shooterName, 'target': targetName}));
-            }
+          if (isHit) {
+            _addLog('log_hardcore_hit'.trParams({'target': targetName}));
           } else {
-            if (isShooterMe) {
-              _addLog('log_hit_me'.trParams({'target': targetName}));
-            } else {
-              _addLog(isTargetMe
-                  ? 'log_hit_you'.trParams({'shooter': shooterName})
-                  : 'log_hit_enemy'.trParams(
-                      {'shooter': shooterName, 'target': targetName}));
-            }
-          }
-        } else if (cell.entity == Entity.turret) {
-          HapticFeedback.mediumImpact();
-          if (isShooterMe) {
-            _addLog('log_turret_me'.trParams({'target': targetName}));
-          } else {
-            _addLog(isTargetMe
-                ? 'log_turret_you'.trParams({'shooter': shooterName})
-                : 'log_turret_enemy'
-                    .trParams({'shooter': shooterName, 'target': targetName}));
+            _addLog('log_hardcore_miss'.trParams({'target': targetName}));
           }
         } else {
-          HapticFeedback.lightImpact();
+          if (cell.entity == Entity.ship) {
+            HapticFeedback.heavyImpact();
+            if (isShipSunk) {
+              if (isShooterMe) {
+                _addLog('log_sunk_me'.trParams(
+                    {'target': targetName, 'size': hitShip!.size.toString()}));
+              } else {
+                _addLog(isTargetMe
+                    ? 'log_sunk_you'.trParams({'shooter': shooterName})
+                    : 'log_sunk_enemy'.trParams(
+                        {'shooter': shooterName, 'target': targetName}));
+              }
+            } else {
+              if (isShooterMe) {
+                _addLog('log_hit_me'.trParams({'target': targetName}));
+              } else {
+                _addLog(isTargetMe
+                    ? 'log_hit_you'.trParams({'shooter': shooterName})
+                    : 'log_hit_enemy'.trParams(
+                        {'shooter': shooterName, 'target': targetName}));
+              }
+            }
+          } else if (cell.entity == Entity.turret) {
+            HapticFeedback.mediumImpact();
+            if (isShooterMe) {
+              _addLog('log_turret_me'.trParams({'target': targetName}));
+            } else {
+              _addLog(isTargetMe
+                  ? 'log_turret_you'.trParams({'shooter': shooterName})
+                  : 'log_turret_enemy'.trParams(
+                      {'shooter': shooterName, 'target': targetName}));
+            }
+          } else {
+            HapticFeedback.lightImpact();
+          }
         }
       }
     }

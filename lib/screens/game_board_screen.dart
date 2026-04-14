@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../state/game_controller.dart';
 import '../models/game_models.dart';
@@ -23,6 +24,9 @@ class _GameBoardScreenState extends State<GameBoardScreen>
   BoxConstraints? _viewportConstraints;
   int? _lastPanShotTime;
 
+  int _secretTapCount = 0;
+  DateTime? _lastSecretTap;
+
   @override
   void initState() {
     super.initState();
@@ -33,7 +37,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
 
     _panController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 600),
     );
 
     _panController.addListener(() {
@@ -51,6 +55,33 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     super.dispose();
   }
 
+  void _handleSecretTap(GameController game) {
+    DateTime now = DateTime.now();
+    if (_lastSecretTap == null ||
+        now.difference(_lastSecretTap!) > const Duration(seconds: 2)) {
+      _secretTapCount = 1;
+    } else {
+      _secretTapCount++;
+    }
+    _lastSecretTap = now;
+
+    if (_secretTapCount >= 5) {
+      _secretTapCount = 0;
+      game.toggleDevMode();
+      HapticFeedback.heavyImpact();
+      Get.snackbar(
+        'DEV MODE',
+        game.isDevMode
+            ? 'Cheat Activated: All ships revealed!'
+            : 'Cheat Deactivated',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.black87,
+        colorText: Colors.greenAccent,
+        duration: const Duration(seconds: 2),
+      );
+    }
+  }
+
   void _panToCell(int index, int cols, int rows, GameController game) {
     if (_viewportConstraints == null) return;
     if (!game.isAutoTrack) return;
@@ -60,6 +91,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
 
     double wv = _viewportConstraints!.maxWidth;
     double hv = _viewportConstraints!.maxHeight;
+
     double ar = (cols + 1) / (rows + 1);
     double wg, hg;
 
@@ -323,7 +355,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
             child: GetBuilder<GameController>(
               builder: (game) {
                 if (game.isDeploying || game.players.isEmpty) {
-                  return _buildLoadingScreen();
+                  return _buildLoadingScreen(game);
                 }
 
                 bool isMyTurn = game.players[game.currentPlayerIndex].id == 0;
@@ -407,23 +439,26 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     );
   }
 
-  Widget _buildLoadingScreen() {
+  Widget _buildLoadingScreen(GameController game) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          AnimatedBuilder(
-            animation: _radarController,
-            builder: (context, child) {
-              final val = _radarController.value;
-              return Transform.scale(
-                scale: 0.5 + (val * 1.5),
-                child: Opacity(
-                    opacity: 1.0 - val,
-                    child: const Icon(Icons.radar,
-                        color: AppColors.ink, size: 50)),
-              );
-            },
+          GestureDetector(
+            onTap: () => _handleSecretTap(game),
+            child: AnimatedBuilder(
+              animation: _radarController,
+              builder: (context, child) {
+                final val = _radarController.value;
+                return Transform.scale(
+                  scale: 0.5 + (val * 1.5),
+                  child: Opacity(
+                      opacity: 1.0 - val,
+                      child: const Icon(Icons.radar,
+                          color: AppColors.ink, size: 50)),
+                );
+              },
+            ),
           ),
           const SizedBox(height: 30),
           Container(
@@ -652,10 +687,6 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                     color: AppColors.ink,
                     onTap: () => _showGlobalRadar(context, game)),
                 _buildSystemBtn(
-                    icon: Icons.bug_report,
-                    color: game.isDevMode ? Colors.green[700]! : Colors.grey,
-                    onTap: game.toggleDevMode),
-                _buildSystemBtn(
                     icon:
                         game.isAutoTrack ? Icons.videocam : Icons.videocam_off,
                     color: game.isAutoTrack ? AppColors.ink : Colors.grey,
@@ -755,11 +786,14 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                       int boardIdx = (r - 1) * game.columns + (c - 1);
                       Cell cell = targetPlayer.board[boardIdx]!;
 
-                      Color cellColor = (cell.terrain == Terrain.land &&
-                              (isMyBoard ||
-                                  (cell.isRevealed && !hideEnemyLand)))
-                          ? Colors.brown[300]!.withOpacity(0.6)
-                          : Colors.transparent;
+                      Color cellColor = Colors.transparent;
+                      if (cell.terrain == Terrain.land) {
+                        if (isMyBoard || (cell.isRevealed && !hideEnemyLand)) {
+                          cellColor = Colors.brown[300]!.withOpacity(0.6);
+                        } else if (game.isDevMode && !isMyBoard) {
+                          cellColor = Colors.brown[300]!.withOpacity(0.25);
+                        }
+                      }
 
                       return InkWell(
                         onTap: () {
@@ -819,7 +853,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
 
     if (showBase && cell.entity != Entity.none) {
       if (cell.entity == Entity.turret) {
-        baseContent = FractionallySizedBox(
+        baseContent = const FractionallySizedBox(
             widthFactor: 0.75,
             heightFactor: 0.75,
             child: FittedBox(child: Icon(Icons.fort, color: AppColors.ink)));
@@ -904,7 +938,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
           curve: Curves.easeInOut,
           builder: (context, val, child) => Transform.scale(
               scale: val,
-              child: FractionallySizedBox(
+              child: const FractionallySizedBox(
                   widthFactor: 0.8,
                   heightFactor: 0.8,
                   child: FittedBox(

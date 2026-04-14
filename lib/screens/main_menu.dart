@@ -37,6 +37,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
 
   // --- Controllers ---
   final TextEditingController _nameController = TextEditingController();
+  final FocusNode _nameFocusNode = FocusNode();
   late AnimationController _animController;
   final mpCtrl = Get.put(MultiplayerController());
 
@@ -52,6 +53,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
   void dispose() {
     _animController.dispose();
     _nameController.dispose();
+    _nameFocusNode.dispose();
     super.dispose();
   }
 
@@ -77,6 +79,33 @@ class _MainMenuScreenState extends State<MainMenuScreen>
         Get.updateLocale(const Locale('en', 'US'));
         break;
     }
+  }
+
+  bool _validateName() {
+    if (_nameController.text.trim().isEmpty) {
+      HapticFeedback.heavyImpact();
+      Get.snackbar(
+        'attention'.tr,
+        Get.locale?.languageCode == 'th'
+            ? 'กรุณาระบุชื่อผู้บัญชาการก่อนเริ่มภารกิจ!'
+            : 'Please enter your Commander Callsign!',
+        backgroundColor: const Color(0xFFFDFBF7),
+        colorText: AppColors.redPen,
+        borderColor: AppColors.redPen,
+        borderWidth: 2,
+        margin: const EdgeInsets.all(16),
+        icon: const Icon(Icons.warning_amber_rounded,
+            color: AppColors.redPen, size: 28),
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 3),
+        boxShadows: [
+          const BoxShadow(color: Colors.black26, offset: Offset(4, 4))
+        ],
+      );
+      _nameFocusNode.requestFocus();
+      return false;
+    }
+    return true;
   }
 
   Widget _buildStep(IconData icon, String text) {
@@ -381,9 +410,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
   void _showMultiplayerLAN() {
     HapticFeedback.heavyImpact();
     final TextEditingController ipInput = TextEditingController();
-    String myName = _nameController.text.trim().isEmpty
-        ? "COMMANDER"
-        : _nameController.text.trim().toUpperCase();
+    String myName = _nameController.text.trim().toUpperCase();
 
     showDialog(
       context: context,
@@ -883,6 +910,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
       ),
       child: TextField(
         controller: _nameController,
+        focusNode: _nameFocusNode,
         textAlign: TextAlign.center,
         maxLength: 12,
         style: const TextStyle(
@@ -1097,14 +1125,14 @@ class _MainMenuScreenState extends State<MainMenuScreen>
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () {
+                    if (!_validateName()) return;
+
                     HapticFeedback.heavyImpact();
                     Get.find<GameController>().botDifficulty = botDifficulty;
                     Get.find<GameController>().assistLevel = assistLevel;
                     Get.toNamed('/placement', arguments: {
                       'enemyCount': enemyCount,
-                      'playerName': _nameController.text.trim().isEmpty
-                          ? "COMMANDER"
-                          : _nameController.text.trim().toUpperCase(),
+                      'playerName': _nameController.text.trim().toUpperCase(),
                       'columns': boardSize.cols,
                       'rows': boardSize.rows,
                     });
@@ -1148,7 +1176,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.satellite_alt, color: AppColors.ink, size: 20),
+              const Icon(Icons.wifi_tethering, color: AppColors.ink, size: 20),
               const SizedBox(width: 8),
               Text('network_battle'.tr,
                   style: const TextStyle(
@@ -1158,9 +1186,19 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                       letterSpacing: 1.2)),
             ],
           ),
+          const SizedBox(height: 4),
+          Text('lan_desc'.tr,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  color: AppColors.ink.withOpacity(0.6),
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
           OutlinedButton.icon(
-            onPressed: _showMultiplayerLAN,
+            onPressed: () {
+              if (!_validateName()) return;
+              _showMultiplayerLAN();
+            },
             icon: const Icon(Icons.cell_tower, color: AppColors.ink),
             label: Text('host_join'.tr,
                 style: const TextStyle(
@@ -1266,7 +1304,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
               Positioned(
                 bottom: 12,
                 left: 20,
-                child: Text("v1.0.0 - Commander Edition",
+                child: Text("v1.0.0beta2 - Commander Edition",
                     style: TextStyle(
                         color: AppColors.ink.withOpacity(0.5),
                         fontSize: 11,
