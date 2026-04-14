@@ -10,9 +10,9 @@ class SoundController extends GetxController {
   // --- Settings State ---
   bool isBgmMuted = false;
   bool isSfxMuted = false;
-  double bgmVolume = 0.5; // ความดัง BGM (0.0 - 1.0)
-  double sfxVolume = 0.8; // ความดัง SFX (0.0 - 1.0)
-  bool hapticsEnabled = true; // ระบบสั่น
+  double bgmVolume = 0.5;
+  double sfxVolume = 0.8;
+  bool hapticsEnabled = true;
 
   // --- Settings Actions ---
   void setBgmVolume(double vol) {
@@ -44,7 +44,6 @@ class SoundController extends GetxController {
     update();
   }
 
-  // ตัวช่วยสั่น (เรียกใช้แทน HapticFeedback โดยตรง เพื่อให้ปิดได้)
   void vibrateLight() {
     if (hapticsEnabled) HapticFeedback.lightImpact();
   }
