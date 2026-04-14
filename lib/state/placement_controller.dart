@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:battleship_game/state/sound_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -77,33 +78,50 @@ class PlacementController extends GetxController {
   // --- UI Actions ---
 
   void setTool(PlacementTool tool) {
-    currentTool = tool;
-    HapticFeedback.lightImpact();
-    update();
+    if (currentTool != tool) {
+      currentTool = tool;
+      HapticFeedback.lightImpact();
+      if (Get.isRegistered<SoundController>()) {
+        Get.find<SoundController>().playClick();
+      }
+      update();
+    }
   }
 
   void toggleOrientation() {
     isHorizontal = !isHorizontal;
     HapticFeedback.lightImpact();
+    if (Get.isRegistered<SoundController>()) {
+      Get.find<SoundController>().playClick();
+    }
     update();
   }
 
   void selectShip(int size) {
-    if (unplacedShips.contains(size)) {
+    if (unplacedShips.contains(size) && selectedShipSize != size) {
       selectedShipSize = size;
       HapticFeedback.lightImpact();
+      if (Get.isRegistered<SoundController>()) {
+        Get.find<SoundController>().playClick();
+      }
       update();
     }
   }
 
   void clearAll() {
     HapticFeedback.mediumImpact();
+    if (Get.isRegistered<SoundController>()) {
+      Get.find<SoundController>().playClick();
+    }
     _initEmptyBoard();
     update();
   }
 
   void clearShips() {
     HapticFeedback.mediumImpact();
+    if (Get.isRegistered<SoundController>()) {
+      Get.find<SoundController>().playClick();
+    }
     board.forEach((key, cell) {
       if (cell.entity == Entity.ship) {
         cell.entity = Entity.none;
@@ -120,16 +138,24 @@ class PlacementController extends GetxController {
   // --- Placement Logic ---
 
   void handleTap(int index) {
+    bool actionSuccess = false;
     switch (currentTool) {
       case PlacementTool.land:
-        _toggleLand(index);
+        actionSuccess = _toggleLand(index);
         break;
       case PlacementTool.turret:
-        _toggleTurret(index);
+        actionSuccess = _toggleTurret(index);
         break;
       case PlacementTool.ship:
-        _placeShipLogic(index);
+        actionSuccess = _placeShipLogic(index);
         break;
+    }
+
+    if (actionSuccess) {
+      HapticFeedback.lightImpact();
+      if (Get.isRegistered<SoundController>()) {
+        Get.find<SoundController>().playClick();
+      }
     }
     _validateBoard();
     update();
@@ -137,6 +163,9 @@ class PlacementController extends GetxController {
 
   void _showError(String message) {
     HapticFeedback.vibrate();
+    if (Get.isRegistered<SoundController>()) {
+      Get.find<SoundController>().playError();
+    }
     Get.snackbar(
       'attention'.tr,
       message,
@@ -154,13 +183,13 @@ class PlacementController extends GetxController {
     );
   }
 
-  void _toggleLand(int index) {
+  bool _toggleLand(int index) {
     Cell cell = board[index]!;
     if (cell.terrain == Terrain.water && cell.entity == Entity.none) {
       if (placedLand < maxLand) {
         cell.terrain = Terrain.land;
         placedLand++;
-        HapticFeedback.lightImpact();
+        return true;
       } else {
         _showError('err_max_land'.tr);
       }
@@ -169,32 +198,34 @@ class PlacementController extends GetxController {
       cell.entity = Entity.none;
       cell.terrain = Terrain.water;
       placedLand--;
-      HapticFeedback.lightImpact();
+      return true;
     } else if (cell.entity == Entity.ship) {
       _showError('err_land_on_ship'.tr);
     }
+    return false;
   }
 
-  void _toggleTurret(int index) {
+  bool _toggleTurret(int index) {
     Cell cell = board[index]!;
     if (cell.terrain != Terrain.land) {
       _showError('err_turret_on_water'.tr);
-      return;
+      return false;
     }
 
     if (cell.entity == Entity.none) {
       if (placedTurrets < maxTurrets) {
         cell.entity = Entity.turret;
         placedTurrets++;
-        HapticFeedback.lightImpact();
+        return true;
       } else {
         _showError('err_max_turret'.tr);
       }
     } else if (cell.entity == Entity.turret) {
       cell.entity = Entity.none;
       placedTurrets--;
-      HapticFeedback.lightImpact();
+      return true;
     }
+    return false;
   }
 
   bool _placeShipLogic(int index, {bool isAuto = false}) {
@@ -234,7 +265,6 @@ class PlacementController extends GetxController {
     unplacedShips.remove(selectedShipSize);
     if (unplacedShips.isNotEmpty) selectedShipSize = unplacedShips.first;
 
-    if (!isAuto) HapticFeedback.lightImpact();
     return true;
   }
 
@@ -338,6 +368,10 @@ class PlacementController extends GetxController {
 
   void autoDeploy() {
     HapticFeedback.heavyImpact();
+    if (Get.isRegistered<SoundController>()) {
+      Get.find<SoundController>().playClick();
+    }
+
     Random r = Random();
     int maxBoardAttempts = 50;
     bool deploymentSuccess = false;
@@ -388,6 +422,9 @@ class PlacementController extends GetxController {
 
     if (!deploymentSuccess) {
       _initEmptyBoard();
+      if (Get.isRegistered<SoundController>()) {
+        Get.find<SoundController>().playError();
+      }
       Get.snackbar(
         'Auto Deploy Failed',
         'Area is too tight! Retrying...',
@@ -480,6 +517,9 @@ class PlacementController extends GetxController {
   void confirmPlacement() {
     if (isBoardValid) {
       HapticFeedback.heavyImpact();
+      if (Get.isRegistered<SoundController>()) {
+        Get.find<SoundController>().playClick();
+      }
       Get.find<GameController>()
           .startGame(columns, rows, board, myShips, enemyCount, playerName);
       Get.offAllNamed('/game');

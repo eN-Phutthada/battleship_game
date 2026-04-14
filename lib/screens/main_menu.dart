@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:battleship_game/state/game_controller.dart';
 import 'package:battleship_game/state/multiplayer_controller.dart';
+import 'package:battleship_game/state/sound_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -30,7 +31,6 @@ class _MainMenuScreenState extends State<MainMenuScreen>
     with SingleTickerProviderStateMixin {
   // --- Game Settings ---
   int enemyCount = 1;
-  bool isMuted = false;
   BotDifficulty botDifficulty = BotDifficulty.normal;
   AssistLevel assistLevel = AssistLevel.standard;
   BoardSize boardSize = BoardSize.standard;
@@ -47,6 +47,11 @@ class _MainMenuScreenState extends State<MainMenuScreen>
     _animController =
         AnimationController(vsync: this, duration: const Duration(seconds: 4))
           ..repeat();
+    _nameController.text = "Commander${Random().nextInt(1000)}";
+
+    if (!Get.isRegistered<SoundController>()) {
+      Get.put(SoundController());
+    }
   }
 
   @override
@@ -57,8 +62,15 @@ class _MainMenuScreenState extends State<MainMenuScreen>
     super.dispose();
   }
 
+  void _playSound() {
+    if (Get.isRegistered<SoundController>()) {
+      Get.find<SoundController>().playClick();
+    }
+  }
+
   void _toggleLanguage() {
     HapticFeedback.lightImpact();
+    _playSound();
     final locales = ['en', 'th', 'es', 'ja'];
     String currentLang = Get.locale?.languageCode ?? 'en';
 
@@ -84,6 +96,9 @@ class _MainMenuScreenState extends State<MainMenuScreen>
   bool _validateName() {
     if (_nameController.text.trim().isEmpty) {
       HapticFeedback.heavyImpact();
+      if (Get.isRegistered<SoundController>()) {
+        Get.find<SoundController>().playError();
+      }
       Get.snackbar(
         'attention'.tr,
         Get.locale?.languageCode == 'th'
@@ -153,6 +168,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
 
   void _showHowToPlay() {
     HapticFeedback.lightImpact();
+    _playSound();
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -196,7 +212,10 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                         constraints: const BoxConstraints(),
                         icon: const Icon(Icons.close,
                             color: AppColors.ink, size: 32),
-                        onPressed: () => Navigator.of(context).pop()),
+                        onPressed: () {
+                          _playSound();
+                          Navigator.of(context).pop();
+                        }),
                   ],
                 ),
                 const Divider(color: AppColors.ink, thickness: 2, height: 24),
@@ -318,7 +337,10 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
                                             BorderRadius.circular(6))),
-                                onPressed: () => Navigator.of(context).pop(),
+                                onPressed: () {
+                                  _playSound();
+                                  Navigator.of(context).pop();
+                                },
                                 label: Text('roger_that'.tr,
                                     style: const TextStyle(
                                         color: Colors.white,
@@ -350,6 +372,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
             onTap: () {
               if (mpCtrl.isHosting.value) {
                 HapticFeedback.lightImpact();
+                _playSound();
                 mpCtrl.updateLobbySettings(level, mpCtrl.currentColumns.value,
                     mpCtrl.currentRows.value);
               }
@@ -383,6 +406,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
             onTap: () {
               if (mpCtrl.isHosting.value) {
                 HapticFeedback.lightImpact();
+                _playSound();
                 mpCtrl.updateLobbySettings(
                     mpCtrl.currentAssistLevel.value, size.cols, size.rows);
               }
@@ -409,6 +433,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
 
   void _showMultiplayerLAN() {
     HapticFeedback.heavyImpact();
+    _playSound();
     final TextEditingController ipInput = TextEditingController();
     String myName = _nameController.text.trim().toUpperCase();
 
@@ -453,6 +478,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                       IconButton(
                           icon: const Icon(Icons.close, color: AppColors.ink),
                           onPressed: () {
+                            _playSound();
                             mpCtrl.leaveLobby();
                             Get.back();
                           }),
@@ -502,7 +528,10 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                         minimumSize: const Size(double.infinity, 50),
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8))),
-                    onPressed: () => mpCtrl.startHost(myName),
+                    onPressed: () {
+                      _playSound();
+                      mpCtrl.startHost(myName);
+                    },
                     child: Text('host_game_btn'.tr,
                         style: const TextStyle(
                             color: Colors.white, fontWeight: FontWeight.w900)),
@@ -536,7 +565,10 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                     IconButton.filledTonal(
                         icon: const Icon(Icons.search,
                             size: 24, color: AppColors.ink),
-                        onPressed: () => mpCtrl.scanForLobbies(),
+                        onPressed: () {
+                          _playSound();
+                          mpCtrl.scanForLobbies();
+                        },
                         style: IconButton.styleFrom(
                             backgroundColor: AppColors.ink.withOpacity(0.1))),
                   Text('quick_scan'.tr,
@@ -546,38 +578,37 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                           color: AppColors.ink)),
                   const SizedBox(height: 10),
                   if (mpCtrl.discoveredLobbies.isNotEmpty)
-                    ...mpCtrl.discoveredLobbies
-                        .map((lobby) => Padding(
-                              padding: const EdgeInsets.only(bottom: 6),
-                              child: InkWell(
-                                onTap: () =>
-                                    mpCtrl.joinBattle(lobby['ip']!, myName),
-                                child: Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                      border: Border.all(
-                                          color: Colors.orange[800]!,
-                                          width: 1.5),
-                                      borderRadius: BorderRadius.circular(6),
-                                      color: Colors.orange.withOpacity(0.1)),
-                                  child: Row(
-                                    children: [
-                                      const Icon(Icons.bolt,
-                                          color: Colors.orange, size: 16),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                          child: Text("${lobby['name']}",
-                                              style: const TextStyle(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w900,
-                                                  color: AppColors.ink),
-                                              overflow: TextOverflow.ellipsis)),
-                                    ],
-                                  ),
-                                ),
+                    ...mpCtrl.discoveredLobbies.map((lobby) => Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: InkWell(
+                            onTap: () {
+                              _playSound();
+                              mpCtrl.joinBattle(lobby['ip']!, myName);
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: Colors.orange[800]!, width: 1.5),
+                                  borderRadius: BorderRadius.circular(6),
+                                  color: Colors.orange.withOpacity(0.1)),
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.bolt,
+                                      color: Colors.orange, size: 16),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                      child: Text("${lobby['name']}",
+                                          style: const TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w900,
+                                              color: AppColors.ink),
+                                          overflow: TextOverflow.ellipsis)),
+                                ],
                               ),
-                            ))
-                        .toList()
+                            ),
+                          ),
+                        ))
                   else
                     Text('no_signals'.tr,
                         style: TextStyle(
@@ -614,7 +645,10 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                 keyboardType: TextInputType.number,
                 style: const TextStyle(
                     color: AppColors.ink, fontWeight: FontWeight.bold),
-                onSubmitted: (value) => mpCtrl.joinBattle(value, myName),
+                onSubmitted: (value) {
+                  _playSound();
+                  mpCtrl.joinBattle(value, myName);
+                },
                 decoration: InputDecoration(
                     hintText: "192.168.x.x",
                     hintStyle: TextStyle(
@@ -635,7 +669,10 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                 style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppColors.ink, width: 2),
                     padding: const EdgeInsets.symmetric(vertical: 12)),
-                onPressed: () => mpCtrl.joinBattle(ipInput.text, myName),
+                onPressed: () {
+                  _playSound();
+                  mpCtrl.joinBattle(ipInput.text, myName);
+                },
                 child: Text('join_btn'.tr,
                     style: const TextStyle(
                         fontWeight: FontWeight.w900, color: AppColors.ink)),
@@ -786,7 +823,10 @@ class _MainMenuScreenState extends State<MainMenuScreen>
           children: [
             Expanded(
               child: OutlinedButton(
-                onPressed: () => mpCtrl.leaveLobby(),
+                onPressed: () {
+                  _playSound();
+                  mpCtrl.leaveLobby();
+                },
                 style: OutlinedButton.styleFrom(
                     side: const BorderSide(color: AppColors.redPen, width: 2)),
                 child: Text(
@@ -807,7 +847,10 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                           : Colors.grey,
                       padding: const EdgeInsets.symmetric(vertical: 12)),
                   onPressed: mpCtrl.lobbyPlayers.length > 1
-                      ? () => mpCtrl.broadcastStart()
+                      ? () {
+                          _playSound();
+                          mpCtrl.broadcastStart();
+                        }
                       : null,
                   label: Text('start_mission'.tr,
                       style: const TextStyle(
@@ -837,6 +880,13 @@ class _MainMenuScreenState extends State<MainMenuScreen>
   }
 
   Widget _buildHeaderActions() {
+    bool isBgm = Get.isRegistered<SoundController>()
+        ? Get.find<SoundController>().isBgmMuted
+        : false;
+    bool isSfx = Get.isRegistered<SoundController>()
+        ? Get.find<SoundController>().isSfxMuted
+        : false;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -860,9 +910,26 @@ class _MainMenuScreenState extends State<MainMenuScreen>
             _buildActionBtn(
               onTap: () {
                 HapticFeedback.lightImpact();
-                setState(() => isMuted = !isMuted);
+                _playSound();
+                if (Get.isRegistered<SoundController>()) {
+                  Get.find<SoundController>().toggleBgm();
+                }
+                setState(() {});
               },
-              child: Icon(isMuted ? Icons.volume_off : Icons.volume_up,
+              child: Icon(isBgm ? Icons.music_off : Icons.music_note,
+                  color: AppColors.ink, size: 18),
+            ),
+            const SizedBox(width: 8),
+            _buildActionBtn(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                _playSound();
+                if (Get.isRegistered<SoundController>()) {
+                  Get.find<SoundController>().toggleSfx();
+                }
+                setState(() {});
+              },
+              child: Icon(isSfx ? Icons.volume_off : Icons.volume_up,
                   color: AppColors.ink, size: 18),
             ),
             const SizedBox(width: 8),
@@ -947,6 +1014,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
         child: InkWell(
           onTap: () {
             HapticFeedback.lightImpact();
+            _playSound();
             onChanged(value);
           },
           child: Container(
@@ -1095,6 +1163,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                                 color: AppColors.ink, size: 18),
                             onPressed: () {
                               HapticFeedback.lightImpact();
+                              _playSound();
                               setState(() {
                                 if (enemyCount > 1) enemyCount--;
                               });
@@ -1112,6 +1181,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                                 color: AppColors.ink, size: 18),
                             onPressed: () {
                               HapticFeedback.lightImpact();
+                              _playSound();
                               setState(() {
                                 if (enemyCount < 7) enemyCount++;
                               });
@@ -1126,15 +1196,15 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                 child: ElevatedButton.icon(
                   onPressed: () {
                     if (!_validateName()) return;
-
                     HapticFeedback.heavyImpact();
+                    _playSound();
                     Get.find<GameController>().botDifficulty = botDifficulty;
                     Get.find<GameController>().assistLevel = assistLevel;
                     Get.toNamed('/placement', arguments: {
                       'enemyCount': enemyCount,
                       'playerName': _nameController.text.trim().toUpperCase(),
                       'columns': boardSize.cols,
-                      'rows': boardSize.rows,
+                      'rows': boardSize.rows
                     });
                   },
                   icon: const Icon(Icons.rocket_launch, color: AppColors.paper),
@@ -1197,6 +1267,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
           OutlinedButton.icon(
             onPressed: () {
               if (!_validateName()) return;
+              _playSound();
               _showMultiplayerLAN();
             },
             icon: const Icon(Icons.cell_tower, color: AppColors.ink),
@@ -1238,14 +1309,13 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                           builder: (context, child) {
                             final value = _animController.value * 2 * pi;
                             return Transform.translate(
-                              offset: Offset(0, 8 * sin(value)),
-                              child: Transform.rotate(
-                                  angle: -0.1 + (0.05 * cos(value)),
-                                  child: const Icon(
-                                      Icons.directions_boat_outlined,
-                                      size: 100,
-                                      color: AppColors.ink)),
-                            );
+                                offset: Offset(0, 8 * sin(value)),
+                                child: Transform.rotate(
+                                    angle: -0.1 + (0.05 * cos(value)),
+                                    child: const Icon(
+                                        Icons.directions_boat_outlined,
+                                        size: 100,
+                                        color: AppColors.ink)));
                           },
                         ),
                         const SizedBox(height: 16),
@@ -1254,18 +1324,17 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                           duration: const Duration(milliseconds: 1200),
                           curve: Curves.elasticOut,
                           builder: (context, val, child) => Transform.scale(
-                            scale: val,
-                            child: const Text('PAPER\nBATTLESHIP',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                    fontSize: 38,
-                                    fontWeight: FontWeight.w900,
-                                    color: AppColors.ink,
-                                    letterSpacing: 4,
-                                    decoration: TextDecoration.underline,
-                                    decorationStyle: TextDecorationStyle.wavy,
-                                    height: 1.2)),
-                          ),
+                              scale: val,
+                              child: const Text('PAPER\nBATTLESHIP',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                      fontSize: 38,
+                                      fontWeight: FontWeight.w900,
+                                      color: AppColors.ink,
+                                      letterSpacing: 4,
+                                      decoration: TextDecoration.underline,
+                                      decorationStyle: TextDecorationStyle.wavy,
+                                      height: 1.2))),
                         ),
                       ],
                     ),
@@ -1302,15 +1371,14 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                 ],
               ),
               Positioned(
-                bottom: 12,
-                left: 20,
-                child: Text("v1.0.0beta2 - Commander Edition",
-                    style: TextStyle(
-                        color: AppColors.ink.withOpacity(0.5),
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1)),
-              ),
+                  bottom: 12,
+                  left: 20,
+                  child: Text("v1.0.0beta4 - Commander Edition",
+                      style: TextStyle(
+                          color: AppColors.ink.withOpacity(0.5),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1))),
             ],
           ),
         ),

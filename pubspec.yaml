@@ -16,6 +16,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   get: ^4.6.6
   google_fonts: ^6.2.1
+  audioplayers: ^6.6.0
 
   # --- Network & Multiplayer ---
   socket_io_client: ^3.1.4

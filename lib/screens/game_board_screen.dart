@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import '../state/game_controller.dart';
+import '../state/sound_controller.dart';
 import '../models/game_models.dart';
 import '../utils/constants.dart';
 import '../widgets/shared_widgets.dart';
@@ -53,6 +54,12 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     _transformCtrl.dispose();
     _panController.dispose();
     super.dispose();
+  }
+
+  void _playSound() {
+    if (Get.isRegistered<SoundController>()) {
+      Get.find<SoundController>().playClick();
+    }
   }
 
   void _handleSecretTap(GameController game) {
@@ -203,6 +210,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
 
     return GestureDetector(
       onTap: () {
+        _playSound();
         if (!isMe && !isDead) {
           game.selectTarget(player.id);
           Get.back();
@@ -290,35 +298,39 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                         if (!hideEnemyRadar) {
                           if (cell.isRevealed &&
                               (cell.entity == Entity.ship ||
-                                  cell.entity == Entity.turret))
+                                  cell.entity == Entity.turret)) {
                             c = AppColors.redPen;
-                          else if (isMe &&
+                          } else if (isMe &&
                               cell.entity != Entity.none &&
-                              !cell.isRevealed)
+                              !cell.isRevealed) {
                             c = AppColors.ink.withOpacity(0.5);
-                          else if (!isMe && cell.isRevealed) {
+                          } else if (!isMe && cell.isRevealed) {
                             if (cell.entity == Entity.none &&
-                                game.assistLevel == AssistLevel.casual)
+                                game.assistLevel == AssistLevel.casual) {
                               c = Colors.black87;
+                            }
                           }
                         } else if (isMe) {
                           if (cell.isRevealed &&
                               (cell.entity == Entity.ship ||
-                                  cell.entity == Entity.turret))
+                                  cell.entity == Entity.turret)) {
                             c = AppColors.redPen;
-                          else if (cell.entity != Entity.none &&
-                              !cell.isRevealed)
+                          } else if (cell.entity != Entity.none &&
+                              !cell.isRevealed) {
                             c = AppColors.ink.withOpacity(0.5);
+                          }
                         }
 
                         Widget marker = const SizedBox();
                         if (hideEnemyRadar && !isMe) {
                           String? manual =
                               game.manualMarkers["${player.id}_$i"];
-                          if (manual == 'X')
+                          if (manual == 'X') {
                             marker = _buildXIcon(color: Colors.red);
-                          if (manual == 'O')
+                          }
+                          if (manual == 'O') {
                             marker = _buildOIcon(color: Colors.black54);
+                          }
                         }
 
                         return Container(
@@ -539,7 +551,12 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                     .length;
 
                 return GestureDetector(
-                  onTap: isDead ? null : () => game.selectTarget(p.id),
+                  onTap: isDead
+                      ? null
+                      : () {
+                          _playSound();
+                          game.selectTarget(p.id);
+                        },
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     margin: const EdgeInsets.only(bottom: 12),
@@ -685,18 +702,27 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                 _buildSystemBtn(
                     icon: Icons.map_outlined,
                     color: AppColors.ink,
-                    onTap: () => _showGlobalRadar(context, game)),
+                    onTap: () {
+                      _playSound();
+                      _showGlobalRadar(context, game);
+                    }),
                 _buildSystemBtn(
                     icon:
                         game.isAutoTrack ? Icons.videocam : Icons.videocam_off,
                     color: game.isAutoTrack ? AppColors.ink : Colors.grey,
-                    onTap: game.toggleAutoTrack),
+                    onTap: () {
+                      _playSound();
+                      game.toggleAutoTrack();
+                    }),
               ],
             ),
           ),
           const SizedBox(height: 8),
           InkWell(
-            onTap: game.cycleBotSpeed,
+            onTap: () {
+              _playSound();
+              game.cycleBotSpeed();
+            },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
               decoration: BoxDecoration(
@@ -1043,7 +1069,10 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             side:
                                 const BorderSide(color: Colors.cyan, width: 2)),
-                        onPressed: game.cancelAllLocks,
+                        onPressed: () {
+                          _playSound();
+                          game.cancelAllLocks();
+                        },
                         child: const Icon(Icons.close, color: Colors.cyan))),
                 const SizedBox(width: 8),
                 Expanded(
@@ -1221,7 +1250,10 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                       constraints: const BoxConstraints(),
                       icon: const Icon(Icons.close,
                           color: AppColors.ink, size: 28),
-                      onPressed: () => Get.back()),
+                      onPressed: () {
+                        _playSound();
+                        Get.back();
+                      }),
                 ],
               ),
               const Divider(color: AppColors.ink, thickness: 2, height: 8),
