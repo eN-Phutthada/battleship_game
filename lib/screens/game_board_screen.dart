@@ -59,6 +59,8 @@ class _GameBoardScreenState extends State<GameBoardScreen>
   void _playSound() {
     if (Get.isRegistered<SoundController>()) {
       Get.find<SoundController>().playClick();
+    } else {
+      Get.put(SoundController()).playClick();
     }
   }
 
@@ -74,6 +76,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
 
     if (_secretTapCount >= 5) {
       _secretTapCount = 0;
+      _playSound();
       game.toggleDevMode();
       HapticFeedback.heavyImpact();
       Get.snackbar(
@@ -203,14 +206,18 @@ class _GameBoardScreenState extends State<GameBoardScreen>
         (game.assistLevel == AssistLevel.hardcore ||
             game.assistLevel == AssistLevel.realLife);
 
-    int aliveShips = player.ships.where((s) => !s.isSunk).length;
-    int aliveTurrets = player.board.values
-        .where((c) => c.entity == Entity.turret && !c.isRevealed)
-        .length;
+    String displayShips = hideEnemyRadar
+        ? "?"
+        : player.ships.where((s) => !s.isSunk).length.toString();
+    String displayTurrets = hideEnemyRadar
+        ? "?"
+        : player.board.values
+            .where((c) => c.entity == Entity.turret && !c.isRevealed)
+            .length
+            .toString();
 
     return GestureDetector(
       onTap: () {
-        _playSound();
         if (!isMe && !isDead) {
           game.selectTarget(player.id);
           Get.back();
@@ -253,7 +260,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                     Icon(Icons.directions_boat,
                         size: 10, color: AppColors.ink.withOpacity(0.7)),
                     const SizedBox(width: 4),
-                    Text("$aliveShips",
+                    Text(displayShips,
                         style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
@@ -262,7 +269,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                     Icon(Icons.fort,
                         size: 10, color: AppColors.ink.withOpacity(0.7)),
                     const SizedBox(width: 4),
-                    Text("$aliveTurrets",
+                    Text(displayTurrets,
                         style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
@@ -295,22 +302,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                         Cell cell = player.board[i]!;
                         Color c = Colors.transparent;
 
-                        if (!hideEnemyRadar) {
-                          if (cell.isRevealed &&
-                              (cell.entity == Entity.ship ||
-                                  cell.entity == Entity.turret)) {
-                            c = AppColors.redPen;
-                          } else if (isMe &&
-                              cell.entity != Entity.none &&
-                              !cell.isRevealed) {
-                            c = AppColors.ink.withOpacity(0.5);
-                          } else if (!isMe && cell.isRevealed) {
-                            if (cell.entity == Entity.none &&
-                                game.assistLevel == AssistLevel.casual) {
-                              c = Colors.black87;
-                            }
-                          }
-                        } else if (isMe) {
+                        if (isMe) {
                           if (cell.isRevealed &&
                               (cell.entity == Entity.ship ||
                                   cell.entity == Entity.turret)) {
@@ -318,6 +310,21 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                           } else if (cell.entity != Entity.none &&
                               !cell.isRevealed) {
                             c = AppColors.ink.withOpacity(0.5);
+                          } else if (cell.isRevealed &&
+                              cell.entity == Entity.none) {
+                            c = Colors.black12;
+                          }
+                        } else {
+                          if (!hideEnemyRadar) {
+                            if (cell.isRevealed &&
+                                (cell.entity == Entity.ship ||
+                                    cell.entity == Entity.turret)) {
+                              c = AppColors.redPen;
+                            } else if (cell.isRevealed &&
+                                cell.entity == Entity.none &&
+                                game.assistLevel == AssistLevel.casual) {
+                              c = Colors.black87;
+                            }
                           }
                         }
 
@@ -325,12 +332,10 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                         if (hideEnemyRadar && !isMe) {
                           String? manual =
                               game.manualMarkers["${player.id}_$i"];
-                          if (manual == 'X') {
+                          if (manual == 'X')
                             marker = _buildXIcon(color: Colors.red);
-                          }
-                          if (manual == 'O') {
+                          if (manual == 'O')
                             marker = _buildOIcon(color: Colors.black54);
-                          }
                         }
 
                         return Container(
@@ -519,6 +524,18 @@ class _GameBoardScreenState extends State<GameBoardScreen>
   }
 
   Widget _buildLeftSidebar(BuildContext context, GameController game) {
+    String astName = '';
+    if (game.assistLevel == AssistLevel.casual) astName = 'ast_casual'.tr;
+    if (game.assistLevel == AssistLevel.standard) astName = 'ast_standard'.tr;
+    if (game.assistLevel == AssistLevel.hardcore) astName = 'ast_hardcore'.tr;
+    if (game.assistLevel == AssistLevel.realLife) astName = 'ast_reallife'.tr;
+
+    String diffName = '';
+    if (game.botDifficulty == BotDifficulty.easy) diffName = 'diff_easy'.tr;
+    if (game.botDifficulty == BotDifficulty.normal) diffName = 'diff_normal'.tr;
+    if (game.botDifficulty == BotDifficulty.hard) diffName = 'diff_hard'.tr;
+    bool hasBot = game.players.any((p) => p.isBot);
+
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
@@ -528,6 +545,30 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                   color: AppColors.ink,
                   fontWeight: FontWeight.w900,
                   fontSize: 16)),
+          const SizedBox(height: 2),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (hasBot) ...[
+                const Icon(Icons.smart_toy, size: 10, color: AppColors.ink),
+                const SizedBox(width: 2),
+                Text(diffName.toUpperCase(),
+                    style: const TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.ink)),
+                const SizedBox(width: 6),
+              ],
+              const Icon(Icons.handshake, size: 10, color: AppColors.ink),
+              const SizedBox(width: 2),
+              Text(astName.toUpperCase(),
+                  style: const TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.ink)),
+            ],
+          ),
+          const SizedBox(height: 2),
           const Divider(color: AppColors.ink, thickness: 2),
           const SizedBox(height: 4),
           Expanded(
@@ -545,10 +586,17 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                 bool hideEnemyRadar = p.id != 0 &&
                     (game.assistLevel == AssistLevel.hardcore ||
                         game.assistLevel == AssistLevel.realLife);
-                int aliveShips = p.ships.where((s) => !s.isSunk).length;
-                int aliveTurrets = p.board.values
-                    .where((c) => c.entity == Entity.turret && !c.isRevealed)
-                    .length;
+
+                String displayShips = hideEnemyRadar
+                    ? "?"
+                    : p.ships.where((s) => !s.isSunk).length.toString();
+                String displayTurrets = hideEnemyRadar
+                    ? "?"
+                    : p.board.values
+                        .where(
+                            (c) => c.entity == Entity.turret && !c.isRevealed)
+                        .length
+                        .toString();
 
                 return GestureDetector(
                   onTap: isDead
@@ -599,7 +647,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                                         ? Colors.white70
                                         : AppColors.ink.withOpacity(0.6)),
                                 const SizedBox(width: 2),
-                                Text("$aliveShips",
+                                Text(displayShips,
                                     style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
@@ -613,7 +661,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                                         ? Colors.white70
                                         : AppColors.ink.withOpacity(0.6)),
                                 const SizedBox(width: 2),
-                                Text("$aliveTurrets",
+                                Text(displayTurrets,
                                     style: TextStyle(
                                         fontSize: 10,
                                         fontWeight: FontWeight.bold,
@@ -645,23 +693,28 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                                 Cell cell = p.board[i]!;
                                 Color c = Colors.transparent;
 
-                                if (!hideEnemyRadar) {
+                                if (p.id == 0) {
                                   if (cell.isRevealed &&
                                       (cell.entity == Entity.ship ||
-                                          cell.entity == Entity.turret))
+                                          cell.entity == Entity.turret)) {
                                     c = AppColors.redPen;
-                                  else if (p.id == 0 &&
-                                      cell.entity != Entity.none &&
-                                      !cell.isRevealed)
+                                  } else if (cell.entity != Entity.none &&
+                                      !cell.isRevealed) {
                                     c = AppColors.ink.withOpacity(0.5);
-                                } else if (p.id == 0) {
-                                  if (cell.isRevealed &&
-                                      (cell.entity == Entity.ship ||
-                                          cell.entity == Entity.turret))
-                                    c = AppColors.redPen;
-                                  else if (cell.entity != Entity.none &&
-                                      !cell.isRevealed)
-                                    c = AppColors.ink.withOpacity(0.5);
+                                  }
+                                } else {
+                                  if (!hideEnemyRadar) {
+                                    if (cell.isRevealed &&
+                                        (cell.entity == Entity.ship ||
+                                            cell.entity == Entity.turret)) {
+                                      c = AppColors.redPen;
+                                    } else if (cell.isRevealed &&
+                                        cell.entity == Entity.none &&
+                                        game.assistLevel ==
+                                            AssistLevel.casual) {
+                                      c = Colors.black87;
+                                    }
+                                  }
                                 }
 
                                 Widget marker = const SizedBox();
@@ -825,13 +878,20 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                         onTap: () {
                           if (isMyTurn &&
                               !isMyBoard &&
-                              !targetPlayer.isDefeated)
+                              !targetPlayer.isDefeated) {
                             game.toggleLockTarget(targetPlayer.id, boardIdx);
+                          } else if (game.assistLevel == AssistLevel.realLife &&
+                              !isMyBoard) {
+                            _playSound();
+                            game.toggleManualMarker(targetPlayer.id, boardIdx);
+                          }
                         },
                         onLongPress: () {
                           if (game.assistLevel == AssistLevel.realLife &&
-                              !isMyBoard)
+                              !isMyBoard) {
+                            _playSound();
                             game.toggleManualMarker(targetPlayer.id, boardIdx);
+                          }
                         },
                         splashColor: Colors.cyanAccent.withOpacity(0.3),
                         child: Container(
@@ -1037,6 +1097,36 @@ class _GameBoardScreenState extends State<GameBoardScreen>
   Widget _buildCommandConsole(GameController game) {
     bool isMyTurn = game.players[game.currentPlayerIndex].id == 0;
 
+    if (game.isWaitingAck) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        margin: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+            color: Colors.orange.withOpacity(0.1),
+            border: Border.all(color: Colors.orange[800]!, width: 2),
+            boxShadow: const [
+              BoxShadow(color: Colors.white, offset: Offset(2, 2))
+            ]),
+        child: ElevatedButton.icon(
+          style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange[800],
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              elevation: 4),
+          onPressed: () {
+            game.acknowledgeTurn();
+          },
+          icon: const Icon(Icons.edit_note, color: Colors.white),
+          label: Text('btn_ack'.tr,
+              style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 13,
+                  letterSpacing: 1.0)),
+        ),
+      );
+    }
+
     if (isMyTurn && game.pendingShots.isNotEmpty) {
       return Container(
         width: double.infinity,
@@ -1083,7 +1173,9 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             elevation: 4),
-                        onPressed: game.confirmFire,
+                        onPressed: () {
+                          game.confirmFire();
+                        },
                         child: Text('fire_all'.tr,
                             style: const TextStyle(
                                 fontWeight: FontWeight.w900,
@@ -1257,6 +1349,16 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                 ],
               ),
               const Divider(color: AppColors.ink, thickness: 2, height: 8),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Text('radar_desc'.tr,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        color: AppColors.ink,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        fontStyle: FontStyle.italic)),
+              ),
               Expanded(
                 child: GridView.builder(
                   shrinkWrap: true,

@@ -1,52 +1,64 @@
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 
 class SoundController extends GetxController {
   final AudioPlayer _bgmPlayer = AudioPlayer();
-  final AudioPlayer _uiPlayer = AudioPlayer();
   final AudioPlayer _sfxPlayer = AudioPlayer();
-  final AudioPlayer _firePlayer = AudioPlayer();
+  final AudioPlayer _sfxFirePlayer = AudioPlayer();
 
+  // --- Settings State ---
   bool isBgmMuted = false;
   bool isSfxMuted = false;
+  double bgmVolume = 0.5; // ความดัง BGM (0.0 - 1.0)
+  double sfxVolume = 0.8; // ความดัง SFX (0.0 - 1.0)
+  bool hapticsEnabled = true; // ระบบสั่น
 
-  @override
-  void onInit() {
-    super.onInit();
-    _bgmPlayer.setReleaseMode(ReleaseMode.loop);
-  }
-
-  @override
-  void onClose() {
-    _bgmPlayer.dispose();
-    _uiPlayer.dispose();
-    _sfxPlayer.dispose();
-    _firePlayer.dispose();
-    super.onClose();
-  }
-
-  // --- การตั้งค่าเปิด/ปิดเสียง ---
-
-  void toggleBgm() {
-    isBgmMuted = !isBgmMuted;
-    if (isBgmMuted) {
-      _bgmPlayer.pause();
+  // --- Settings Actions ---
+  void setBgmVolume(double vol) {
+    bgmVolume = vol;
+    _bgmPlayer.setVolume(vol);
+    if (vol == 0) {
+      isBgmMuted = true;
     } else {
-      _bgmPlayer.resume();
+      isBgmMuted = false;
     }
     update();
   }
 
-  void toggleSfx() {
-    isSfxMuted = !isSfxMuted;
+  void setSfxVolume(double vol) {
+    sfxVolume = vol;
+    _sfxPlayer.setVolume(vol);
+    _sfxFirePlayer.setVolume(vol);
+    if (vol == 0) {
+      isSfxMuted = true;
+    } else {
+      isSfxMuted = false;
+    }
     update();
   }
 
-  // --- Music (BGM) ---
+  void toggleHaptics() {
+    hapticsEnabled = !hapticsEnabled;
+    if (hapticsEnabled) HapticFeedback.lightImpact();
+    update();
+  }
 
+  // ตัวช่วยสั่น (เรียกใช้แทน HapticFeedback โดยตรง เพื่อให้ปิดได้)
+  void vibrateLight() {
+    if (hapticsEnabled) HapticFeedback.lightImpact();
+  }
+
+  void vibrateHeavy() {
+    if (hapticsEnabled) HapticFeedback.heavyImpact();
+  }
+
+  // --- BGM ---
   Future<void> playBGM() async {
-    if (!isBgmMuted) {
-      await _bgmPlayer.play(AssetSource('sounds/bgm.mp3'));
+    _bgmPlayer.setReleaseMode(ReleaseMode.loop);
+    _bgmPlayer.setVolume(bgmVolume);
+    if (!isBgmMuted && bgmVolume > 0) {
+      await _bgmPlayer.play(AssetSource('sounds/bgm.ogg'));
     }
   }
 
@@ -54,34 +66,20 @@ class SoundController extends GetxController {
     await _bgmPlayer.stop();
   }
 
-  // --- Sound Effects (SFX) ---
-
+  // --- SFX ---
   Future<void> _playSFX(AudioPlayer player, String fileName) async {
-    if (isSfxMuted) return;
-    await player.stop(); // หยุดเสียงเก่าที่อาจจะค้างอยู่ของ Player ตัวนั้น
+    if (isSfxMuted || sfxVolume == 0) return;
+    await player.stop();
+    await player.setVolume(sfxVolume);
     await player.play(AssetSource('sounds/$fileName'));
   }
 
-  // 🖱️ เสียง UI
-  void playClick() => _playSFX(_uiPlayer, 'click.ogg'); // เสียงคลิกปุ่มทั่วไป
-  void playLock() => _playSFX(_uiPlayer, 'lock.ogg'); // เสียงล็อกเป้าหมาย
-  void playError() =>
-      _playSFX(_uiPlayer, 'error.ogg'); // เสียง Error (ยิงซ้ำ, วางไม่ได้)
-  void playRadar() => _playSFX(_uiPlayer, 'radar.mp3'); // เสียงสแกนตอนเริ่มเกม
-
-  // 💣 เสียงแอคชั่นในเกม
-  void playFire() => _playSFX(_firePlayer, 'fire.mp3'); // เสียงปืนใหญ่ตอนกดยิง
-  void playHit() => _playSFX(_sfxPlayer, 'hit.ogg'); // เสียงระเบิด (โดน)
-  void playMiss() => _playSFX(_sfxPlayer, 'miss.mp3'); // เสียงน้ำกระจาย (พลาด)
-
-  // 🏆 เสียงจบเกม (ให้ไปเล่นที่ _bgmPlayer เพื่อให้มันไปแทนที่เพลงพื้นหลังเดิมเลย)
-  void playWin() async {
-    _bgmPlayer.setReleaseMode(ReleaseMode.stop); // ไม่ต้องวนลูป
-    if (!isSfxMuted) await _bgmPlayer.play(AssetSource('sounds/win.mp3'));
-  }
-
-  void playLose() async {
-    _bgmPlayer.setReleaseMode(ReleaseMode.stop); // ไม่ต้องวนลูป
-    if (!isSfxMuted) await _bgmPlayer.play(AssetSource('sounds/lose.mp3'));
-  }
+  void playFire() => _playSFX(_sfxFirePlayer, 'fire.ogg');
+  void playHit() => _playSFX(_sfxPlayer, 'hit.ogg');
+  void playMiss() => _playSFX(_sfxPlayer, 'miss.ogg');
+  void playLock() => _playSFX(_sfxPlayer, 'click.ogg');
+  void playError() => _playSFX(_sfxPlayer, 'error.ogg');
+  void playWin() => _playSFX(_sfxPlayer, 'win.ogg');
+  void playLose() => _playSFX(_sfxPlayer, 'lose.ogg');
+  void playClick() => _playSFX(_sfxPlayer, 'click.ogg');
 }

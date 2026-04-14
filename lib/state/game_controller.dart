@@ -37,6 +37,7 @@ class GameController extends GetxController {
   int selectedTargetId = 1;
   bool isTurnTransition = false;
   bool isWaitingTurnEnd = false;
+  bool isWaitingAck = false;
   String turnTransitionMessage = "";
 
   // --- Game Settings ---
@@ -62,6 +63,7 @@ class GameController extends GetxController {
     isGameOver = false;
     isDeploying = true;
     isWaitingTurnEnd = false;
+    isWaitingAck = false;
     statusMessage = 'simulating'.tr;
     pendingShots.clear();
     currentBotSpeed = BotSpeed.normal;
@@ -284,7 +286,8 @@ class GameController extends GetxController {
     if (isGameOver ||
         !players[currentPlayerIndex].isBot ||
         isTurnTransition ||
-        isWaitingTurnEnd) {
+        isWaitingTurnEnd ||
+        isWaitingAck) {
       return;
     }
 
@@ -348,12 +351,29 @@ class GameController extends GetxController {
 
     if (!shotFired) {
       remainingShotsInTurn = 0;
-      if (!isGameOver) _endTurn();
+      if (!isGameOver) {
+        if (assistLevel == AssistLevel.realLife) {
+          isWaitingAck = true;
+          update();
+        } else {
+          _endTurn();
+        }
+      }
       return;
     }
     if (remainingShotsInTurn > 0 && !isGameOver && !isWaitingTurnEnd) {
       Future.delayed(Duration(milliseconds: botSpeedMs), _botLogic);
     }
+  }
+
+  void acknowledgeTurn() {
+    HapticFeedback.heavyImpact();
+    if (Get.isRegistered<SoundController>()) {
+      Get.find<SoundController>().playClick();
+    }
+    isWaitingAck = false;
+    update();
+    _endTurn();
   }
 
   // COMBAT LOGIC
@@ -508,19 +528,32 @@ class GameController extends GetxController {
     if (assistLevel == AssistLevel.realLife) {
       HapticFeedback.heavyImpact();
       String shooterDisplay = isShooterMe ? 'you_tag'.tr : shooterName;
+      String targetDisplay = isTargetMe ? 'you_tag'.tr : targetName;
 
       if (cell.terrain == Terrain.land && cell.entity == Entity.none) {
-        _addLog('log_reallife_land'
-            .trParams({'shooter': shooterDisplay, 'coord': coord}));
+        _addLog('log_reallife_land'.trParams({
+          'shooter': shooterDisplay,
+          'target': targetDisplay,
+          'coord': coord
+        }));
       } else if (isShipSunk) {
-        _addLog('log_reallife_sunk'
-            .trParams({'shooter': shooterDisplay, 'coord': coord}));
+        _addLog('log_reallife_sunk'.trParams({
+          'shooter': shooterDisplay,
+          'target': targetDisplay,
+          'coord': coord
+        }));
       } else if (isHit) {
-        _addLog('log_reallife_hit'
-            .trParams({'shooter': shooterDisplay, 'coord': coord}));
+        _addLog('log_reallife_hit'.trParams({
+          'shooter': shooterDisplay,
+          'target': targetDisplay,
+          'coord': coord
+        }));
       } else {
-        _addLog('log_reallife_miss'
-            .trParams({'shooter': shooterDisplay, 'coord': coord}));
+        _addLog('log_reallife_miss'.trParams({
+          'shooter': shooterDisplay,
+          'target': targetDisplay,
+          'coord': coord
+        }));
       }
     } else {
       if (wasRevealed) {
@@ -583,7 +616,15 @@ class GameController extends GetxController {
       isWaitingTurnEnd = true;
       update();
       Future.delayed(const Duration(milliseconds: 1500), () {
-        if (!isGameOver) _endTurn();
+        if (!isGameOver) {
+          if (assistLevel == AssistLevel.realLife &&
+              players[currentPlayerIndex].isBot) {
+            isWaitingAck = true;
+            update();
+          } else {
+            _endTurn();
+          }
+        }
       });
     } else {
       update();
@@ -702,7 +743,8 @@ class GameController extends GetxController {
     if (players[currentPlayerIndex].isBot ||
         isGameOver ||
         isTurnTransition ||
-        isWaitingTurnEnd) {
+        isWaitingTurnEnd ||
+        isWaitingAck) {
       return;
     }
 
@@ -806,6 +848,9 @@ class GameController extends GetxController {
     if (assistLevel != AssistLevel.realLife) return;
 
     HapticFeedback.selectionClick();
+    if (Get.isRegistered<SoundController>()) {
+      Get.find<SoundController>().playClick();
+    }
     String key = "${targetPlayerId}_$cellIndex";
 
     if (!manualMarkers.containsKey(key)) {

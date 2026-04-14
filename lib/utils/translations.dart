@@ -36,6 +36,11 @@ class AppTranslations extends Translations {
           'ast_reallife': 'REAL LIFE',
           'grid_size': 'GRID SIZE',
           'engage_bots': 'ENGAGE BOTS',
+          'settings': 'SETTINGS',
+          'haptic_feedback': 'VIBRATION / HAPTICS',
+          'bgm_volume': 'MUSIC VOLUME',
+          'sfx_volume': 'EFFECTS VOLUME',
+          'language': 'LANGUAGE',
 
           // --- MULTIPLAYER LOBBY ---
           'network_battle': 'NETWORK BATTLE (PvP)',
@@ -61,34 +66,37 @@ class AppTranslations extends Translations {
           // --- HOW TO PLAY (HELP) ---
           'how_to_play': 'HOW TO PLAY',
           'deployment_phase': 'DEPLOYMENT PHASE:',
-          'help_step_1': 'Draw 12 Land blocks (Max 2 islands)',
-          'help_step_2': 'Deploy 3 Turrets on Land',
-          'help_step_3': 'Deploy 5 Ships on Water',
+          'help_step_1':
+              'Draw Land blocks based on grid capacity (Max 2 islands)',
+          'help_step_2': 'Deploy Turrets on Land',
+          'help_step_3': 'Deploy all Ships on Water',
           'ammo_legend_title': 'AMMO LEGEND:',
           'ammo_legend_desc':
               ' 🟦 Base Fleet Ammo\n 🟧 Land Hit Bonus\n 🩵 Locked Target',
           'combat_rules': 'COMBAT RULES:',
-          'rule_1': '💥 Ammo = 1 + Active Turrets + Land Bonus',
+          'rule_1': '💥 Ammo per turn = 1 (Base) + Active Turrets + Land Bonus',
           'rule_2':
               '🎯 Salvo Fire: Lock multiple targets with your available ammo, then FIRE ALL!',
           'rule_3':
-              '⚖️ Rule: You must distribute your shots evenly across all alive enemies.',
+              '⚖️ Rule: You must distribute your shots evenly across all alive enemies (No ganging up).',
+
           'help_diff_title': 'BOT DIFFICULTY:',
           'help_diff_easy':
-              '🟢 EASY: Shoots randomly. May waste ammo on revealed spots.',
+              '🟢 EASY: Shoots randomly. May waste ammo on already revealed spots.',
           'help_diff_normal':
-              '🟡 NORMAL: Shoots randomly but avoids revealed sectors.',
+              '🟡 NORMAL: Shoots randomly but actively avoids revealed sectors.',
           'help_diff_hard':
               '🔴 HARD: The Hunter! Focuses fire around hit targets to sink ships fast.',
+
           'help_assist_title': 'ASSIST LEVELS:',
           'help_ast_casual':
-              '🟢 CASUAL: Shows everything. Prevents shooting revealed sectors. Full logs.',
+              '🟢 CASUAL: Board tracks all marks. Prevents wasting ammo on revealed sectors. Detailed combat logs.',
           'help_ast_standard':
-              '🟡 STANDARD: Misses fade. Wastes ammo on revealed sectors. Full logs.',
+              '🟡 STANDARD: Miss marks fade away. Wasting ammo on revealed sectors is possible. Detailed combat logs.',
           'help_ast_hardcore':
-              '🔴 HARDCORE: Land & Misses hidden. Logs hide ship/turret details.',
+              '🔴 HARDCORE: Misses and enemy land are hidden. Wasting ammo is possible. Vague combat logs.',
           'help_ast_reallife':
-              '⚫ REAL LIFE: Blind mode! No marks remain. (LONG PRESS to draw manual markers). Minimal logs.',
+              '⚫ REAL LIFE: Completely blind board. Long-press to manually mark X/O. Coordinate-based logs.',
 
           // --- PLACEMENT PHASE ---
           'tools': 'TOOLS',
@@ -108,7 +116,8 @@ class AppTranslations extends Translations {
           // --- GAME BOARD ---
           'targets': 'TARGETS',
           'global_radar': 'GLOBAL RADAR',
-          'radar_desc': 'Only successful hits and allied fleets are tracked',
+          'radar_desc':
+              'Tracks only your fleet and successful hits on enemies.',
           'close_radar': 'CLOSE RADAR',
           'my_fleet': 'MY FLEET',
           'me': 'ME',
@@ -120,9 +129,11 @@ class AppTranslations extends Translations {
           'fire_all': 'FIRE ALL!',
           'turn_announce': "@name's TURN",
           'hint_reallife':
-              '💡 HINT: Long-press a sector to manually mark X or O.',
+              '💡 HINT: Tap (during enemy turns) or Long-press to mark X/O. Game pauses after bot turns.',
+          'btn_ack': 'ACKNOWLEDGE',
           'simulating': 'SIMULATING ENEMY PLACEMENT...',
-          'distribute_shots': 'You must distribute shots evenly!',
+          'distribute_shots':
+              'You must distribute your shots evenly among all alive targets!',
           'abort_title': 'ABORT MISSION?',
           'abort_desc':
               'Are you sure you want to retreat to the main menu? All progress will be lost.',
@@ -134,34 +145,52 @@ class AppTranslations extends Translations {
           'battle_log': 'BATTLE LOG',
           'casual_block':
               'Sector already revealed! (Casual Mode prevents wasted ammo)',
-          'wasted_shot':
-              '⚠️ Wasted shot! You fired at an already revealed sector.',
-          'wasted_shot_bot': '🤣 @shooter wasted a shot on a known sector!',
-          'log_sunk_me': '🎉 You completely sank @target\'s ship! (Size @size)',
-          'log_sunk_enemy': '💥 @shooter sank @target\'s ship!',
-          'log_sunk_you': '🚨 MAYDAY! @shooter sank your ship!',
-          'log_hit_me': '🎯 Direct hit on @target\'s ship!',
-          'log_hit_enemy': '🎯 @shooter hit @target\'s ship!',
-          'log_hit_you': '⚠️ Warning! @shooter hit your ship!',
-          'log_turret_me': '🛡️ You destroyed @target\'s turret!',
-          'log_turret_enemy': '🛡️ @shooter destroyed @target\'s turret!',
-          'log_turret_you': '🧨 Watch out! @shooter destroyed your turret!',
-          'log_hardcore_hit': '🎯 Target Hit! (@target)',
-          'log_hardcore_miss': '💦 Target Missed! (@target)',
-          'log_reallife_hit': '🎯 [@shooter] Hit at @coord',
-          'log_reallife_miss': '💦 [@shooter] Miss at @coord',
-          'log_reallife_sunk': '💥 [@shooter] Sunk at @coord',
-          'log_reallife_land': '⛰️ [@shooter] Land at @coord',
+
+          'wasted_shot': '⚠️ [YOU] Wasted a shot on a revealed sector!',
+          'wasted_shot_bot': '🤣 [@shooter] Wasted a shot on a known sector!',
+
+          'log_sunk_me':
+              '🎉 [YOU] completely sank @target\'s ship! (Size @size)',
+          'log_sunk_enemy': '💥 [@shooter] sank @target\'s ship!',
+          'log_sunk_you': '🚨 [@shooter] sank YOUR ship!',
+
+          'log_hit_me': '🎯 [YOU] hit @target\'s ship!',
+          'log_hit_enemy': '🎯 [@shooter] hit @target\'s ship!',
+          'log_hit_you': '⚠️ [@shooter] hit YOUR ship!',
+
+          'log_turret_me': '🛡️ [YOU] destroyed @target\'s turret!',
+          'log_turret_enemy': '🛡️ [@shooter] destroyed @target\'s turret!',
+          'log_turret_you': '🧨 [@shooter] destroyed YOUR turret!',
+
+          'log_hardcore_hit':
+              '🎯 [?] Confirmed hit on @target! (Structure hidden)',
+          'log_hardcore_miss': '💦 [?] Attack missed on @target!',
+
+          'log_reallife_hit': '🎯 [@shooter] hit @target at @coord',
+          'log_reallife_miss': '💦 [@shooter] missed @target at @coord',
+          'log_reallife_sunk': '💥 [@shooter] sunk @target at @coord',
+          'log_reallife_land': '⛰️ [@shooter] hit land on @target at @coord',
 
           // --- ERRORS ---
-          'err_max_land': 'Maximum land blocks reached!',
+          'err_empty_name': 'Please enter your Commander Callsign!',
+          'err_max_land': 'Land block quota reached!',
           'err_land_on_ship': 'Cannot place land over a ship!',
-          'err_turret_on_water': 'Turrets must be built on land!',
-          'err_max_turret': 'Maximum turrets reached!',
-          'err_ship_on_land': 'Ships must be placed on water!',
+          'err_turret_on_water': 'Turrets must be placed on land!',
+          'err_max_turret': 'Turret quota reached!',
+          'err_ship_on_land': 'Ships must be placed on water (No land)!',
           'err_ship_overlap': 'Ships cannot overlap each other!',
           'err_ship_out_of_bounds':
               'Ship placement out of bounds!\n🔄 Try rotating it.',
+
+          // --- CREDITS & WARNINGS ---
+          'credits': 'CREDITS:',
+          'credit_desc':
+              'Game rules inspired by RUBSARB production\n"เรือรบรุ่นหนูลองยา : Battleship Beta Test Mark 1.1" (YouTube)',
+          'rl_warning_title': '🚨 REAL LIFE MODE WARNING',
+          'rl_warning_desc':
+              'In this mode, the system will NOT automatically record your hits or misses on the enemy board.\n\nYou must remember them or manually mark your shots by LONG PRESSING on the grid.\n\nAre you ready for the ultimate challenge?',
+          'accept_btn': 'ACCEPT',
+          'cancel_btn': 'CANCEL',
         },
 
         // ==========================================
@@ -197,6 +226,11 @@ class AppTranslations extends Translations {
           'ast_reallife': 'มืดบอด',
           'grid_size': 'ขนาดพื้นที่รบ',
           'engage_bots': 'เริ่มประจัญบาน',
+          'settings': 'การตั้งค่า',
+          'haptic_feedback': 'ระบบสั่น (Haptics)',
+          'bgm_volume': 'ระดับเสียงดนตรี',
+          'sfx_volume': 'ระดับเสียงเอฟเฟกต์',
+          'language': 'ภาษา (Language)',
 
           // --- MULTIPLAYER LOBBY ---
           'network_battle': 'รบออนไลน์ (PvP)',
@@ -222,34 +256,37 @@ class AppTranslations extends Translations {
           // --- HOW TO PLAY (HELP) ---
           'how_to_play': 'คู่มือการรบ',
           'deployment_phase': 'ขั้นตอนการวางกำลัง:',
-          'help_step_1': 'วาดแผ่นดิน 12 บล็อก (สูงสุด 2 เกาะ)',
-          'help_step_2': 'สร้างป้อมปืน 3 ป้อมบนแผ่นดิน',
-          'help_step_3': 'จัดวางกองเรือ 5 ลำบนผืนน้ำ',
+          'help_step_1': 'วาดแผ่นดินตามโควต้าของขนาดกระดาน (สูงสุด 2 เกาะ)',
+          'help_step_2': 'สร้างป้อมปืนบนแผ่นดิน',
+          'help_step_3': 'จัดวางกองเรือทั้งหมดลงบนผืนน้ำ',
           'ammo_legend_title': 'สัญลักษณ์กระสุน:',
           'ammo_legend_desc':
               ' 🟦 กระสุนกองเรือหลัก\n 🟧 โบนัสยิงแผ่นดิน\n 🩵 ล็อกเป้าหมายแล้ว',
           'combat_rules': 'กฎการปะทะ:',
-          'rule_1': '💥 กระสุน = 1 + ป้อมปืนที่เหลือ + โบนัส',
+          'rule_1':
+              '💥 กระสุนต่อเทิร์น = 1 (ฐาน) + ป้อมปืนที่รอดชีวิต + โบนัสยิงแผ่นดิน',
           'rule_2':
               '🎯 ยิงรัว (Salvo): ล็อกหลายเป้าหมายตามกระสุนที่มี แล้วกดยิงรวดเดียว!',
           'rule_3':
-              '⚖️ กฎเหล็ก: คุณต้องกระจายการยิงให้ศัตรูที่รอดชีวิตอย่างเท่าเทียมกัน',
+              '⚖️ กฎเหล็ก: ต้องกระจายเป้าหมายการยิงให้ศัตรูที่รอดชีวิตเท่าๆ กัน (ห้ามรุม)',
+
           'help_diff_title': 'ระดับความยากของ AI:',
           'help_diff_easy':
-              '🟢 ง่าย: สุ่มยิงมั่ว 100% (อาจยิงเสียกระสุนฟรีในจุดเดิม)',
+              '🟢 ง่าย: สุ่มยิงมั่ว 100% (อาจยิงเสียกระสุนฟรีในจุดที่เปิดแล้ว)',
           'help_diff_normal':
               '🟡 ปานกลาง: สุ่มยิงแบบฉลาด หลีกเลี่ยงพิกัดที่เคยยิงไปแล้ว',
           'help_diff_hard':
               '🔴 ยาก: นักล่า! เมื่อยิงโดนเรือจะสาดกระสุนรอบๆ เพื่อจมเรือทันที',
+
           'help_assist_title': 'ระดับการช่วยเหลือ:',
           'help_ast_casual':
-              '🟢 แคชชวล: กระดานจำรอยโดนและพลาด ห้ามยิงพิกัดซ้ำ ประวัติบอกครบถ้วน',
+              '🟢 แคชชวล: กระดานจำรอยให้ทั้งหมด ระบบป้องกันการยิงซ้ำพิกัดเดิม ประวัติรบแจ้งผลแบบละเอียด',
           'help_ast_standard':
-              '🟡 มาตรฐาน: กระดานจำเฉพาะรอยโดน ยิงซ้ำพิกัดเดิมเสียกระสุน ประวัติบอกครบถ้วน',
+              '🟡 มาตรฐาน: รอยยิงพลาดจะจางหายไป ระวังยิงซ้ำพิกัดเดิมเสียกระสุนฟรี ประวัติรบแจ้งผลแบบละเอียด',
           'help_ast_hardcore':
-              '🔴 ฮาร์ดคอร์: ซ่อนแผ่นดินศัตรู ประวัติไม่บอกว่าจมเรือหรือพังป้อม',
+              '🔴 ฮาร์ดคอร์: ซ่อนแผ่นดินศัตรูและรอยพลาด ยิงซ้ำเสียกระสุนฟรี ประวัติรบแจ้งผลแบบคลุมเครือ',
           'help_ast_reallife':
-              '⚫ มืดบอด: ซ่อนทุกอย่าง! (กดค้างที่ตารางเพื่อเขียน X, O บันทึกเอง) ประวัติบอกแค่พิกัด',
+              '⚫ มืดบอด: ซ่อนทุกอย่างบนกระดาน (กดค้างที่ช่องเพื่อจด X/O เอง) ประวัติรบแจ้งแค่พิกัดที่ยิง',
 
           // --- PLACEMENT PHASE ---
           'tools': 'เครื่องมือ',
@@ -269,7 +306,7 @@ class AppTranslations extends Translations {
           // --- GAME BOARD ---
           'targets': 'เป้าหมาย',
           'global_radar': 'เรดาร์รวม',
-          'radar_desc': 'แสดงเฉพาะพิกัดที่ยิงโดนเป้าหมายและกองเรือฝั่งเรา',
+          'radar_desc': 'แสดงเฉพาะกองเรือฝั่งเราและรอยที่ยิงโดนศัตรู',
           'close_radar': 'ปิดเรดาร์',
           'my_fleet': 'กองเรือเรา',
           'me': 'เรา',
@@ -281,9 +318,11 @@ class AppTranslations extends Translations {
           'fire_all': 'ยิงทั้งหมด!',
           'turn_announce': "เทิร์นของ @name",
           'hint_reallife':
-              '💡 คำแนะนำ: กดค้างที่ตารางเพื่อบันทึกเครื่องหมาย X หรือ O เอง',
+              '💡 คำแนะนำ: กดจิ้ม (ในตาของศัตรู) หรือกดค้างเพื่อบันทึก X/O เกมจะหยุดรอให้จดจนกว่าจะกดยืนยัน',
+          'btn_ack': 'บันทึกเสร็จสิ้น (ข้ามเทิร์น)',
           'simulating': 'กำลังจำลองการวางกำลังศัตรู...',
-          'distribute_shots': 'คุณต้องกระจายการยิงให้เท่าๆ กัน!',
+          'distribute_shots':
+              'คุณต้องกระจายการยิงเป้าหมายให้ศัตรูเท่าๆ กันทุกคน!',
           'abort_title': 'ยกเลิกภารกิจ?',
           'abort_desc':
               'คุณแน่ใจหรือไม่ว่าจะถอยทัพกลับสู่เมนูหลัก? ความคืบหน้าทั้งหมดจะสูญหาย',
@@ -294,34 +333,52 @@ class AppTranslations extends Translations {
           // --- BATTLE LOGS ---
           'battle_log': 'บันทึกการรบ',
           'casual_block':
-              'พิกัดนี้ถูกเปิดไปแล้ว! (โหมดแคชชวลป้องกันการเสียกระสุน)',
-          'wasted_shot': '⚠️ เสียกระสุนฟรี! ยิงซ้ำพิกัดที่เปิดไปแล้ว',
-          'wasted_shot_bot': '🤣 @shooter ยิงเสียของไปโดนจุดที่เปิดแล้ว!',
-          'log_sunk_me': '🎉 คุณจมเรือของ @target สำเร็จ! (ขนาด @size)',
-          'log_sunk_enemy': '💥 @shooter จมเรือของ @target!',
-          'log_sunk_you': '🚨 แย่แล้ว! @shooter จมเรือของคุณ!',
-          'log_hit_me': '🎯 ยิงโดนเรือของ @target เต็มๆ!',
-          'log_hit_enemy': '🎯 @shooter ยิงโดนเรือของ @target!',
-          'log_hit_you': '⚠️ คำเตือน! @shooter ยิงโดนเรือคุณ!',
-          'log_turret_me': '🛡️ คุณทำลายป้อมปืนของ @target!',
-          'log_turret_enemy': '🛡️ @shooter ทำลายป้อมปืนของ @target!',
-          'log_turret_you': '🧨 ระวัง! @shooter ทำลายป้อมปืนของคุณ!',
-          'log_hardcore_hit': '🎯 ยิงโดนเป้าหมาย! (@target)',
-          'log_hardcore_miss': '💦 ยิงพลาดเป้า! (@target)',
-          'log_reallife_hit': '🎯 [@shooter] โดนเป้าหมายพิกัด @coord',
-          'log_reallife_miss': '💦 [@shooter] ไม่โดนพิกัด @coord',
-          'log_reallife_sunk': '💥 [@shooter] จมเป้าหมายพิกัด @coord',
-          'log_reallife_land': '⛰️ [@shooter] โดนดินพิกัด @coord',
+              'พิกัดนี้ยิงไปแล้ว! (โหมดแคชชวลช่วยป้องกันการยิงซ้ำเสียกระสุนฟรี)',
+
+          'wasted_shot': '⚠️ [คุณ] เสียกระสุนฟรี! ยิงซ้ำพิกัดเดิม',
+          'wasted_shot_bot': '🤣 [@shooter] ยิงเสียของไปโดนจุดที่เปิดแล้ว!',
+
+          'log_sunk_me': '🎉 [คุณ] จมเรือของ @target สำเร็จ! (ขนาด @size)',
+          'log_sunk_enemy': '💥 [@shooter] จมเรือของ @target!',
+          'log_sunk_you': '🚨 [@shooter] จมเรือของ [คุณ]!',
+
+          'log_hit_me': '🎯 [คุณ] ยิงโดนเรือของ @target!',
+          'log_hit_enemy': '🎯 [@shooter] ยิงโดนเรือของ @target!',
+          'log_hit_you': '⚠️ [@shooter] ยิงโดนเรือของ [คุณ]!',
+
+          'log_turret_me': '🛡️ [คุณ] ทำลายป้อมปืนของ @target!',
+          'log_turret_enemy': '🛡️ [@shooter] ทำลายป้อมปืนของ @target!',
+          'log_turret_you': '🧨 [@shooter] ทำลายป้อมปืนของ [คุณ]!',
+
+          'log_hardcore_hit': '🎯 [?] ยิงโดนเป้าหมาย @target! (ซ่อนประเภท)',
+          'log_hardcore_miss': '💦 [?] ยิงพลาดเป้าหมาย @target!',
+
+          'log_reallife_hit': '🎯 [@shooter] ยิง @target โดนพิกัด @coord',
+          'log_reallife_miss': '💦 [@shooter] ยิง @target พลาดพิกัด @coord',
+          'log_reallife_sunk': '💥 [@shooter] ยิง @target จมที่พิกัด @coord',
+          'log_reallife_land':
+              '⛰️ [@shooter] ยิง @target โดนแผ่นดินพิกัด @coord',
 
           // --- ERRORS ---
-          'err_max_land': 'สร้างแผ่นดินครบตามจำนวนที่กำหนดแล้ว!',
-          'err_land_on_ship': 'ไม่สามารถสร้างแผ่นดินทับกองเรือได้!',
-          'err_turret_on_water': 'ป้อมปืนต้องสร้างบนแผ่นดินเท่านั้น!',
-          'err_max_turret': 'สร้างป้อมปืนครบตามจำนวนที่กำหนดแล้ว!',
-          'err_ship_on_land': 'กองเรือต้องวางบนผืนน้ำเท่านั้น!',
+          'err_empty_name': 'กรุณาระบุชื่อผู้บัญชาการก่อนเริ่มภารกิจ!',
+          'err_max_land': 'โควต้าสร้างแผ่นดินเต็มแล้ว!',
+          'err_land_on_ship': 'ไม่สามารถวางแผ่นดินทับกองเรือได้!',
+          'err_turret_on_water': 'ป้อมปืนต้องวางบนแผ่นดินเท่านั้น!',
+          'err_max_turret': 'โควต้าสร้างป้อมปืนเต็มแล้ว!',
+          'err_ship_on_land': 'กองเรือต้องวางบนผืนน้ำ (ห้ามทับแผ่นดิน)!',
           'err_ship_overlap': 'ไม่สามารถวางกองเรือทับกันได้!',
           'err_ship_out_of_bounds':
               'กองเรือล้นออกนอกกระดาน!\n🔄 ลองกดปุ่มหมุนทิศทางดูนะ',
+
+          // --- CREDITS & WARNINGS ---
+          'credits': 'เครดิต (CREDITS):',
+          'credit_desc':
+              'กฎกติกาการเล่นได้รับแรงบันดาลใจจากช่อง RUBSARB production\nคลิป "เรือรบรุ่นหนูลองยา : Battleship Beta Test Mark 1.1" (YouTube)',
+          'rl_warning_title': '🚨 คำเตือน: โหมดมืดบอด (REAL LIFE)',
+          'rl_warning_desc':
+              'ในโหมดนี้ ระบบจะ "ไม่บันทึก" รอยยิงโดนหรือพลาดบนกระดานศัตรูให้คุณ!\n\nคุณจะต้องจดจำพิกัดเอง หรือ "กดค้าง" ที่ตารางเพื่อวาดเครื่องหมาย X และ O ด้วยตัวเอง\n\nคุณพร้อมรับความท้าทายนี้หรือไม่?',
+          'accept_btn': 'พร้อมลุย!',
+          'cancel_btn': 'ยกเลิก',
         },
 
         // ==========================================
@@ -357,6 +414,11 @@ class AppTranslations extends Translations {
           'ast_reallife': 'VIDA REAL',
           'grid_size': 'TAMAÑO DE LA CUADRÍCULA',
           'engage_bots': 'ATACAR BOTS',
+          'settings': 'AJUSTES',
+          'haptic_feedback': 'VIBRACIÓN',
+          'bgm_volume': 'VOLUMEN MÚSICA',
+          'sfx_volume': 'VOLUMEN EFECTOS',
+          'language': 'IDIOMA',
 
           // --- MULTIPLAYER LOBBY ---
           'network_battle': 'BATALLA EN RED (PvP)',
@@ -382,16 +444,19 @@ class AppTranslations extends Translations {
           // --- HOW TO PLAY (HELP) ---
           'how_to_play': 'CÓMO JUGAR',
           'deployment_phase': 'FASE DE DESPLIEGUE:',
-          'help_step_1': 'Dibuja 12 bloques de Tierra (Máx 2 islas)',
-          'help_step_2': 'Despliega 3 Torretas en Tierra',
-          'help_step_3': 'Despliega 5 Barcos en Agua',
+          'help_step_1':
+              'Dibuja bloques de Tierra según la cuadrícula (Máx 2 islas)',
+          'help_step_2': 'Despliega Torretas en Tierra',
+          'help_step_3': 'Despliega todos los Barcos en Agua',
           'ammo_legend_title': 'LEYENDA DE MUNICIÓN:',
           'ammo_legend_desc':
               ' 🟦 Munición Base\n 🟧 Bono por Tierra\n 🩵 Objetivo Fijado',
           'combat_rules': 'REGLAS DE COMBATE:',
-          'rule_1': '💥 Munición = 1 + Torretas Activas + Bono',
+          'rule_1':
+              '💥 Munición por turno = 1 (Base) + Torretas Activas + Bono',
           'rule_2': '🎯 Salva: ¡Fija objetivos, luego DISPARA TODO!',
           'rule_3': '⚖️ Regla: Distribuye tus disparos equitativamente.',
+
           'help_diff_title': 'DIFICULTAD DEL BOT:',
           'help_diff_easy':
               '🟢 FÁCIL: Dispara al azar. Puede desperdiciar munición.',
@@ -399,15 +464,16 @@ class AppTranslations extends Translations {
               '🟡 NORMAL: Dispara al azar pero evita sectores revelados.',
           'help_diff_hard':
               '🔴 DIFÍCIL: ¡El Cazador! Enfoca el fuego alrededor del objetivo.',
+
           'help_assist_title': 'NIVELES DE ASISTENCIA:',
           'help_ast_casual':
-              '🟢 CASUAL: Muestra todo. Evita disparos repetidos. Registros completos.',
+              '🟢 CASUAL: El tablero recuerda todo. Evita disparos repetidos. Registros detallados.',
           'help_ast_standard':
-              '🟡 ESTÁNDAR: Fallos desaparecen. Pierde munición repetida. Registros completos.',
+              '🟡 ESTÁNDAR: Los fallos desaparecen. Pierdes munición si repites. Registros detallados.',
           'help_ast_hardcore':
-              '🔴 EXTREMO: Tierra y Fallos ocultos. Registros sin detalles.',
+              '🔴 EXTREMO: Tierra enemiga y fallos ocultos. Pierdes munición si repites. Registros vagos.',
           'help_ast_reallife':
-              '⚫ VIDA REAL: ¡Ciego! (MANTÉN PRESIONADO para marcar). Registros mínimos.',
+              '⚫ VIDA REAL: Tablero ciego. Mantén presionado para marcar X/O. Registros por coordenadas.',
 
           // --- PLACEMENT PHASE ---
           'tools': 'HERRAMIENTAS',
@@ -439,7 +505,8 @@ class AppTranslations extends Translations {
           'fire_all': '¡DISPARAR!',
           'turn_announce': 'TURNO DE @name',
           'hint_reallife':
-              '💡 PISTA: Mantén presionado un sector para marcar X o O.',
+              '💡 PISTA: Toca (turno enemigo) o mantén presionado para marcar X/O. El juego se pausa.',
+          'btn_ack': 'ENTENDIDO',
           'simulating': 'SIMULANDO DESPLIEGUE ENEMIGO...',
           'distribute_shots': '¡Debes distribuir los disparos equitativamente!',
           'abort_title': '¿ABORTAR MISIÓN?',
@@ -452,33 +519,53 @@ class AppTranslations extends Translations {
           // --- BATTLE LOGS ---
           'battle_log': 'REGISTRO DE BATALLA',
           'casual_block': '¡Sector ya revelado! (Modo Casual activado)',
-          'wasted_shot': '⚠️ ¡Disparo desperdiciado! Sector ya revelado.',
-          'wasted_shot_bot': '🤣 ¡@shooter desperdició un disparo!',
-          'log_sunk_me': '🎉 ¡Hundiste el barco de @target! (Tamaño @size)',
-          'log_sunk_enemy': '💥 ¡@shooter hundió el barco de @target!',
-          'log_sunk_you': '🚨 ¡MAYDAY! ¡@shooter hundió tu barco!',
-          'log_hit_me': '🎯 ¡Impacto directo en @target!',
-          'log_hit_enemy': '🎯 ¡@shooter impactó a @target!',
-          'log_hit_you': '⚠️ ¡Advertencia! ¡@shooter te impactó!',
-          'log_turret_me': '🛡️ ¡Destruiste la torreta de @target!',
-          'log_turret_enemy': '🛡️ ¡@shooter destruyó la torreta de @target!',
-          'log_turret_you': '🧨 ¡Cuidado! ¡@shooter destruyó tu torreta!',
-          'log_hardcore_hit': '🎯 ¡Objetivo impactado! (@target)',
-          'log_hardcore_miss': '💦 ¡Objetivo fallado! (@target)',
-          'log_reallife_hit': '🎯 [@shooter] Impacto en @coord',
-          'log_reallife_miss': '💦 [@shooter] Fallo en @coord',
-          'log_reallife_sunk': '💥 [@shooter] Hundido en @coord',
-          'log_reallife_land': '⛰️ [@shooter] Tierra en @coord',
+
+          'wasted_shot': '⚠️ [TÚ] ¡Disparo desperdiciado en sector revelado!',
+          'wasted_shot_bot': '🤣 [@shooter] desperdició un disparo!',
+
+          'log_sunk_me': '🎉 [TÚ] hundiste el barco de @target (Tamaño @size)',
+          'log_sunk_enemy': '💥 [@shooter] hundió el barco de @target',
+          'log_sunk_you': '🚨 [@shooter] hundió TU barco',
+
+          'log_hit_me': '🎯 [TÚ] impactaste el barco de @target',
+          'log_hit_enemy': '🎯 [@shooter] impactó el barco de @target',
+          'log_hit_you': '⚠️ [@shooter] impactó TU barco',
+
+          'log_turret_me': '🛡️ [TÚ] destruiste la torreta de @target',
+          'log_turret_enemy': '🛡️ [@shooter] destruyó la torreta de @target',
+          'log_turret_you': '🧨 [@shooter] destruyó TU torreta',
+
+          'log_hardcore_hit': '🎯 [?] Impacto en @target (Estructura oculta)',
+          'log_hardcore_miss': '💦 [?] Fallo en @target',
+
+          'log_reallife_hit': '🎯 [@shooter] impactó a @target en @coord',
+          'log_reallife_miss': '💦 [@shooter] falló a @target en @coord',
+          'log_reallife_sunk': '💥 [@shooter] hundió a @target en @coord',
+          'log_reallife_land':
+              '⛰️ [@shooter] dio en tierra de @target en @coord',
 
           // --- ERRORS ---
+          'err_empty_name':
+              '¡Por favor, ingrese su identificador de comandante!',
           'err_max_land': '¡Límite máximo de bloques de tierra alcanzado!',
           'err_land_on_ship': '¡No se puede colocar tierra sobre un barco!',
           'err_turret_on_water': '¡Las torretas deben construirse en tierra!',
           'err_max_turret': '¡Límite máximo de torretas alcanzado!',
-          'err_ship_on_land': '¡Los barcos deben colocarse en el agua!',
+          'err_ship_on_land':
+              '¡Los barcos deben colocarse en el agua (no sobre tierra)!',
           'err_ship_overlap': '¡Los barcos no pueden superponerse!',
           'err_ship_out_of_bounds':
               '¡Barco fuera de los límites!\n🔄 Intenta rotarlo.',
+
+          // --- CREDITS & WARNINGS ---
+          'credits': 'CRÉDITOS:',
+          'credit_desc':
+              'Reglas del juego inspiradas en RUBSARB production\n"เรือรบรุ่นหนูลองยา : Battleship Beta Test Mark 1.1" (YouTube)',
+          'rl_warning_title': '🚨 ADVERTENCIA: MODO VIDA REAL',
+          'rl_warning_desc':
+              'En este modo, el sistema NO registrará automáticamente tus impactos o fallos.\n\nDebes recordarlos o marcarlos manualmente MANTENIENDO PRESIONADO en la cuadrícula.\n\n¿Estás listo para el desafío?',
+          'accept_btn': 'ACEPTAR',
+          'cancel_btn': 'CANCELAR',
         },
 
         // ==========================================
@@ -514,6 +601,11 @@ class AppTranslations extends Translations {
           'ast_reallife': 'リアルライフ',
           'grid_size': 'グリッドサイズ',
           'engage_bots': '交戦開始',
+          'settings': '設定',
+          'haptic_feedback': '振動 (ハプティクス)',
+          'bgm_volume': 'BGM 音量',
+          'sfx_volume': '効果音 音量',
+          'language': '言語 (Language)',
 
           // --- MULTIPLAYER LOBBY ---
           'network_battle': 'ネットワークバトル (PvP)',
@@ -539,24 +631,26 @@ class AppTranslations extends Translations {
           // --- HOW TO PLAY (HELP) ---
           'how_to_play': '遊び方',
           'deployment_phase': '配置フェーズ:',
-          'help_step_1': '12個の陸地を描く (最大2つの島)',
-          'help_step_2': '陸地に3つの砲塔を配置',
-          'help_step_3': '水上に5隻の船を配置',
+          'help_step_1': 'グリッドに応じた数の陸地を描く (最大2つの島)',
+          'help_step_2': '陸地に砲塔を配置',
+          'help_step_3': '水上にすべての船を配置',
           'ammo_legend_title': '弾薬の凡例:',
           'ammo_legend_desc': ' 🟦 基本艦隊弾薬\n 🟧 陸地ヒットボーナス\n 🩵 ロックオン',
           'combat_rules': '戦闘ルール:',
-          'rule_1': '💥 弾薬 = 1 + アクティブな砲塔 + ボーナス',
+          'rule_1': '💥 弾薬 = 1 (基本) + アクティブな砲塔 + ボーナス',
           'rule_2': '🎯 一斉射撃: ターゲットをロックして、全弾発射！',
           'rule_3': '⚖️ ルール: 生存している敵全体に均等に撃つ必要があります。',
+
           'help_diff_title': 'ボットの難易度:',
           'help_diff_easy': '🟢 簡単: ランダムに撃つ。同じ場所を撃つ可能性あり。',
           'help_diff_normal': '🟡 普通: ランダムに撃つが、判明した場所は避ける。',
           'help_diff_hard': '🔴 難しい: ハンター！ ヒットした周辺を集中砲火。',
+
           'help_assist_title': 'アシストレベル:',
-          'help_ast_casual': '🟢 カジュアル: 全て表示。同じ場所を撃つのを防ぐ。',
-          'help_ast_standard': '🟡 スタンダード: ミスは消える。同じ場所を撃つと弾を消費。',
-          'help_ast_hardcore': '🔴 ハードコア: 陸地とミスは非表示。ログの詳細は隠される。',
-          'help_ast_reallife': '⚫ リアルライフ: ブラインド！ (長押しで手動マーク)。',
+          'help_ast_casual': '🟢 カジュアル: 盤面は全てを記録。無駄撃ちを自動で防止。詳細な戦闘ログ。',
+          'help_ast_standard': '🟡 スタンダード: ミスの跡が消える。同じ場所を撃つと弾を消費。詳細な戦闘ログ。',
+          'help_ast_hardcore': '🔴 ハードコア: 敵の陸地とミスは非表示。同じ場所を撃つと弾を消費。曖昧な戦闘ログ。',
+          'help_ast_reallife': '⚫ リアルライフ: 完全なブラインド盤面（長押しで手動マーク）。座標ベースのログ。',
 
           // --- PLACEMENT PHASE ---
           'tools': 'ツール',
@@ -587,9 +681,10 @@ class AppTranslations extends Translations {
           'targets_locked': 'ターゲットロック完了',
           'fire_all': '全弾発射！',
           'turn_announce': '@name のターン',
-          'hint_reallife': '💡 ヒント: セクターを長押しして手動でXまたはOをマーク。',
+          'hint_reallife': '💡 ヒント: 敵のターン中にタップ、または長押しでX/Oをマーク。記録のために一時停止します。',
+          'btn_ack': '確認 (ターン終了)',
           'simulating': '敵の配置をシミュレート中...',
-          'distribute_shots': '均等に撃つ必要があります！',
+          'distribute_shots': '生きているすべての敵に均等に撃つ必要があります！',
           'abort_title': 'ミッションを中止しますか？',
           'abort_desc': 'メインメニューに撤退しますか？進行状況は失われます。',
           'war_over': '戦争終結',
@@ -599,32 +694,49 @@ class AppTranslations extends Translations {
           // --- BATTLE LOGS ---
           'battle_log': 'バトルログ',
           'casual_block': '既に判明しているセクターです！',
-          'wasted_shot': '⚠️ 無駄撃ち！ 既に判明しているセクターを撃ちました。',
-          'wasted_shot_bot': '🤣 @shooter が既知のセクターに無駄撃ち！',
-          'log_sunk_me': '🎉 @target の船を完全に沈めました！ (サイズ @size)',
-          'log_sunk_enemy': '💥 @shooter が @target の船を沈めました！',
-          'log_sunk_you': '🚨 メーデー！ @shooter があなたの船を沈めました！',
-          'log_hit_me': '🎯 @target の船に直撃！',
-          'log_hit_enemy': '🎯 @shooter が @target の船にヒット！',
-          'log_hit_you': '⚠️ 警告！ @shooter があなたの船にヒット！',
-          'log_turret_me': '🛡️ @target の砲塔を破壊しました！',
-          'log_turret_enemy': '🛡️ @shooter が @target の砲塔を破壊しました！',
-          'log_turret_you': '🧨 気をつけて！ @shooter があなたの砲塔を破壊しました！',
-          'log_hardcore_hit': '🎯 ターゲットにヒット！ (@target)',
-          'log_hardcore_miss': '💦 ターゲットを外しました！ (@target)',
-          'log_reallife_hit': '🎯 [@shooter] @coord でヒット',
-          'log_reallife_miss': '💦 [@shooter] @coord でミス',
-          'log_reallife_sunk': '💥 [@shooter] @coord で撃沈',
-          'log_reallife_land': '⛰️ [@shooter] @coord で陸地',
+
+          'wasted_shot': '⚠️ [あなた] 既に判明しているセクターに無駄撃ち！',
+          'wasted_shot_bot': '🤣 [@shooter] が既知のセクターに無駄撃ち！',
+
+          'log_sunk_me': '🎉 [あなた] が @target の船を撃沈！ (サイズ @size)',
+          'log_sunk_enemy': '💥 [@shooter] が @target の船を撃沈！',
+          'log_sunk_you': '🚨 [@shooter] が [あなた] の船を撃沈！',
+
+          'log_hit_me': '🎯 [あなた] が @target の船に命中！',
+          'log_hit_enemy': '🎯 [@shooter] が @target の船に命中！',
+          'log_hit_you': '⚠️ [@shooter] が [あなた] の船に命中！',
+
+          'log_turret_me': '🛡️ [あなた] が @target の砲塔を破壊！',
+          'log_turret_enemy': '🛡️ [@shooter] が @target の砲塔を破壊！',
+          'log_turret_you': '🧨 [@shooter] が [あなた] の砲塔を破壊！',
+
+          'log_hardcore_hit': '🎯 [?] @target に命中！（詳細非表示）',
+          'log_hardcore_miss': '💦 [?] @target への攻撃ミス！',
+
+          'log_reallife_hit': '🎯 [@shooter] が @target の @coord に命中',
+          'log_reallife_miss': '💦 [@shooter] が @target の @coord でミス',
+          'log_reallife_sunk': '💥 [@shooter] が @target の @coord で撃沈',
+          'log_reallife_land': '⛰️ [@shooter] が @target の @coord で陸地に命中',
 
           // --- ERRORS ---
+          'err_empty_name': '指揮官コールサインを入力してください！',
           'err_max_land': '陸地ブロックの最大数に達しました！',
           'err_land_on_ship': '船の上に陸地を配置することはできません！',
           'err_turret_on_water': '砲塔は陸地に配置する必要があります！',
           'err_max_turret': '砲塔の最大数に達しました！',
-          'err_ship_on_land': '船は水上に配置する必要があります！',
+          'err_ship_on_land': '船は水上に配置する必要があります（陸地は不可）！',
           'err_ship_overlap': '船を重ねて配置することはできません！',
           'err_ship_out_of_bounds': '船がボードからはみ出しています！\n🔄 回転させてみてください。',
+
+          // --- CREDITS & WARNINGS ---
+          'credits': 'クレジット:',
+          'credit_desc':
+              'ゲームルールは RUBSARB production に触発されました\n「เรือรบรุ่นหนูลองยา : Battleship Beta Test Mark 1.1」(YouTube)',
+          'rl_warning_title': '🚨 警告: リアルライフモード',
+          'rl_warning_desc':
+              'このモードでは、システムは敵ボードのヒットやミスを自動的に記録しません。\n\n自分で覚えるか、グリッドを「長押し」して手動でマークする必要があります。\n\n究極の挑戦の準備はできていますか？',
+          'accept_btn': '挑戦する',
+          'cancel_btn': 'キャンセル',
         },
       };
 }
