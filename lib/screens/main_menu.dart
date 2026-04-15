@@ -1,11 +1,12 @@
 import 'dart:math';
-import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter/material.dart';
+
 import '../state/game_controller.dart';
 import '../state/multiplayer_controller.dart';
 import '../state/sound_controller.dart';
 import '../utils/constants.dart';
-import '../widgets/shared_widgets.dart';
+import '../widgets/shared/animated_paper_bg.dart';
 import '../widgets/dialogs/how_to_play_dialog.dart';
 import '../widgets/dialogs/multiplayer_dialog.dart';
 import '../widgets/dialogs/real_life_warning_dialog.dart';
