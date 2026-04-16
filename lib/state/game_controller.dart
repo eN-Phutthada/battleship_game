@@ -39,6 +39,7 @@ class GameController extends GetxController {
   bool isWaitingTurnEnd = false;
   bool isWaitingAck = false;
   String turnTransitionMessage = "";
+  VehicleTheme vehicleTheme = VehicleTheme.boat;
 
   // --- Game Settings ---
   bool isDevMode = false;

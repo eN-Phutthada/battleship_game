@@ -2,6 +2,8 @@ enum Terrain { water, land }
 
 enum Entity { none, ship, turret }
 
+enum VehicleTheme { boat, submarine, space }
+
 class ShipData {
   final String id;
   final int size;

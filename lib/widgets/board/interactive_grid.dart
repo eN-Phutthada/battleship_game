@@ -1,8 +1,11 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+
 import '../../state/game_controller.dart';
 import '../../models/game_models.dart';
 import '../../utils/constants.dart';
+// ตรวจสอบให้แน่ใจว่า ConnectedShipPiece, TurretPiece, ThemedLandPiece
+// ถูก import มาจากไฟล์ที่ถูกต้อง (เช่น themed_pieces.dart หรือ connected_ship_piece.dart)
 import '../shared/connected_ship_piece.dart';
 
 class InteractiveGridWidget extends StatelessWidget {
@@ -71,6 +74,7 @@ class InteractiveGridWidget extends StatelessWidget {
                     itemBuilder: (context, index) {
                       int r = index ~/ (game.columns + 1);
                       int c = index % (game.columns + 1);
+
                       if (r == 0 && c == 0) return const SizedBox();
                       if (r == 0) return GridHeaderCell('$c');
                       if (c == 0)
@@ -79,12 +83,15 @@ class InteractiveGridWidget extends StatelessWidget {
                       int boardIdx = (r - 1) * game.columns + (c - 1);
                       Cell cell = targetPlayer.board[boardIdx]!;
 
-                      Color cellColor = Colors.transparent;
+                      bool showLand = false;
+                      double landOpacity = 1.0;
+
                       if (cell.terrain == Terrain.land) {
                         if (isMyBoard || (cell.isRevealed && !hideEnemyLand)) {
-                          cellColor = Colors.brown[300]!.withOpacity(0.6);
+                          showLand = true;
                         } else if (game.isDevMode && !isMyBoard) {
-                          cellColor = Colors.brown[300]!.withOpacity(0.25);
+                          showLand = true;
+                          landOpacity = 0.3;
                         }
                       }
 
@@ -108,14 +115,62 @@ class InteractiveGridWidget extends StatelessWidget {
                           }
                         },
                         splashColor: Colors.cyanAccent.withOpacity(0.3),
-                        child: Container(
-                            decoration: BoxDecoration(
-                                border: Border.all(
-                                    color: AppColors.ink.withOpacity(0.2),
-                                    width: 1.0),
-                                color: cellColor),
-                            child: _buildCellGraphics(
-                                boardIdx, targetPlayer, game)),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeOut,
+                          decoration: BoxDecoration(
+                            color: Colors.transparent,
+                          ),
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              // 1. Layer แผ่นดิน (Land) - แสดงผลตามธีมและโหมด Dev
+                              if (showLand)
+                                Opacity(
+                                  opacity: landOpacity,
+                                  child: ThemedLandPiece(
+                                    index: boardIdx,
+                                    board: targetPlayer.board,
+                                    columns: game.columns,
+                                  ),
+                                ),
+
+                              // 2. ✨ Layer เส้นตาราง (Faint Grid Lines) บนแผ่นดิน ✨
+                              // เราใช้ Opacity ต่ำๆ เพื่อให้เห็นเส้นจางๆ
+                              if (showLand)
+                                Opacity(
+                                  opacity:
+                                      0.1, // ปรับความจางของเส้นตารางบนแผ่นดินที่นี่ (0.0 - 1.0)
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: AppColors.ink,
+                                        width: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+
+                              // 3. Layer เส้นตารางหลัก (Main Grid Lines) - สำหรับพื้นที่ที่ไม่ใช่ Land
+                              if (!showLand)
+                                Container(
+                                  decoration: BoxDecoration(
+                                    border: Border.all(
+                                      color: AppColors.ink.withOpacity(
+                                          0.2), // ความชัดเจนของเส้นตารางปกติ
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                ),
+
+                              // 4. Layer เนื้อหา (Cell Graphics) วางทับด้านบนสุด
+                              Center(
+                                child: _buildCellGraphics(
+                                    boardIdx, targetPlayer, game),
+                              ),
+                            ],
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -153,10 +208,7 @@ class InteractiveGridWidget extends StatelessWidget {
 
     if (showBase && cell.entity != Entity.none) {
       if (cell.entity == Entity.turret) {
-        baseContent = const FractionallySizedBox(
-            widthFactor: 0.75,
-            heightFactor: 0.75,
-            child: FittedBox(child: Icon(Icons.fort, color: AppColors.ink)));
+        baseContent = const TurretPiece();
       } else if (cell.entity == Entity.ship) {
         baseContent = ConnectedShipPiece(
             index: index,
@@ -176,10 +228,11 @@ class InteractiveGridWidget extends StatelessWidget {
     Widget manualMarker = const SizedBox();
     if (game.assistLevel == AssistLevel.realLife && isEnemyBoard) {
       String? marker = game.manualMarkers["${targetPlayer.id}_$index"];
-      if (marker == 'X')
+      if (marker == 'X') {
         manualMarker = _buildXIcon(color: Colors.redAccent);
-      else if (marker == 'O')
+      } else if (marker == 'O') {
         manualMarker = _buildOIcon(color: AppColors.ink.withOpacity(0.6));
+      }
     }
 
     Widget overlay = const SizedBox();
@@ -218,10 +271,11 @@ class InteractiveGridWidget extends StatelessWidget {
                 }
               });
         } else {
-          if (isHitReal && showHit)
+          if (isHitReal && showHit) {
             overlay = _buildXIcon();
-          else if (!isHitReal && showMiss)
+          } else if (!isHitReal && showMiss) {
             overlay = _buildOIcon(color: AppColors.ink.withOpacity(0.7));
+          }
         }
       }
     }
@@ -252,10 +306,15 @@ class InteractiveGridWidget extends StatelessWidget {
 class GridHeaderCell extends StatelessWidget {
   final String text;
   const GridHeaderCell(this.text, {super.key});
+
   @override
   Widget build(BuildContext context) {
+    // ปรับให้ GridHeader มีความหนาของเส้นตารางเข้ากันได้พอดี
     return Container(
-      color: AppColors.ink.withOpacity(0.05),
+      decoration: BoxDecoration(
+        color: AppColors.ink.withOpacity(0.05),
+        border: Border.all(color: AppColors.ink.withOpacity(0.2), width: 0.5),
+      ),
       child: Center(
         child: Text(
           text,

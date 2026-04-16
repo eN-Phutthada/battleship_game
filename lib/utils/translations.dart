@@ -17,6 +17,10 @@ class AppTranslations extends Translations {
           'vert': 'VERT',
 
           // --- MAIN MENU ---
+          'game_title': 'PAPER\nBATTLESHIP',
+          'ee_sub': 'Submarine deployed! ⚓',
+          'ee_rocket': 'Space Force deployed! 🚀',
+          'ee_boat': 'Back to basics! ⛵',
           'mission_briefing': 'MISSION BRIEFING',
           'commander_name': 'COMMANDER CALLSIGN',
           'local_campaign': 'LOCAL CAMPAIGN (VS BOTS)',
@@ -207,6 +211,10 @@ class AppTranslations extends Translations {
           'vert': 'แนวตั้ง',
 
           // --- MAIN MENU ---
+          'game_title': 'ยุทธนาวี\nกระดาษ',
+          'ee_sub': 'ปลดล็อกเรือดำน้ำสำเร็จ! ⚓',
+          'ee_rocket': 'กองกำลังอวกาศพร้อมรบ! 🚀',
+          'ee_boat': 'กลับสู่ความคลาสสิก! ⛵',
           'mission_briefing': 'รายละเอียดภารกิจ',
           'commander_name': 'ชื่อผู้บัญชาการ',
           'local_campaign': 'รบออฟไลน์ (ปะทะ AI)',
@@ -395,6 +403,10 @@ class AppTranslations extends Translations {
           'vert': 'VERT',
 
           // --- MAIN MENU ---
+          'game_title': 'BATALLA\nNAVAL',
+          'ee_sub': '¡Submarino desplegado! ⚓',
+          'ee_rocket': '¡Fuerza espacial lista! 🚀',
+          'ee_boat': '¡De vuelta a lo básico! ⛵',
           'mission_briefing': 'REPORTE DE MISIÓN',
           'commander_name': 'IDENTIFICADOR',
           'local_campaign': 'CAMPAÑA LOCAL (VS BOTS)',
@@ -582,6 +594,10 @@ class AppTranslations extends Translations {
           'vert': '縦',
 
           // --- MAIN MENU ---
+          'game_title': 'ペーパー\n海戦',
+          'ee_sub': '潜水艦配備完了！ ⚓',
+          'ee_rocket': '宇宙軍出撃！ 🚀',
+          'ee_boat': '基本に帰還！ ⛵',
           'mission_briefing': 'ミッション概要',
           'commander_name': '指揮官コールサイン',
           'local_campaign': 'ローカル (VS ボット)',

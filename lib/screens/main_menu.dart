@@ -2,15 +2,16 @@ import 'dart:math';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 
+import '../models/game_models.dart';
 import '../state/game_controller.dart';
 import '../state/multiplayer_controller.dart';
 import '../state/sound_controller.dart';
+import '../screens/how_to_play_screen.dart';
+import '../screens/settings_screen.dart';
 import '../utils/constants.dart';
 import '../widgets/shared/animated_paper_bg.dart';
-import '../widgets/dialogs/how_to_play_dialog.dart';
 import '../widgets/dialogs/multiplayer_dialog.dart';
 import '../widgets/dialogs/real_life_warning_dialog.dart';
-import '../widgets/dialogs/settings_dialog.dart';
 
 enum BoardSize { standard, large, huge }
 
@@ -45,6 +46,10 @@ class _MainMenuScreenState extends State<MainMenuScreen>
   final MultiplayerController mpCtrl = Get.put(MultiplayerController());
   late SoundController _sound;
 
+  int _logoTapCount = 0;
+  IconData _currentVehicleIcon = Icons.directions_boat_outlined;
+  OverlayEntry? _activeEasterEgg;
+
   @override
   void initState() {
     super.initState();
@@ -55,6 +60,10 @@ class _MainMenuScreenState extends State<MainMenuScreen>
 
     _nameController.text = "Commander${Random().nextInt(1000)}";
     _sound = Get.put(SoundController());
+
+    if (Get.isRegistered<GameController>()) {
+      Get.find<GameController>().vehicleTheme = VehicleTheme.boat;
+    }
   }
 
   @override
@@ -132,13 +141,13 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                   if (isMobile) {
                     return SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 20),
+                          horizontal: 24, vertical: 24),
                       child: Column(
                         children: [
                           brandingSection,
-                          const SizedBox(height: 30),
-                          const Divider(color: AppColors.ink, thickness: 1),
-                          const SizedBox(height: 30),
+                          const SizedBox(height: 32),
+                          const Divider(color: AppColors.ink, thickness: 2),
+                          const SizedBox(height: 32),
                           formSection,
                         ],
                       ),
@@ -149,7 +158,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                     children: [
                       Expanded(flex: 4, child: brandingSection),
                       Container(
-                        width: 2,
+                        width: 2.5,
                         height: double.infinity,
                         color: AppColors.ink.withOpacity(0.2),
                         margin: const EdgeInsets.symmetric(vertical: 40),
@@ -160,7 +169,10 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                           child: SingleChildScrollView(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 40, vertical: 20),
-                            child: formSection,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 500),
+                              child: formSection,
+                            ),
                           ),
                         ),
                       ),
@@ -191,19 +203,23 @@ class _MainMenuScreenState extends State<MainMenuScreen>
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        AnimatedBuilder(
-          animation: _animController,
-          builder: (context, child) {
-            final value = _animController.value * 2 * pi;
-            return Transform.translate(
-              offset: Offset(0, 8 * sin(value)),
-              child: Transform.rotate(
-                angle: -0.1 + (0.05 * cos(value)),
-                child: Icon(Icons.directions_boat_outlined,
-                    size: isMobile ? 80 : 100, color: AppColors.ink),
-              ),
-            );
-          },
+        GestureDetector(
+          onTap: _handleLogoTap,
+          behavior: HitTestBehavior.opaque,
+          child: AnimatedBuilder(
+            animation: _animController,
+            builder: (context, child) {
+              final value = _animController.value * 2 * pi;
+              return Transform.translate(
+                offset: Offset(0, 8 * sin(value)),
+                child: Transform.rotate(
+                  angle: -0.1 + (0.05 * cos(value)),
+                  child: Icon(_currentVehicleIcon,
+                      size: isMobile ? 80 : 100, color: AppColors.ink),
+                ),
+              );
+            },
+          ),
         ),
         const SizedBox(height: 16),
         TweenAnimationBuilder(
@@ -213,10 +229,10 @@ class _MainMenuScreenState extends State<MainMenuScreen>
           builder: (context, val, child) => Transform.scale(
             scale: val,
             child: Text(
-              'PAPER\nBATTLESHIP',
+              'game_title'.tr,
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: isMobile ? 32 : 38,
+                fontSize: isMobile ? 36 : 42,
                 fontWeight: FontWeight.w900,
                 color: AppColors.ink,
                 letterSpacing: 4,
@@ -237,12 +253,13 @@ class _MainMenuScreenState extends State<MainMenuScreen>
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _buildHeaderActions(),
-        const SizedBox(height: 24),
+        const SizedBox(height: 28),
         _buildCommanderInput(),
-        const SizedBox(height: 24),
+        const SizedBox(height: 28),
         _buildLocalCampaignCard(),
-        const SizedBox(height: 16),
+        const SizedBox(height: 24),
         _buildNetworkCard(),
+        const SizedBox(height: 40),
       ],
     );
   }
@@ -251,24 +268,97 @@ class _MainMenuScreenState extends State<MainMenuScreen>
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text('mission_briefing'.tr,
-            style: const TextStyle(
-                color: AppColors.ink,
-                fontSize: 20,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 1.2)),
+        Expanded(
+          child: Text('mission_briefing'.tr,
+              style: const TextStyle(
+                  color: AppColors.ink,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1.5)),
+        ),
         Row(
           children: [
             PaperActionButton(
+                icon: Icons.info_outline, onTap: _showCreditsDialog),
+            const SizedBox(width: 10),
+            PaperActionButton(
                 icon: Icons.settings,
-                onTap: () => Get.dialog(const SettingsDialog())),
-            const SizedBox(width: 8),
+                onTap: () => Get.to(() => const SettingsScreen())),
+            const SizedBox(width: 10),
             PaperActionButton(
                 icon: Icons.question_mark,
-                onTap: () => Get.dialog(const HowToPlayDialog())),
+                onTap: () => Get.to(() => const HowToPlayScreen())),
           ],
         ),
       ],
+    );
+  }
+
+  void _showCreditsDialog() {
+    _sound.playClick();
+    Get.dialog(
+      Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(16),
+        child: PaperContainer(
+          padding: const EdgeInsets.all(32),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 400),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.smart_display_outlined,
+                        color: AppColors.ink, size: 32),
+                    const SizedBox(width: 12),
+                    Text('credits'.tr,
+                        style: const TextStyle(
+                            color: AppColors.ink,
+                            fontSize: 22,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 1.5)),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                const Divider(color: AppColors.ink, thickness: 2.5),
+                const SizedBox(height: 16),
+                Text('credit_desc'.tr,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                        color: AppColors.ink,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                        fontStyle: FontStyle.italic,
+                        height: 1.6)),
+                const SizedBox(height: 36),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        elevation: 0,
+                        backgroundColor: AppColors.ink,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8))),
+                    onPressed: () {
+                      _sound.playClick();
+                      Get.back();
+                    },
+                    child: Text('roger_that'.tr,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
+                            letterSpacing: 1.5)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -282,18 +372,21 @@ class _MainMenuScreenState extends State<MainMenuScreen>
         style: const TextStyle(
             color: AppColors.ink,
             fontWeight: FontWeight.w900,
-            fontSize: 18,
+            fontSize: 20,
             letterSpacing: 2),
         decoration: InputDecoration(
           counterText: "",
           labelText: 'commander_name'.tr,
-          prefixIcon: const Icon(Icons.badge, color: AppColors.ink),
+          prefixIcon: const Padding(
+            padding: EdgeInsets.only(left: 16, right: 8),
+            child: Icon(Icons.badge, color: AppColors.ink, size: 28),
+          ),
           labelStyle: TextStyle(
-              color: AppColors.ink.withOpacity(0.6),
-              letterSpacing: 1,
+              color: AppColors.ink.withOpacity(0.7),
+              letterSpacing: 1.5,
               fontWeight: FontWeight.bold),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(vertical: 20),
         ),
       ),
     );
@@ -301,24 +394,26 @@ class _MainMenuScreenState extends State<MainMenuScreen>
 
   Widget _buildLocalCampaignCard() {
     return PaperContainer(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.smart_toy, color: AppColors.ink, size: 22),
-              const SizedBox(width: 8),
+              const Icon(Icons.smart_toy, color: AppColors.ink, size: 24),
+              const SizedBox(width: 12),
               Text('local_campaign'.tr,
                   style: const TextStyle(
                       color: AppColors.ink,
-                      fontSize: 15,
+                      fontSize: 16,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1.2)),
             ],
           ),
-          const Divider(color: AppColors.ink, height: 24, thickness: 1.5),
+          const SizedBox(height: 16),
+          const Divider(color: AppColors.ink, thickness: 2.5),
+          const SizedBox(height: 16),
           _buildConfigRow(
               'difficulty'.tr,
               CustomSegmentedControl<BotDifficulty>(
@@ -355,12 +450,12 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                 },
                 onChanged: (val) => setState(() => boardSize = val),
               )),
-          const SizedBox(height: 20),
+          const SizedBox(height: 24),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               _buildEnemyCounter(),
-              const SizedBox(width: 16),
+              const SizedBox(width: 20),
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: _handleStartLocalCampaign,
@@ -372,13 +467,14 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                             color: AppColors.paper,
                             fontSize: 16,
                             fontWeight: FontWeight.w900,
-                            letterSpacing: 1.2)),
+                            letterSpacing: 1.5)),
                   ),
                   style: ElevatedButton.styleFrom(
+                    elevation: 0,
                     backgroundColor: AppColors.ink,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6)),
+                        borderRadius: BorderRadius.circular(8)),
                   ),
                 ),
               ),
@@ -393,14 +489,15 @@ class _MainMenuScreenState extends State<MainMenuScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title,
+        Text(title.toUpperCase(),
             style: const TextStyle(
                 color: AppColors.ink,
                 fontWeight: FontWeight.w900,
-                fontSize: 12)),
-        const SizedBox(height: 6),
+                fontSize: 13,
+                letterSpacing: 1.2)),
+        const SizedBox(height: 8),
         control,
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
       ],
     );
   }
@@ -409,23 +506,29 @@ class _MainMenuScreenState extends State<MainMenuScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('enemies'.tr,
+        Text('enemies'.tr.toUpperCase(),
             style: const TextStyle(
                 color: AppColors.ink,
                 fontWeight: FontWeight.w900,
-                fontSize: 12)),
-        const SizedBox(height: 4),
+                fontSize: 13,
+                letterSpacing: 1.2)),
+        const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-              border: Border.all(color: AppColors.ink),
-              borderRadius: BorderRadius.circular(6)),
+            color: Colors.white,
+            border: Border.all(color: AppColors.ink, width: 2),
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: const [
+              BoxShadow(color: AppColors.ink, offset: Offset(2, 2))
+            ],
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               IconButton(
                 padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                icon: const Icon(Icons.remove, color: AppColors.ink, size: 18),
+                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                icon: const Icon(Icons.remove, color: AppColors.ink, size: 20),
                 onPressed: () => setState(() {
                   if (enemyCount > 1) {
                     _sound.playClick();
@@ -433,15 +536,18 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                   }
                 }),
               ),
-              Text("$enemyCount",
-                  style: const TextStyle(
-                      color: AppColors.ink,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900)),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text("$enemyCount",
+                    style: const TextStyle(
+                        color: AppColors.ink,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900)),
+              ),
               IconButton(
                 padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-                icon: const Icon(Icons.add, color: AppColors.ink, size: 18),
+                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                icon: const Icon(Icons.add, color: AppColors.ink, size: 20),
                 onPressed: () => setState(() {
                   if (enemyCount < 7) {
                     _sound.playClick();
@@ -458,30 +564,30 @@ class _MainMenuScreenState extends State<MainMenuScreen>
 
   Widget _buildNetworkCard() {
     return PaperContainer(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
       child: Column(
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.wifi_tethering, color: AppColors.ink, size: 20),
-              const SizedBox(width: 8),
+              const Icon(Icons.wifi_tethering, color: AppColors.ink, size: 24),
+              const SizedBox(width: 12),
               Text('network_battle'.tr,
                   style: const TextStyle(
                       color: AppColors.ink,
-                      fontSize: 14,
+                      fontSize: 16,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1.2)),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 8),
           Text('lan_desc'.tr,
               textAlign: TextAlign.center,
               style: TextStyle(
-                  color: AppColors.ink.withOpacity(0.6),
-                  fontSize: 10,
+                  color: AppColors.ink.withOpacity(0.7),
+                  fontSize: 12,
                   fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
           OutlinedButton.icon(
             onPressed: () {
               if (_validateName()) {
@@ -495,21 +601,76 @@ class _MainMenuScreenState extends State<MainMenuScreen>
             label: Text('host_join'.tr,
                 style: const TextStyle(
                     color: AppColors.ink,
-                    fontSize: 15,
+                    fontSize: 16,
+                    letterSpacing: 1.5,
                     fontWeight: FontWeight.w900)),
             style: OutlinedButton.styleFrom(
-              side: const BorderSide(color: AppColors.ink, width: 2),
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              minimumSize: const Size(double.infinity, 45),
+              backgroundColor: Colors.white,
+              side: const BorderSide(color: AppColors.ink, width: 2.5),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              minimumSize: const Size(double.infinity, 50),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6)),
+                  borderRadius: BorderRadius.circular(8)),
             ),
           ),
         ],
       ),
     );
   }
+
+  void _handleLogoTap() {
+    setState(() {
+      _logoTapCount++;
+      final gameCtrl = Get.find<GameController>();
+
+      if (_logoTapCount == 7) {
+        _currentVehicleIcon = Icons.anchor;
+        gameCtrl.vehicleTheme = VehicleTheme.submarine;
+        _triggerEasterEgg('ee_sub'.tr);
+      } else if (_logoTapCount == 14) {
+        _currentVehicleIcon = Icons.rocket_launch_outlined;
+        gameCtrl.vehicleTheme = VehicleTheme.space;
+        _triggerEasterEgg('ee_rocket'.tr);
+      } else if (_logoTapCount == 21) {
+        _currentVehicleIcon = Icons.directions_boat_outlined;
+        gameCtrl.vehicleTheme = VehicleTheme.boat;
+        _logoTapCount = 0;
+        _triggerEasterEgg('ee_boat'.tr);
+      } else {
+        _sound.playClick();
+      }
+    });
+  }
+
+  void _triggerEasterEgg(String message) {
+    _sound.vibrateHeavy();
+
+    if (_activeEasterEgg != null) {
+      _activeEasterEgg?.remove();
+      _activeEasterEgg = null;
+    }
+
+    final overlayState = Overlay.of(context);
+    _activeEasterEgg = OverlayEntry(
+      builder: (context) => EasterEggToast(
+        message: message,
+        icon: _currentVehicleIcon,
+        onClose: () {
+          if (mounted && _activeEasterEgg != null) {
+            _activeEasterEgg?.remove();
+            _activeEasterEgg = null;
+          }
+        },
+      ),
+    );
+
+    overlayState.insert(_activeEasterEgg!);
+  }
 }
+
+// ==========================================
+// SHARED UI COMPONENTS (Updated to match SettingsScreen)
+// ==========================================
 
 class PaperContainer extends StatelessWidget {
   final Widget child;
@@ -524,10 +685,10 @@ class PaperContainer extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: AppColors.ink, width: 2),
-        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: AppColors.ink, width: 2.5),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: const [
-          BoxShadow(color: Colors.black12, offset: Offset(4, 4))
+          BoxShadow(color: AppColors.ink, offset: Offset(5, 5))
         ],
       ),
       child: child,
@@ -548,20 +709,18 @@ class PaperActionButton extends StatelessWidget {
         Get.find<SoundController>().playClick();
         onTap();
       },
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: Colors.white,
           border: Border.all(color: AppColors.ink, width: 2),
-          borderRadius: BorderRadius.circular(6),
-          boxShadow: [
-            BoxShadow(
-                color: AppColors.ink.withOpacity(0.2),
-                offset: const Offset(2, 2))
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: const [
+            BoxShadow(color: AppColors.ink, offset: Offset(3, 3))
           ],
         ),
-        child: Icon(icon, color: AppColors.ink, size: 20),
+        child: Icon(icon, color: AppColors.ink, size: 24),
       ),
     );
   }
@@ -584,55 +743,178 @@ class CustomSegmentedControl<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final keys = items.keys.toList();
-    return Row(
-      children: List.generate(keys.length, (index) {
-        final key = keys[index];
-        final isSelected = key == selectedValue;
-        final isFirst = index == 0;
-        final isLast = index == keys.length - 1;
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: AppColors.ink, width: 2),
+        borderRadius: BorderRadius.circular(8),
+        color: Colors.white,
+      ),
+      child: Row(
+        children: List.generate(keys.length, (index) {
+          final key = keys[index];
+          final isSelected = key == selectedValue;
+          final isFirst = index == 0;
+          final isLast = index == keys.length - 1;
 
-        return Expanded(
-          child: InkWell(
-            onTap: () {
-              Get.find<SoundController>().playClick();
-              onChanged(key);
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                color: isSelected ? activeColor : Colors.transparent,
-                borderRadius: BorderRadius.horizontal(
-                  left: Radius.circular(isFirst ? 6 : 0),
-                  right: Radius.circular(isLast ? 6 : 0),
+          return Expanded(
+            child: InkWell(
+              onTap: () {
+                Get.find<SoundController>().playClick();
+                onChanged(key);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  color: isSelected ? activeColor : Colors.transparent,
+                  borderRadius: BorderRadius.horizontal(
+                    left: Radius.circular(isFirst ? 6 : 0),
+                    right: Radius.circular(isLast ? 6 : 0),
+                  ),
+                  border: Border(
+                    right: isLast
+                        ? BorderSide.none
+                        : const BorderSide(color: AppColors.ink, width: 2),
+                  ),
                 ),
-                border: Border(
-                  top: BorderSide(color: activeColor, width: 1),
-                  bottom: BorderSide(color: activeColor, width: 1),
-                  left: BorderSide(color: activeColor, width: 1),
-                  right: isLast
-                      ? BorderSide(color: activeColor, width: 1)
-                      : BorderSide.none,
-                ),
-              ),
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  child: Text(
-                    items[key]!,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : activeColor,
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: Text(
+                      items[key]!,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : AppColors.ink,
+                        fontSize: 12,
+                        letterSpacing: 1.2,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class EasterEggToast extends StatefulWidget {
+  final String message;
+  final IconData icon;
+  final VoidCallback onClose;
+
+  const EasterEggToast({
+    super.key,
+    required this.message,
+    required this.icon,
+    required this.onClose,
+  });
+
+  @override
+  State<EasterEggToast> createState() => _EasterEggToastState();
+}
+
+class _EasterEggToastState extends State<EasterEggToast>
+    with TickerProviderStateMixin {
+  late AnimationController _slideController;
+  late AnimationController _pulseController;
+
+  @override
+  void initState() {
+    super.initState();
+    _slideController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 800));
+    _pulseController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 1000))
+      ..repeat(reverse: true);
+
+    _slideController.forward();
+
+    Future.delayed(const Duration(seconds: 3), () async {
+      if (mounted) {
+        await _slideController.reverse();
+        widget.onClose();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _slideController.dispose();
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: MediaQuery.of(context).padding.top + 16,
+      left: 20,
+      right: 20,
+      child: Material(
+        color: Colors.transparent,
+        child: SlideTransition(
+          position: Tween<Offset>(begin: const Offset(0, -2), end: Offset.zero)
+              .animate(CurvedAnimation(
+                  parent: _slideController, curve: Curves.elasticOut)),
+          child: PaperContainer(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            child: Row(
+              children: [
+                ScaleTransition(
+                  scale: Tween<double>(begin: 0.85, end: 1.15).animate(
+                      CurvedAnimation(
+                          parent: _pulseController, curve: Curves.easeInOut)),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: const BoxDecoration(
+                      color: AppColors.ink,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                            color: Colors.black26,
+                            offset: Offset(2, 2),
+                            blurRadius: 4)
+                      ],
+                    ),
+                    child: Icon(widget.icon, color: Colors.white, size: 28),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'roger_that'.tr,
+                        style: const TextStyle(
+                          color: AppColors.ink,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.message,
+                        style: TextStyle(
+                          color: AppColors.ink.withOpacity(0.8),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        );
-      }),
+        ),
+      ),
     );
   }
 }
