@@ -3,13 +3,14 @@ import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'screens/game_board_screen.dart';
 import 'screens/main_menu.dart';
 import 'screens/placement_screen.dart';
-import 'screens/game_board_screen.dart';
 import 'state/game_controller.dart';
-import 'utils/translations.dart';
 import 'utils/constants.dart';
+import 'utils/translations.dart';
 
+// Entry Point
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -22,6 +23,54 @@ void main() {
   });
 }
 
+// Custom Transitions
+class ModernPremiumTransition extends CustomTransition {
+  @override
+  Widget buildTransition(
+      BuildContext context,
+      Curve? curve,
+      Alignment? alignment,
+      Animation<double> animation,
+      Animation<double> secondaryAnimation,
+      Widget child) {
+    return FadeTransition(
+      opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+      ),
+      child: ScaleTransition(
+        scale: Tween<double>(begin: 1.03, end: 1.0).animate(
+          CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
+class CinematicPanTransition extends CustomTransition {
+  @override
+  Widget buildTransition(
+      BuildContext context,
+      Curve? curve,
+      Alignment? alignment,
+      Animation<double> animation,
+      Animation<double> secondaryAnimation,
+      Widget child) {
+    return FadeTransition(
+      opacity: animation,
+      child: SlideTransition(
+        position:
+            Tween<Offset>(begin: const Offset(0.05, 0.0), end: Offset.zero)
+                .animate(
+          CurvedAnimation(parent: animation, curve: Curves.easeOutQuart),
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
+// Main Application
 class BattleshipApp extends StatelessWidget {
   const BattleshipApp({super.key});
 
@@ -49,16 +98,19 @@ class BattleshipApp extends StatelessWidget {
           name: '/',
           page: () => const MainMenuScreen(),
           transition: Transition.fadeIn,
+          transitionDuration: const Duration(milliseconds: 500),
         ),
         GetPage(
           name: '/placement',
           page: () => const PlacementScreen(),
-          transition: Transition.rightToLeft,
+          customTransition: ModernPremiumTransition(),
+          transitionDuration: const Duration(milliseconds: 500),
         ),
         GetPage(
           name: '/game',
           page: () => const GameBoardScreen(),
-          transition: Transition.rightToLeft,
+          customTransition: CinematicPanTransition(),
+          transitionDuration: const Duration(milliseconds: 600),
         ),
       ],
     );

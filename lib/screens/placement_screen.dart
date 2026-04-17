@@ -1,14 +1,16 @@
-import 'package:get/get.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../models/game_models.dart';
 import '../state/placement_controller.dart';
 import '../state/sound_controller.dart';
-import '../widgets/dialogs/abort_dialog.dart';
-import '../widgets/shared/connected_ship_piece.dart';
-import '../widgets/shared/animated_paper_bg.dart';
 import '../utils/constants.dart';
+import '../widgets/dialogs/abort_dialog.dart';
+import '../widgets/shared/animated_paper_bg.dart';
+import '../widgets/shared/connected_ship_piece.dart';
 import '../widgets/shared/floating_joke_widget.dart';
+
+// --- Main Screen ---
 
 class PlacementScreen extends StatelessWidget {
   const PlacementScreen({super.key});
@@ -70,6 +72,8 @@ class PlacementScreen extends StatelessWidget {
     );
   }
 }
+
+// --- Layout & Sidebar Components ---
 
 class SidebarContainer extends StatelessWidget {
   final double width;
@@ -152,10 +156,9 @@ class _RightSidebar extends StatefulWidget {
 }
 
 class _RightSidebarState extends State<_RightSidebar> {
-  // --- Easter Egg Counters ---
+  // --- Easter Egg State ---
   int _autoSpamCount = 0;
   DateTime? _lastAutoTap;
-
   int _clearSpamCount = 0;
   int _impatientSpamCount = 0;
 
@@ -163,6 +166,7 @@ class _RightSidebarState extends State<_RightSidebar> {
   final GlobalKey _clearKey = GlobalKey();
   final GlobalKey _engageKey = GlobalKey();
 
+  // --- Handlers ---
   void _triggerJoke(String message, IconData icon, GlobalKey anchorKey) {
     if (Get.isRegistered<SoundController>()) {
       Get.find<SoundController>().vibrateHeavy();
@@ -315,6 +319,8 @@ class _RightSidebarState extends State<_RightSidebar> {
     );
   }
 }
+
+// --- Status & Option Bars ---
 
 class _StatusHeader extends StatelessWidget {
   final PlacementController ctrl;
@@ -503,6 +509,8 @@ class _ShipOptionsBarState extends State<_ShipOptionsBar> {
   }
 }
 
+// --- Grid & Cells ---
+
 class _AnimatedPaperGrid extends StatelessWidget {
   final PlacementController ctrl;
   const _AnimatedPaperGrid({required this.ctrl});
@@ -648,6 +656,8 @@ class _CellContent extends StatelessWidget {
     return const SizedBox.shrink();
   }
 }
+
+// --- Shared Buttons ---
 
 class _ToolButton extends StatelessWidget {
   final PlacementController ctrl;

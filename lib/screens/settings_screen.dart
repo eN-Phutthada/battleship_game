@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../utils/constants.dart';
+
 import '../state/sound_controller.dart';
+import '../utils/constants.dart';
 import '../widgets/shared/animated_paper_bg.dart';
 
+// --- Main Screen ---
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
@@ -53,7 +55,6 @@ class SettingsScreen extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Divider(color: AppColors.ink, thickness: 3, height: 1),
               ),
-
               // --- CONTENT ---
               Expanded(
                 child: Center(
@@ -64,7 +65,6 @@ class SettingsScreen extends StatelessWidget {
                         physics: const BouncingScrollPhysics(),
                         padding: const EdgeInsets.all(24),
                         children: [
-                          // 1. LANGUAGE SECTION
                           _buildPaperCard(
                             title: 'language'.tr,
                             icon: Icons.language,
@@ -74,8 +74,6 @@ class SettingsScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 28),
-
-                          // 2. AUDIO SECTION
                           _buildPaperCard(
                             title: 'AUDIO',
                             icon: Icons.volume_up,
@@ -110,13 +108,11 @@ class SettingsScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 28),
-
-                          // 3. SYSTEM SECTION
                           _buildPaperCard(
                             title: 'SYSTEM',
                             icon: Icons.vibration,
                             child: _buildSwitchRow(
-                              label: 'haptic_feedback'.tr,
+                              label: 'haptics_feedback'.tr,
                               value: sound.hapticsEnabled,
                               onChanged: (val) => sound.toggleHaptics(),
                             ),
@@ -135,6 +131,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
+  // --- UI Components ---
   Widget _buildBackButton() {
     return InkWell(
       onTap: () {
@@ -165,7 +162,6 @@ class SettingsScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section Title
         Row(
           children: [
             Icon(icon, color: AppColors.ink, size: 22),
@@ -179,16 +175,13 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        // The Card
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
             border: Border.all(color: AppColors.ink, width: 2.5),
             borderRadius: BorderRadius.circular(12),
             boxShadow: const [
-              BoxShadow(
-                  color: AppColors.ink,
-                  offset: Offset(5, 5)) // Signature Hard Shadow
+              BoxShadow(color: AppColors.ink, offset: Offset(5, 5))
             ],
           ),
           child: child,
@@ -346,11 +339,10 @@ class SettingsScreen extends StatelessWidget {
   }
 }
 
+// --- Custom Shapes ---
 class _CustomThumbShape extends SliderComponentShape {
   @override
-  Size getPreferredSize(bool isEnabled, bool isDiscrete) {
-    return const Size(24, 24);
-  }
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) => const Size(24, 24);
 
   @override
   void paint(
@@ -369,16 +361,15 @@ class _CustomThumbShape extends SliderComponentShape {
   }) {
     final Canvas canvas = context.canvas;
 
-    final Paint shadowPaint = Paint()..color = AppColors.ink;
-    canvas.drawCircle(center + const Offset(2, 2), 12, shadowPaint);
-
-    final Paint fillPaint = Paint()..color = Colors.white;
-    canvas.drawCircle(center, 12, fillPaint);
-
-    final Paint strokePaint = Paint()
-      ..color = AppColors.ink
-      ..strokeWidth = 2.5
-      ..style = PaintingStyle.stroke;
-    canvas.drawCircle(center, 12, strokePaint);
+    canvas.drawCircle(
+        center + const Offset(2, 2), 12, Paint()..color = AppColors.ink);
+    canvas.drawCircle(center, 12, Paint()..color = Colors.white);
+    canvas.drawCircle(
+        center,
+        12,
+        Paint()
+          ..color = AppColors.ink
+          ..strokeWidth = 2.5
+          ..style = PaintingStyle.stroke);
   }
 }

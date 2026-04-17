@@ -1,22 +1,23 @@
 import 'dart:math';
-import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:get/get.dart';
 
 import '../models/game_models.dart';
 import '../state/game_controller.dart';
 import '../state/sound_controller.dart';
 import '../utils/constants.dart';
 
-import '../widgets/shared/animated_paper_bg.dart';
-import '../widgets/board/hit_logs.dart';
-import '../widgets/board/command_console.dart';
 import '../widgets/board/ammo_status.dart';
-import '../widgets/board/left_sidebar.dart';
+import '../widgets/board/command_console.dart';
+import '../widgets/board/hit_logs.dart';
 import '../widgets/board/interactive_grid.dart';
+import '../widgets/board/left_sidebar.dart';
+import '../widgets/shared/animated_paper_bg.dart';
 import '../widgets/dialogs/abort_dialog.dart';
 import '../widgets/dialogs/global_radar_dialog.dart';
 
+// --- Main Screen ---
 class GameBoardScreen extends StatefulWidget {
   const GameBoardScreen({super.key});
 
@@ -29,6 +30,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
   final TransformationController _transformCtrl = TransformationController();
   late AnimationController _panController;
   Animation<Matrix4>? _panAnimation;
+
   BoxConstraints? _viewportConstraints;
   int? _lastPanShotTime;
 
@@ -62,6 +64,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     }
   }
 
+  // Camera panning logic for auto-tracking shots
   void _panToCell(int index, int cols, int rows, GameController game) {
     if (_viewportConstraints == null || !game.isAutoTrack) return;
 
@@ -237,6 +240,8 @@ class _GameBoardScreenState extends State<GameBoardScreen>
   }
 }
 
+// --- Sub-Widgets ---
+
 class _PaperPanel extends StatelessWidget {
   final Widget child;
   const _PaperPanel({required this.child});
@@ -296,10 +301,9 @@ class _TurnTransitionOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // --- EASTER EGG: ข้อความเปลี่ยนเทิร์นแบบกวนๆ ---
     String displayText = game.turnTransitionMessage;
+
     if (isMyTurn && Random().nextDouble() > 0.85) {
-      // โอกาส 15%
       displayText = "ถึงตาคุณแล้ว!\n(สรุป E หรือ F นะ? 🧐)";
     }
 
@@ -353,10 +357,9 @@ class _LoadingRadarScreenState extends State<_LoadingRadarScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _radarController;
   int _secretTapCount = 0;
+  int _jokeIndex = 0;
   DateTime? _lastSecretTap;
 
-  // --- EASTER EGG: ข้อความตอนโหลด ---
-  int _jokeIndex = 0;
   List<String> get _loadingJokes => [
         'simulating'.tr,
         'กำลังเถียงกันว่า E หรือ F... 🤷‍♂️',
@@ -380,6 +383,7 @@ class _LoadingRadarScreenState extends State<_LoadingRadarScreen>
     super.dispose();
   }
 
+  // Dev Mode cheat activation
   void _handleSecretTap() {
     final DateTime now = DateTime.now();
     if (_lastSecretTap == null ||

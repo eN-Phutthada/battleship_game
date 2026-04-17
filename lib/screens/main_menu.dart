@@ -14,6 +14,8 @@ import '../widgets/dialogs/multiplayer_dialog.dart';
 import '../widgets/dialogs/real_life_warning_dialog.dart';
 import '../widgets/shared/floating_joke_widget.dart';
 
+// --- Enums & Extensions ---
+
 enum BoardSize { standard, large, huge }
 
 extension BoardSizeExt on BoardSize {
@@ -26,6 +28,8 @@ extension BoardSizeExt on BoardSize {
       : (this == BoardSize.large ? '10x8' : '12x10');
 }
 
+// --- Main Screen ---
+
 class MainMenuScreen extends StatefulWidget {
   const MainMenuScreen({super.key});
 
@@ -35,15 +39,16 @@ class MainMenuScreen extends StatefulWidget {
 
 class _MainMenuScreenState extends State<MainMenuScreen>
     with SingleTickerProviderStateMixin {
+  // --- Game Config Variables ---
   int enemyCount = 1;
   BotDifficulty botDifficulty = BotDifficulty.normal;
   AssistLevel assistLevel = AssistLevel.standard;
   BoardSize boardSize = BoardSize.standard;
 
+  // --- Controllers & Keys ---
   final TextEditingController _nameController = TextEditingController();
   final FocusNode _nameFocusNode = FocusNode();
   late AnimationController _animController;
-
   final MultiplayerController mpCtrl = Get.put(MultiplayerController());
   late SoundController _sound;
 
@@ -54,21 +59,19 @@ class _MainMenuScreenState extends State<MainMenuScreen>
   final GlobalKey _startBtnKey = GlobalKey();
   final GlobalKey _versionKey = GlobalKey();
 
-  // --- Easter Egg State Variables ---
+  // --- Easter Egg State ---
   int _logoTapCount = 0;
   IconData _currentVehicleIcon = Icons.directions_boat_outlined;
-
   int _versionTapCount = 0;
   String _versionText = "v1.0.0 - Commander Edition";
-
   int _maxEnemyTapCount = 0;
   int _minEnemyTapCount = 0;
   String _lastSecretName = "";
-
   int _assistTapCount = 0;
   DateTime? _lastAssistTapTime;
-
   int _emptyNameSpamCount = 0;
+
+  // --- Lifecycle ---
 
   @override
   void initState() {
@@ -96,6 +99,8 @@ class _MainMenuScreenState extends State<MainMenuScreen>
     _nameFocusNode.dispose();
     super.dispose();
   }
+
+  // --- Logic & Handlers ---
 
   void _checkSecretNames() {
     final name = _nameController.text.trim().toUpperCase();
@@ -205,6 +210,57 @@ class _MainMenuScreenState extends State<MainMenuScreen>
     }
   }
 
+  void _handleLogoTap() {
+    setState(() {
+      _logoTapCount++;
+      final gameCtrl = Get.find<GameController>();
+
+      if (_logoTapCount == 7) {
+        _currentVehicleIcon = Icons.anchor;
+        gameCtrl.vehicleTheme = VehicleTheme.submarine;
+        _triggerEasterEgg('ee_sub'.tr, _logoKey);
+      } else if (_logoTapCount == 14) {
+        _currentVehicleIcon = Icons.rocket_launch_outlined;
+        gameCtrl.vehicleTheme = VehicleTheme.space;
+        _triggerEasterEgg('ee_rocket'.tr, _logoKey);
+      } else if (_logoTapCount == 21) {
+        _currentVehicleIcon = Icons.directions_boat_outlined;
+        gameCtrl.vehicleTheme = VehicleTheme.boat;
+        _logoTapCount = 0;
+        _triggerEasterEgg('ee_boat'.tr, _logoKey);
+      } else {
+        _sound.playClick();
+      }
+    });
+  }
+
+  void _triggerEasterEgg(String message, GlobalKey anchorKey,
+      {IconData? customIcon}) {
+    _sound.vibrateHeavy();
+
+    final context = anchorKey.currentContext;
+    if (context == null) return;
+
+    final RenderBox box = context.findRenderObject() as RenderBox;
+    final Offset topCenter = box.localToGlobal(Offset(box.size.width / 2, 0));
+
+    final overlayState = Overlay.of(context);
+    late OverlayEntry entry;
+
+    entry = OverlayEntry(
+      builder: (context) => FloatingJokeWidget(
+        message: message,
+        icon: customIcon ?? _currentVehicleIcon,
+        startPosition: topCenter,
+        onComplete: () => entry.remove(),
+      ),
+    );
+
+    overlayState.insert(entry);
+  }
+
+  // --- Main Layout ---
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -294,6 +350,8 @@ class _MainMenuScreenState extends State<MainMenuScreen>
       ),
     );
   }
+
+  // --- UI Section Builders ---
 
   Widget _buildBrandingSection(bool isMobile) {
     return Column(
@@ -741,56 +799,9 @@ class _MainMenuScreenState extends State<MainMenuScreen>
       ),
     );
   }
-
-  void _handleLogoTap() {
-    setState(() {
-      _logoTapCount++;
-      final gameCtrl = Get.find<GameController>();
-
-      if (_logoTapCount == 7) {
-        _currentVehicleIcon = Icons.anchor;
-        gameCtrl.vehicleTheme = VehicleTheme.submarine;
-        _triggerEasterEgg('ee_sub'.tr, _logoKey);
-      } else if (_logoTapCount == 14) {
-        _currentVehicleIcon = Icons.rocket_launch_outlined;
-        gameCtrl.vehicleTheme = VehicleTheme.space;
-        _triggerEasterEgg('ee_rocket'.tr, _logoKey);
-      } else if (_logoTapCount == 21) {
-        _currentVehicleIcon = Icons.directions_boat_outlined;
-        gameCtrl.vehicleTheme = VehicleTheme.boat;
-        _logoTapCount = 0;
-        _triggerEasterEgg('ee_boat'.tr, _logoKey);
-      } else {
-        _sound.playClick();
-      }
-    });
-  }
-
-  void _triggerEasterEgg(String message, GlobalKey anchorKey,
-      {IconData? customIcon}) {
-    _sound.vibrateHeavy();
-
-    final context = anchorKey.currentContext;
-    if (context == null) return;
-
-    final RenderBox box = context.findRenderObject() as RenderBox;
-    final Offset topCenter = box.localToGlobal(Offset(box.size.width / 2, 0));
-
-    final overlayState = Overlay.of(context);
-    late OverlayEntry entry;
-
-    entry = OverlayEntry(
-      builder: (context) => FloatingJokeWidget(
-        message: message,
-        icon: customIcon ?? _currentVehicleIcon,
-        startPosition: topCenter,
-        onComplete: () => entry.remove(),
-      ),
-    );
-
-    overlayState.insert(entry);
-  }
 }
+
+// --- Shared Components ---
 
 class PaperContainer extends StatelessWidget {
   final Widget child;

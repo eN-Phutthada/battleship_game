@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../utils/constants.dart';
+
 import '../state/sound_controller.dart';
+import '../utils/constants.dart';
 import '../widgets/shared/animated_paper_bg.dart';
 
+// --- Main Screen ---
 class HowToPlayScreen extends StatelessWidget {
   const HowToPlayScreen({super.key});
 
@@ -17,7 +19,6 @@ class HowToPlayScreen extends StatelessWidget {
         child: SafeArea(
           child: Column(
             children: [
-              // --- HEADER (Aligned with SettingsScreen) ---
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
                 child: Row(
@@ -41,8 +42,6 @@ class HowToPlayScreen extends StatelessWidget {
                 padding: EdgeInsets.symmetric(horizontal: 20),
                 child: Divider(color: AppColors.ink, thickness: 3, height: 1),
               ),
-
-              // --- CONTENT ---
               Expanded(
                 child: Center(
                   child: ConstrainedBox(
@@ -84,6 +83,8 @@ class HowToPlayScreen extends StatelessWidget {
       ),
     );
   }
+
+  // --- Layouts ---
 
   Widget _buildMobileLayout() {
     return ListView(
@@ -139,9 +140,7 @@ class HowToPlayScreen extends StatelessWidget {
     );
   }
 
-  // ==========================================
-  // SECTION CARDS (UI COMPONENTS)
-  // ==========================================
+  // --- Content Cards ---
 
   Widget _buildDeploymentCard() {
     return _buildPaperCard(
@@ -205,11 +204,8 @@ class HowToPlayScreen extends StatelessWidget {
     );
   }
 
-  // ==========================================
-  // HELPER WIDGETS
-  // ==========================================
+  // --- Helper Widgets ---
 
-  /// การ์ดสไตล์กระดาษที่มี Title ด้านนอกแบบเดียวกับ SettingsScreen
   Widget _buildPaperCard({
     required String title,
     required IconData icon,
@@ -220,7 +216,6 @@ class HowToPlayScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Section Title
         Row(
           children: [
             Icon(icon, color: color, size: 22),
@@ -234,7 +229,6 @@ class HowToPlayScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        // The Card
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(20),
@@ -242,11 +236,7 @@ class HowToPlayScreen extends StatelessWidget {
             color: Colors.white,
             border: Border.all(color: color, width: 2.5),
             borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                  color: color,
-                  offset: const Offset(5, 5)) // Signature Hard Shadow
-            ],
+            boxShadow: [BoxShadow(color: color, offset: const Offset(5, 5))],
           ),
           child: child,
         ),
