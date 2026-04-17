@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 
 import '../models/game_models.dart';
 import '../state/placement_controller.dart';
+import '../state/sound_controller.dart';
 import '../widgets/dialogs/abort_dialog.dart';
-import '../widgets/shared/connected_ship_piece.dart'; // ให้แน่ใจว่ามี ThemedLandPiece และ TurretPiece อยู่ในนี้หรือ import มาครบนะครับ
+import '../widgets/shared/connected_ship_piece.dart';
 import '../widgets/shared/animated_paper_bg.dart';
 import '../utils/constants.dart';
+import '../widgets/shared/floating_joke_widget.dart';
 
 class PlacementScreen extends StatelessWidget {
   const PlacementScreen({super.key});
@@ -68,10 +70,6 @@ class PlacementScreen extends StatelessWidget {
     );
   }
 }
-
-// ==========================================
-// EXTRACTED WIDGETS
-// ==========================================
 
 class SidebarContainer extends StatelessWidget {
   final double width;
@@ -145,9 +143,92 @@ class _LeftSidebar extends StatelessWidget {
   }
 }
 
-class _RightSidebar extends StatelessWidget {
+class _RightSidebar extends StatefulWidget {
   final PlacementController ctrl;
   const _RightSidebar({required this.ctrl});
+
+  @override
+  State<_RightSidebar> createState() => _RightSidebarState();
+}
+
+class _RightSidebarState extends State<_RightSidebar> {
+  // --- Easter Egg Counters ---
+  int _autoSpamCount = 0;
+  DateTime? _lastAutoTap;
+
+  int _clearSpamCount = 0;
+  int _impatientSpamCount = 0;
+
+  final GlobalKey _autoKey = GlobalKey();
+  final GlobalKey _clearKey = GlobalKey();
+  final GlobalKey _engageKey = GlobalKey();
+
+  void _triggerJoke(String message, IconData icon, GlobalKey anchorKey) {
+    if (Get.isRegistered<SoundController>()) {
+      Get.find<SoundController>().vibrateHeavy();
+      Get.find<SoundController>().playError();
+    }
+
+    final context = anchorKey.currentContext;
+    if (context == null) return;
+
+    final RenderBox box = context.findRenderObject() as RenderBox;
+    final Offset topCenter = box.localToGlobal(Offset(box.size.width / 2, 0));
+
+    final overlayState = Overlay.of(context);
+    late OverlayEntry entry;
+
+    entry = OverlayEntry(
+      builder: (context) => FloatingJokeWidget(
+        message: message,
+        icon: icon,
+        startPosition: topCenter,
+        onComplete: () => entry.remove(),
+      ),
+    );
+
+    overlayState.insert(entry);
+  }
+
+  void _handleAuto() {
+    widget.ctrl.autoDeploy();
+
+    DateTime now = DateTime.now();
+    if (_lastAutoTap != null &&
+        now.difference(_lastAutoTap!).inMilliseconds < 800) {
+      _autoSpamCount++;
+      if (_autoSpamCount == 6) {
+        _triggerJoke('ee_indecisive'.tr, Icons.sync_problem, _autoKey);
+        _autoSpamCount = 0;
+      }
+    } else {
+      _autoSpamCount = 1;
+    }
+    _lastAutoTap = now;
+  }
+
+  void _handleClear() {
+    if (widget.ctrl.placedShipsCount == 0 &&
+        widget.ctrl.placedTurrets == 0 &&
+        widget.ctrl.placedLand == 0) {
+      _clearSpamCount++;
+      if (_clearSpamCount == 4) {
+        _triggerJoke('ee_ocd'.tr, Icons.layers_clear, _clearKey);
+        _clearSpamCount = 0;
+      }
+    } else {
+      _clearSpamCount = 0;
+      widget.ctrl.clearAll();
+    }
+  }
+
+  void _handleDisabledEngage() {
+    _impatientSpamCount++;
+    if (_impatientSpamCount == 5) {
+      _triggerJoke('ee_impatient'.tr, Icons.warning_amber_rounded, _engageKey);
+      _impatientSpamCount = 0;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -166,14 +247,16 @@ class _RightSidebar extends StatelessWidget {
                 children: [
                   const SizedBox(height: 8),
                   _CommandButton(
-                    onPressed: ctrl.autoDeploy,
+                    key: _autoKey,
+                    onPressed: _handleAuto,
                     icon: Icons.casino,
                     label: 'auto'.tr,
                     color: AppColors.ink,
                   ),
                   const SizedBox(height: 12),
                   _CommandButton(
-                    onPressed: ctrl.clearAll,
+                    key: _clearKey,
+                    onPressed: _handleClear,
                     icon: Icons.delete_forever,
                     label: 'clear'.tr,
                     color: AppColors.redPen,
@@ -187,28 +270,44 @@ class _RightSidebar extends StatelessWidget {
             duration: const Duration(milliseconds: 300),
             width: double.infinity,
             height: 70,
-            child: ElevatedButton(
-              onPressed: ctrl.isBoardValid ? ctrl.confirmPlacement : null,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: ctrl.isBoardValid
-                    ? Colors.green[700]
-                    : Colors.grey.withOpacity(0.3),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8)),
-                padding: EdgeInsets.zero,
-                disabledBackgroundColor: Colors.grey.withOpacity(0.3),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.rocket_launch, size: 24),
-                  const SizedBox(height: 4),
-                  Text('engage'.tr,
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w900)),
-                ],
-              ),
+            child: Stack(
+              key: _engageKey,
+              fit: StackFit.expand,
+              children: [
+                ElevatedButton(
+                  onPressed: widget.ctrl.isBoardValid
+                      ? widget.ctrl.confirmPlacement
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: widget.ctrl.isBoardValid
+                        ? Colors.green[700]
+                        : Colors.grey.withOpacity(0.3),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8)),
+                    padding: EdgeInsets.zero,
+                    disabledBackgroundColor: Colors.grey.withOpacity(0.3),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.rocket_launch, size: 24),
+                      const SizedBox(height: 4),
+                      Text('engage'.tr,
+                          style: const TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w900)),
+                    ],
+                  ),
+                ),
+                if (!widget.ctrl.isBoardValid)
+                  Positioned.fill(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: _handleDisabledEngage,
+                      child: Container(),
+                    ),
+                  ),
+              ],
             ),
           ),
         ],
@@ -251,9 +350,59 @@ class _StatusHeader extends StatelessWidget {
   }
 }
 
-class _ShipOptionsBar extends StatelessWidget {
+class _ShipOptionsBar extends StatefulWidget {
   final PlacementController ctrl;
   const _ShipOptionsBar({required this.ctrl});
+
+  @override
+  State<_ShipOptionsBar> createState() => _ShipOptionsBarState();
+}
+
+class _ShipOptionsBarState extends State<_ShipOptionsBar> {
+  final GlobalKey _rotateKey = GlobalKey();
+  int _rotateSpamCount = 0;
+  DateTime? _lastRotateTap;
+
+  void _handleRotate() {
+    widget.ctrl.toggleOrientation();
+
+    DateTime now = DateTime.now();
+    if (_lastRotateTap != null &&
+        now.difference(_lastRotateTap!).inMilliseconds < 400) {
+      _rotateSpamCount++;
+      if (_rotateSpamCount == 10) {
+        if (Get.isRegistered<SoundController>()) {
+          Get.find<SoundController>().vibrateHeavy();
+          Get.find<SoundController>().playError();
+        }
+
+        final context = _rotateKey.currentContext;
+        if (context != null) {
+          final RenderBox box = context.findRenderObject() as RenderBox;
+          final Offset topCenter =
+              box.localToGlobal(Offset(box.size.width / 2, 0));
+
+          final overlayState = Overlay.of(context);
+          late OverlayEntry entry;
+
+          entry = OverlayEntry(
+            builder: (context) => FloatingJokeWidget(
+              message: 'ee_dizzy'.tr,
+              icon: Icons.screen_rotation,
+              startPosition: topCenter,
+              onComplete: () => entry.remove(),
+            ),
+          );
+
+          overlayState.insert(entry);
+        }
+        _rotateSpamCount = 0;
+      }
+    } else {
+      _rotateSpamCount = 1;
+    }
+    _lastRotateTap = now;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -277,14 +426,15 @@ class _ShipOptionsBar extends StatelessWidget {
             child: Wrap(
               spacing: 8.0,
               runSpacing: 4.0,
-              children: ctrl.fleetDefinition.toSet().map((size) {
+              children: widget.ctrl.fleetDefinition.toSet().map((size) {
                 final int count =
-                    ctrl.unplacedShips.where((s) => s == size).length;
-                final bool isSelected = ctrl.selectedShipSize == size;
+                    widget.ctrl.unplacedShips.where((s) => s == size).length;
+                final bool isSelected = widget.ctrl.selectedShipSize == size;
                 final bool isAvailable = count > 0;
 
                 return GestureDetector(
-                  onTap: isAvailable ? () => ctrl.selectShip(size) : null,
+                  onTap:
+                      isAvailable ? () => widget.ctrl.selectShip(size) : null,
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     padding:
@@ -316,7 +466,8 @@ class _ShipOptionsBar extends StatelessWidget {
             ),
           ),
           InkWell(
-            onTap: ctrl.toggleOrientation,
+            key: _rotateKey,
+            onTap: _handleRotate,
             borderRadius: BorderRadius.circular(4),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -329,14 +480,14 @@ class _ShipOptionsBar extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   AnimatedRotation(
-                    turns: ctrl.isHorizontal ? 0 : 0.25,
+                    turns: widget.ctrl.isHorizontal ? 0 : 0.25,
                     duration: const Duration(milliseconds: 300),
                     child: const Icon(Icons.rotate_90_degrees_cw_outlined,
                         color: AppColors.ink, size: 16),
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    ctrl.isHorizontal ? 'horz'.tr : 'vert'.tr,
+                    widget.ctrl.isHorizontal ? 'horz'.tr : 'vert'.tr,
                     style: const TextStyle(
                         color: AppColors.ink,
                         fontSize: 12,
@@ -389,56 +540,32 @@ class _AnimatedPaperGrid extends StatelessWidget {
               final Cell? cell = ctrl.board[boardIdx];
               if (cell == null) return const SizedBox.shrink();
 
-              // ภายในคลาส _AnimatedPaperGrid
               return InkWell(
                 onTap: () => ctrl.handleTap(boardIdx),
                 splashColor: AppColors.ink.withOpacity(0.3),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 300),
                   curve: Curves.easeOut,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     color: Colors.transparent,
                   ),
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
-                      // 1. Layer แผ่นดิน (Land) - แสดงผลตามธีม
+                      Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(
+                            color: AppColors.ink.withOpacity(0.2),
+                            width: 0.5,
+                          ),
+                        ),
+                      ),
                       if (cell.terrain == Terrain.land)
                         ThemedLandPiece(
                           index: boardIdx,
                           board: ctrl.board,
                           columns: ctrl.columns,
                         ),
-
-                      // 2. ✨ Layer เส้นตาราง (Faint Grid Lines) บนแผ่นดิน ✨
-                      // เราใช้ Opacity ต่ำๆ เพื่อให้เห็นเส้นจางๆ
-                      if (cell.terrain == Terrain.land)
-                        Opacity(
-                          opacity:
-                              0.1, // ปรับความจางของเส้นตารางบนแผ่นดินที่นี่ (0.0 - 1.0)
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: AppColors.ink,
-                                width: 0.5,
-                              ),
-                            ),
-                          ),
-                        ),
-
-                      // 3. Layer เส้นตารางหลัก (Main Grid Lines) - สำหรับพื้นที่ที่ไม่ใช่ Land
-                      if (cell.terrain != Terrain.land)
-                        Container(
-                          decoration: BoxDecoration(
-                            border: Border.all(
-                              color: AppColors.ink.withOpacity(
-                                  0.2), // ความชัดเจนของเส้นตารางปกติ
-                              width: 0.5,
-                            ),
-                          ),
-                        ),
-
-                      // 4. Layer เนื้อหา (Ships/Turrets) วางทับด้านบนสุด
                       Center(
                         child: _CellContent(
                             cell: cell, index: boardIdx, ctrl: ctrl),
@@ -461,7 +588,6 @@ class GridHeaderCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ปรับให้ GridHeader มีความหนาของเส้นตารางเข้ากันได้พอดี
     return Container(
       decoration: BoxDecoration(
         color: AppColors.ink.withOpacity(0.05),
@@ -502,7 +628,7 @@ class _CellContent extends StatelessWidget {
         scale: 1.0,
         duration: Duration(milliseconds: 200),
         curve: Curves.bounceOut,
-        child: TurretPiece(), // ตัวมันเองจัดการขนาดให้พอดีแล้ว
+        child: TurretPiece(),
       );
     } else if (cell.entity == Entity.ship) {
       return AnimatedScale(
@@ -585,6 +711,7 @@ class _CommandButton extends StatelessWidget {
   final Color color;
 
   const _CommandButton({
+    super.key,
     required this.onPressed,
     required this.icon,
     required this.label,

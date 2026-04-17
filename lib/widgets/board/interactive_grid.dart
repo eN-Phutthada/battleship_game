@@ -1,14 +1,15 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 import '../../state/game_controller.dart';
+import '../../state/sound_controller.dart';
 import '../../models/game_models.dart';
 import '../../utils/constants.dart';
-// ตรวจสอบให้แน่ใจว่า ConnectedShipPiece, TurretPiece, ThemedLandPiece
-// ถูก import มาจากไฟล์ที่ถูกต้อง (เช่น themed_pieces.dart หรือ connected_ship_piece.dart)
 import '../shared/connected_ship_piece.dart';
+import '../shared/floating_joke_widget.dart'; // 👈 Import ตัวนี้มาแทนที่
 
-class InteractiveGridWidget extends StatelessWidget {
+class InteractiveGridWidget extends StatefulWidget {
   final GameController game;
   final PlayerData targetPlayer;
   final bool isMyTurn;
@@ -25,6 +26,50 @@ class InteractiveGridWidget extends StatelessWidget {
     required this.onConstraintsBuilt,
     required this.playSound,
   });
+
+  @override
+  State<InteractiveGridWidget> createState() => _InteractiveGridWidgetState();
+}
+
+class _InteractiveGridWidgetState extends State<InteractiveGridWidget> {
+  Offset? _lastTapPosition;
+
+  // --- Easter Egg Trackers ---
+  bool _isCursedEFBoard = false; // ถ้าสุ่มได้ true แถว E กับ F จะสลับกัน
+  int _efTapCount = 0;
+
+  final Map<int, int> _friendlyFireCount = {};
+  final Map<int, int> _feedFishCount = {};
+
+  @override
+  void initState() {
+    super.initState();
+    // สุ่มความน่าจะเป็น 15% ที่กระดานนี้ แถว E กับ F จะสลับตัวอักษรกัน (อิงตาม Hash ของเกมเพื่อไม่ให้มันกระพริบตอน Scroll)
+    _isCursedEFBoard = Random(widget.game.hashCode).nextDouble() < 0.15;
+  }
+
+  void _triggerJoke(String message, IconData icon) {
+    if (_lastTapPosition == null) return;
+
+    if (Get.isRegistered<SoundController>()) {
+      Get.find<SoundController>().vibrateHeavy();
+      Get.find<SoundController>().playError();
+    }
+
+    final overlayState = Overlay.of(context);
+    late OverlayEntry entry;
+
+    entry = OverlayEntry(
+      builder: (context) => FloatingJokeWidget(
+        message: message,
+        icon: icon,
+        startPosition: _lastTapPosition!,
+        onComplete: () => entry.remove(),
+      ),
+    );
+
+    overlayState.insert(entry);
+  }
 
   Widget _buildXIcon({Color color = AppColors.redPen}) {
     return FractionallySizedBox(
@@ -43,24 +88,24 @@ class InteractiveGridWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    bool isMyBoard = targetPlayer.id == 0;
+    bool isMyBoard = widget.targetPlayer.id == 0;
     bool hideEnemyLand = !isMyBoard &&
-        (game.assistLevel == AssistLevel.hardcore ||
-            game.assistLevel == AssistLevel.realLife);
+        (widget.game.assistLevel == AssistLevel.hardcore ||
+            widget.game.assistLevel == AssistLevel.realLife);
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          onConstraintsBuilt(constraints);
+          widget.onConstraintsBuilt(constraints);
           return InteractiveViewer(
-            transformationController: transformCtrl,
+            transformationController: widget.transformCtrl,
             minScale: 1.0,
             maxScale: 4.0,
             boundaryMargin: EdgeInsets.zero,
             child: Center(
               child: AspectRatio(
-                aspectRatio: (game.columns + 1) / (game.rows + 1),
+                aspectRatio: (widget.game.columns + 1) / (widget.game.rows + 1),
                 child: Container(
                   decoration: BoxDecoration(
                       border: Border.all(
@@ -69,19 +114,28 @@ class InteractiveGridWidget extends StatelessWidget {
                   child: GridView.builder(
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: game.columns + 1),
-                    itemCount: (game.columns + 1) * (game.rows + 1),
+                        crossAxisCount: widget.game.columns + 1),
+                    itemCount:
+                        (widget.game.columns + 1) * (widget.game.rows + 1),
                     itemBuilder: (context, index) {
-                      int r = index ~/ (game.columns + 1);
-                      int c = index % (game.columns + 1);
+                      int r = index ~/ (widget.game.columns + 1);
+                      int c = index % (widget.game.columns + 1);
 
                       if (r == 0 && c == 0) return const SizedBox();
                       if (r == 0) return GridHeaderCell('$c');
-                      if (c == 0)
-                        return GridHeaderCell(String.fromCharCode(64 + r));
 
-                      int boardIdx = (r - 1) * game.columns + (c - 1);
-                      Cell cell = targetPlayer.board[boardIdx]!;
+                      if (c == 0) {
+                        String rowChar = String.fromCharCode(64 + r);
+                        // 🥚 Easter Egg: สลับ E กับ F
+                        if (_isCursedEFBoard) {
+                          if (r == 5) rowChar = 'F';
+                          if (r == 6) rowChar = 'E';
+                        }
+                        return GridHeaderCell(rowChar);
+                      }
+
+                      int boardIdx = (r - 1) * widget.game.columns + (c - 1);
+                      Cell cell = widget.targetPlayer.board[boardIdx]!;
 
                       bool showLand = false;
                       double landOpacity = 1.0;
@@ -89,84 +143,103 @@ class InteractiveGridWidget extends StatelessWidget {
                       if (cell.terrain == Terrain.land) {
                         if (isMyBoard || (cell.isRevealed && !hideEnemyLand)) {
                           showLand = true;
-                        } else if (game.isDevMode && !isMyBoard) {
+                        } else if (widget.game.isDevMode && !isMyBoard) {
                           showLand = true;
                           landOpacity = 0.3;
                         }
                       }
 
                       return InkWell(
+                        onTapDown: (details) {
+                          _lastTapPosition = details
+                              .globalPosition; // 👈 เก็บพิกัดไว้เด้ง Joke
+                        },
                         onTap: () {
-                          if (isMyTurn &&
+                          // 🥚 Easter Egg: กดแถว E หรือ F บ่อยๆ
+                          if (!isMyBoard && (r == 5 || r == 6)) {
+                            _efTapCount++;
+                            if (_efTapCount >= 6) {
+                              _triggerJoke('ee_e_or_f'.tr, Icons.spellcheck);
+                              _efTapCount = 0;
+                            }
+                          }
+
+                          if (widget.isMyTurn &&
                               !isMyBoard &&
-                              !targetPlayer.isDefeated) {
-                            game.toggleLockTarget(targetPlayer.id, boardIdx);
-                          } else if (game.assistLevel == AssistLevel.realLife &&
+                              !widget.targetPlayer.isDefeated) {
+                            // 🥚 Easter Egg: ยิงซ้ำที่น้ำ (ให้อาหารปลา)
+                            if (cell.isRevealed && cell.entity == Entity.none) {
+                              _feedFishCount[boardIdx] =
+                                  (_feedFishCount[boardIdx] ?? 0) + 1;
+                              if (_feedFishCount[boardIdx]! >= 3) {
+                                _triggerJoke('ee_feed_fish'.tr, Icons.set_meal);
+                                _feedFishCount[boardIdx] = 0;
+                              } else {
+                                widget.playSound();
+                              }
+                            } else {
+                              widget.game.toggleLockTarget(
+                                  widget.targetPlayer.id, boardIdx);
+                            }
+                          } else if (isMyBoard && widget.isMyTurn) {
+                            // 🥚 Easter Egg: กดยิงเรือฝั่งตัวเอง (Friendly Fire)
+                            if (cell.entity == Entity.ship) {
+                              _friendlyFireCount[boardIdx] =
+                                  (_friendlyFireCount[boardIdx] ?? 0) + 1;
+                              if (_friendlyFireCount[boardIdx]! >= 3) {
+                                _triggerJoke('ee_friendly_fire'.tr,
+                                    Icons.warning_rounded);
+                                _friendlyFireCount[boardIdx] = 0;
+                              } else {
+                                widget.playSound();
+                              }
+                            }
+                          } else if (widget.game.assistLevel ==
+                                  AssistLevel.realLife &&
                               !isMyBoard) {
-                            playSound();
-                            game.toggleManualMarker(targetPlayer.id, boardIdx);
+                            widget.playSound();
+                            widget.game.toggleManualMarker(
+                                widget.targetPlayer.id, boardIdx);
                           }
                         },
                         onLongPress: () {
-                          if (game.assistLevel == AssistLevel.realLife &&
+                          if (widget.game.assistLevel == AssistLevel.realLife &&
                               !isMyBoard) {
-                            playSound();
-                            game.toggleManualMarker(targetPlayer.id, boardIdx);
+                            widget.playSound();
+                            widget.game.toggleManualMarker(
+                                widget.targetPlayer.id, boardIdx);
                           }
                         },
                         splashColor: Colors.cyanAccent.withOpacity(0.3),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 300),
                           curve: Curves.easeOut,
-                          decoration: BoxDecoration(
+                          decoration: const BoxDecoration(
                             color: Colors.transparent,
                           ),
                           child: Stack(
                             fit: StackFit.expand,
                             children: [
-                              // 1. Layer แผ่นดิน (Land) - แสดงผลตามธีมและโหมด Dev
+                              Container(
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: AppColors.ink.withOpacity(0.2),
+                                    width: 0.5,
+                                  ),
+                                ),
+                              ),
                               if (showLand)
                                 Opacity(
                                   opacity: landOpacity,
                                   child: ThemedLandPiece(
                                     index: boardIdx,
-                                    board: targetPlayer.board,
-                                    columns: game.columns,
+                                    board: widget.targetPlayer.board,
+                                    columns: widget.game.columns,
                                   ),
                                 ),
-
-                              // 2. ✨ Layer เส้นตาราง (Faint Grid Lines) บนแผ่นดิน ✨
-                              // เราใช้ Opacity ต่ำๆ เพื่อให้เห็นเส้นจางๆ
-                              if (showLand)
-                                Opacity(
-                                  opacity:
-                                      0.1, // ปรับความจางของเส้นตารางบนแผ่นดินที่นี่ (0.0 - 1.0)
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: AppColors.ink,
-                                        width: 0.5,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-
-                              // 3. Layer เส้นตารางหลัก (Main Grid Lines) - สำหรับพื้นที่ที่ไม่ใช่ Land
-                              if (!showLand)
-                                Container(
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                      color: AppColors.ink.withOpacity(
-                                          0.2), // ความชัดเจนของเส้นตารางปกติ
-                                      width: 0.5,
-                                    ),
-                                  ),
-                                ),
-
-                              // 4. Layer เนื้อหา (Cell Graphics) วางทับด้านบนสุด
                               Center(
                                 child: _buildCellGraphics(
-                                    boardIdx, targetPlayer, game),
+                                    boardIdx, widget.targetPlayer, widget.game),
                               ),
                             ],
                           ),
@@ -309,11 +382,13 @@ class GridHeaderCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ปรับให้ GridHeader มีความหนาของเส้นตารางเข้ากันได้พอดี
     return Container(
       decoration: BoxDecoration(
         color: AppColors.ink.withOpacity(0.05),
-        border: Border.all(color: AppColors.ink.withOpacity(0.2), width: 0.5),
+        border: Border.all(
+          color: AppColors.ink.withOpacity(0.2),
+          width: 0.5,
+        ),
       ),
       child: Center(
         child: Text(

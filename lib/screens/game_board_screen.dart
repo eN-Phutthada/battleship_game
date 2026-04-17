@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -71,11 +72,9 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     final double hv = _viewportConstraints!.maxHeight;
     final double ar = (cols + 1) / (rows + 1);
 
-    // Calculate Grid dimensions
     final double wg = (wv / hv > ar) ? (hv * ar) : wv;
     final double hg = (wv / hv > ar) ? hv : (wv / ar);
 
-    // Calculate Cell Center
     final double offsetX = (wv - wg) / 2;
     final double offsetY = (hv - hg) / 2;
     final double cw = wg / (cols + 1);
@@ -85,7 +84,6 @@ class _GameBoardScreenState extends State<GameBoardScreen>
     final double cx = offsetX + (bc + 1.5) * cw;
     final double cy = offsetY + (br + 1.5) * ch;
 
-    // Check if currently visible
     final double curTx = _transformCtrl.value.getTranslation().x;
     final double curTy = _transformCtrl.value.getTranslation().y;
     final double screenX = curTx + (cx * scale);
@@ -99,7 +97,6 @@ class _GameBoardScreenState extends State<GameBoardScreen>
 
     if (isVisible) return;
 
-    // Calculate New Translation constraints
     double tx = (wv / 2) - (cx * scale);
     double ty = (hv / 2) - (cy * scale);
     final double minTx = wv - (wv * scale);
@@ -112,7 +109,6 @@ class _GameBoardScreenState extends State<GameBoardScreen>
       ..translate(tx, ty)
       ..scale(scale);
 
-    // Trigger Animation
     _panController.stop();
     int panDurationMs = (game.botSpeedMs * 0.7).toInt().clamp(0, 600);
     _panController.duration = Duration(milliseconds: panDurationMs);
@@ -138,12 +134,10 @@ class _GameBoardScreenState extends State<GameBoardScreen>
           child: SafeArea(
             child: GetBuilder<GameController>(
               builder: (game) {
-                // State 1: Loading
                 if (game.isDeploying || game.players.isEmpty) {
                   return _LoadingRadarScreen(game: game, playSound: _playSound);
                 }
 
-                // Data Prep
                 final bool isMyTurn =
                     game.players[game.currentPlayerIndex].id == 0;
                 final PlayerData viewTarget = game.players.firstWhere(
@@ -151,7 +145,6 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                   orElse: () => game.players[1],
                 );
 
-                // Handle Pan Animation Dispatch
                 if (game.activeShotAnimation != null) {
                   final int timestamp = game.activeShotAnimation!['timestamp'];
                   if (timestamp != _lastPanShotTime &&
@@ -164,7 +157,6 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                   }
                 }
 
-                // State 2: Main Board
                 return Stack(
                   children: [
                     Padding(
@@ -304,6 +296,13 @@ class _TurnTransitionOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // --- EASTER EGG: ข้อความเปลี่ยนเทิร์นแบบกวนๆ ---
+    String displayText = game.turnTransitionMessage;
+    if (isMyTurn && Random().nextDouble() > 0.85) {
+      // โอกาส 15%
+      displayText = "ถึงตาคุณแล้ว!\n(สรุป E หรือ F นะ? 🧐)";
+    }
+
     return Container(
       color: Colors.black.withOpacity(0.5),
       child: Center(
@@ -324,13 +323,13 @@ class _TurnTransitionOverlay extends StatelessWidget {
                     boxShadow: [
                       BoxShadow(color: Colors.black54, blurRadius: 10)
                     ]),
-                child: Text(game.turnTransitionMessage,
+                child: Text(displayText,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                         color: isMyTurn ? Colors.green[800] : AppColors.redPen,
-                        fontSize: 40,
+                        fontSize: 36,
                         fontWeight: FontWeight.w900,
-                        letterSpacing: 6)),
+                        letterSpacing: 4)),
               ),
             );
           },
@@ -355,6 +354,16 @@ class _LoadingRadarScreenState extends State<_LoadingRadarScreen>
   late AnimationController _radarController;
   int _secretTapCount = 0;
   DateTime? _lastSecretTap;
+
+  // --- EASTER EGG: ข้อความตอนโหลด ---
+  int _jokeIndex = 0;
+  List<String> get _loadingJokes => [
+        'simulating'.tr,
+        'กำลังเถียงกันว่า E หรือ F... 🤷‍♂️',
+        'เรือดำน้ำบินได้กำลังมา... 🛸',
+        'หมุนเรือจนกว่าจะอ้วก... 🤢',
+        'RUBSARB Beta Test Mark 1.1 🛠️',
+      ];
 
   @override
   void initState() {
@@ -422,20 +431,28 @@ class _LoadingRadarScreenState extends State<_LoadingRadarScreen>
             ),
           ),
           const SizedBox(height: 30),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: AppColors.ink, width: 2),
-                boxShadow: const [
-                  BoxShadow(color: Colors.black12, offset: Offset(4, 4))
-                ]),
-            child: Text('simulating'.tr,
-                style: const TextStyle(
-                    color: AppColors.ink,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 2)),
+          GestureDetector(
+            onTap: () {
+              widget.playSound();
+              setState(() {
+                _jokeIndex = (_jokeIndex + 1) % _loadingJokes.length;
+              });
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                  color: Colors.white,
+                  border: Border.all(color: AppColors.ink, width: 2),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black12, offset: Offset(4, 4))
+                  ]),
+              child: Text(_loadingJokes[_jokeIndex],
+                  style: const TextStyle(
+                      color: AppColors.ink,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 2)),
+            ),
           ),
         ],
       ),

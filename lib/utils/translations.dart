@@ -16,11 +16,33 @@ class AppTranslations extends Translations {
           'horz': 'HORZ',
           'vert': 'VERT',
 
-          // --- MAIN MENU ---
-          'game_title': 'PAPER\nBATTLESHIP',
+          // --- EASTER EGGS ---
           'ee_sub': 'Submarine deployed! ⚓',
           'ee_rocket': 'Space Force deployed! 🚀',
           'ee_boat': 'Back to basics! ⛵',
+          'ee_rubsarb': 'Legendary Creator recognized! 🫡',
+          'ee_johnwick': 'They took your dog... Avenge him! ✏️',
+          'ee_pirate': 'Yarrr! Ready to plunder, Captain? 🏴‍☠️',
+          'ee_devmode_joke': 'Developer mode... just kidding! 💻',
+          'ee_max_enemy':
+              'Maximum 7 enemies! You can\'t fight the entire ocean! 🌊',
+          'ee_bot_name': 'Wait, are we the bad guys? 🤖',
+          'ee_dev_name': 'Nice try, I wrote this code! 👨‍💻',
+          'ee_screaming': 'STOP SCREAMING!! 🙉',
+          'ee_min_enemy': 'Who are you fighting? Your inner demons? 👻',
+          'ee_confused': 'System error: Commander is confused. 😵‍💫',
+          'ee_no_name_spam': 'SERIOUSLY, JUST TYPE A NAME!! 🤬',
+          'ee_dizzy': 'Stop spinning! The crew is throwing up! 🤢',
+          'ee_indecisive': 'Make up your mind! The fleet is exhausted! 🥵',
+          'ee_ocd': 'It\'s already blank! What are you erasing?! 📄',
+          'ee_impatient':
+              'Can\'t you see the RED warning? Deploy correctly first! 😡',
+          'ee_e_or_f': 'Wait... is that E or F? 😵‍💫',
+          'ee_friendly_fire': 'Captain! That\'s our OWN ship!! 🤬',
+          'ee_feed_fish': 'We already missed! Stop feeding the fishes! 🐟',
+
+          // --- MAIN MENU ---
+          'game_title': 'PAPER\nBATTLESHIP',
           'mission_briefing': 'MISSION BRIEFING',
           'commander_name': 'COMMANDER CALLSIGN',
           'local_campaign': 'LOCAL CAMPAIGN (VS BOTS)',
@@ -128,7 +150,7 @@ class AppTranslations extends Translations {
           'defending': 'DEFENDING: MY SECTOR',
           'targeting': 'TARGETING: @name',
           'ammo_ready': 'AMMO: ',
-          'ammo_legend': '🟦 FLEET   🟧 BONUS   🩵 LOCKED',
+          'ammo_legend': '🟦 FLEET   🟧 BONUS   🩵 LOCKED',
           'targets_locked': 'TARGETS LOCKED',
           'fire_all': 'FIRE ALL!',
           'turn_announce': "@name's TURN",
@@ -149,27 +171,21 @@ class AppTranslations extends Translations {
           'battle_log': 'BATTLE LOG',
           'casual_block':
               'Sector already revealed! (Casual Mode prevents wasted ammo)',
-
           'wasted_shot': '⚠️ [YOU] Wasted a shot on a revealed sector!',
           'wasted_shot_bot': '🤣 [@shooter] Wasted a shot on a known sector!',
-
           'log_sunk_me':
               '🎉 [YOU] completely sank @target\'s ship! (Size @size)',
           'log_sunk_enemy': '💥 [@shooter] sank @target\'s ship!',
           'log_sunk_you': '🚨 [@shooter] sank YOUR ship!',
-
           'log_hit_me': '🎯 [YOU] hit @target\'s ship!',
           'log_hit_enemy': '🎯 [@shooter] hit @target\'s ship!',
           'log_hit_you': '⚠️ [@shooter] hit YOUR ship!',
-
           'log_turret_me': '🛡️ [YOU] destroyed @target\'s turret!',
           'log_turret_enemy': '🛡️ [@shooter] destroyed @target\'s turret!',
           'log_turret_you': '🧨 [@shooter] destroyed YOUR turret!',
-
           'log_hardcore_hit':
               '🎯 [?] Confirmed hit on @target! (Structure hidden)',
           'log_hardcore_miss': '💦 [?] Attack missed on @target!',
-
           'log_reallife_hit': '🎯 [@shooter] hit @target at @coord',
           'log_reallife_miss': '💦 [@shooter] missed @target at @coord',
           'log_reallife_sunk': '💥 [@shooter] sunk @target at @coord',
@@ -210,11 +226,32 @@ class AppTranslations extends Translations {
           'horz': 'แนวนอน',
           'vert': 'แนวตั้ง',
 
-          // --- MAIN MENU ---
-          'game_title': 'ยุทธนาวี\nกระดาษ',
+          // --- EASTER EGGS ---
           'ee_sub': 'ปลดล็อกเรือดำน้ำสำเร็จ! ⚓',
           'ee_rocket': 'กองกำลังอวกาศพร้อมรบ! 🚀',
           'ee_boat': 'กลับสู่ความคลาสสิก! ⛵',
+          'ee_rubsarb': 'ตรวจพบผู้สร้างตำนานระดับพระกาฬ! 🫡',
+          'ee_johnwick': 'พวกมันขโมยหมาคุณไป... ล้างแค้นให้มันซะ! ✏️',
+          'ee_pirate': 'ย้าาาร์! พร้อมปล้นสะดมแล้วหรือยังกัปตัน? 🏴‍☠️',
+          'ee_devmode_joke': 'เปิดโหมดนักพัฒนา... ล้อเล่นน่า! 💻',
+          'ee_max_enemy':
+              'ศัตรูสูงสุด 7 คน! คุณสู้คนทั้งมหาสมุทรไม่ไหวหรอก! 🌊',
+          'ee_bot_name': 'เดี๋ยวนะ นี่เราเป็นฝั่งบอทหรอ? 🤖',
+          'ee_dev_name': 'รู้ดีนักนะ! 👨‍💻',
+          'ee_screaming': 'เลิกแหกปากได้แล้ววว!! 🙉',
+          'ee_min_enemy': 'จะสู้กับใคร? สู้กับความว่างเปล่าหรอ? 👻',
+          'ee_confused': 'ระบบรวน: ผู้บัญชาการกำลังสับสน 😵‍💫',
+          'ee_no_name_spam': 'ก็บอกให้พิมพ์ชื่อก่อนไงเล่า!! 🤬',
+          'ee_dizzy': 'หยุดหมุนโว้ยยย! ลูกเรืออ้วกแตกหมดแล้ว! 🤢',
+          'ee_indecisive': 'เลือกสักทีเถอะ! จัดแถวใหม่จนทหารหอบแล้ว! 🥵',
+          'ee_ocd': 'กระดานมันก็ว่างอยู่แล้วไง จะลบอะไรนักหนา! 📄',
+          'ee_impatient': 'ใจร้อนจังโว้ย! อ่านคำเตือนสีแดงด้านบนก่อนไหม! 😡',
+          'ee_e_or_f': 'เดี๋ยวนะ แถว E หรือ F วะเนี่ย? 😵‍💫',
+          'ee_friendly_fire': 'กัปตัน! นั่นเรือฝั่งเราโว้ยย!! 🤬',
+          'ee_feed_fish': 'ตรงนั้นยิงพลาดไปแล้ว! จะให้อาหารปลาหรือไง! 🐟',
+
+          // --- MAIN MENU ---
+          'game_title': 'ยุทธนาวี\nกระดาษ',
           'mission_briefing': 'รายละเอียดภารกิจ',
           'commander_name': 'ชื่อผู้บัญชาการ',
           'local_campaign': 'รบออฟไลน์ (ปะทะ AI)',
@@ -321,7 +358,7 @@ class AppTranslations extends Translations {
           'defending': 'ป้องกัน: น่านน้ำของเรา',
           'targeting': 'ล็อกเป้า: @name',
           'ammo_ready': 'กระสุน: ',
-          'ammo_legend': '🟦 กองเรือ   🟧 โบนัส   🩵 ล็อกเป้า',
+          'ammo_legend': '🟦 กองเรือ   🟧 โบนัส   🩵 ล็อกเป้า',
           'targets_locked': 'ล็อกเป้าหมายแล้ว',
           'fire_all': 'ยิงทั้งหมด!',
           'turn_announce': "เทิร์นของ @name",
@@ -342,25 +379,19 @@ class AppTranslations extends Translations {
           'battle_log': 'บันทึกการรบ',
           'casual_block':
               'พิกัดนี้ยิงไปแล้ว! (โหมดแคชชวลช่วยป้องกันการยิงซ้ำเสียกระสุนฟรี)',
-
           'wasted_shot': '⚠️ [คุณ] เสียกระสุนฟรี! ยิงซ้ำพิกัดเดิม',
           'wasted_shot_bot': '🤣 [@shooter] ยิงเสียของไปโดนจุดที่เปิดแล้ว!',
-
           'log_sunk_me': '🎉 [คุณ] จมเรือของ @target สำเร็จ! (ขนาด @size)',
           'log_sunk_enemy': '💥 [@shooter] จมเรือของ @target!',
           'log_sunk_you': '🚨 [@shooter] จมเรือของ [คุณ]!',
-
           'log_hit_me': '🎯 [คุณ] ยิงโดนเรือของ @target!',
           'log_hit_enemy': '🎯 [@shooter] ยิงโดนเรือของ @target!',
           'log_hit_you': '⚠️ [@shooter] ยิงโดนเรือของ [คุณ]!',
-
           'log_turret_me': '🛡️ [คุณ] ทำลายป้อมปืนของ @target!',
           'log_turret_enemy': '🛡️ [@shooter] ทำลายป้อมปืนของ @target!',
           'log_turret_you': '🧨 [@shooter] ทำลายป้อมปืนของ [คุณ]!',
-
           'log_hardcore_hit': '🎯 [?] ยิงโดนเป้าหมาย @target! (ซ่อนประเภท)',
           'log_hardcore_miss': '💦 [?] ยิงพลาดเป้าหมาย @target!',
-
           'log_reallife_hit': '🎯 [@shooter] ยิง @target โดนพิกัด @coord',
           'log_reallife_miss': '💦 [@shooter] ยิง @target พลาดพิกัด @coord',
           'log_reallife_sunk': '💥 [@shooter] ยิง @target จมที่พิกัด @coord',
@@ -402,11 +433,34 @@ class AppTranslations extends Translations {
           'horz': 'HORZ',
           'vert': 'VERT',
 
-          // --- MAIN MENU ---
-          'game_title': 'BATALLA\nNAVAL',
+          // --- EASTER EGGS ---
           'ee_sub': '¡Submarino desplegado! ⚓',
           'ee_rocket': '¡Fuerza espacial lista! 🚀',
           'ee_boat': '¡De vuelta a lo básico! ⛵',
+          'ee_rubsarb': '¡Creador legendario reconocido! 🫡',
+          'ee_johnwick': 'Se llevaron a tu perro... ¡Véngalo! ✏️',
+          'ee_pirate': '¡Yarrr! ¿Listo para saquear, Capitán? 🏴‍☠️',
+          'ee_devmode_joke': 'Modo desarrollador... ¡es broma! 💻',
+          'ee_max_enemy':
+              '¡Máximo 7 enemigos! ¡No puedes luchar contra todo el océano! 🌊',
+          'ee_bot_name': 'Espera, ¿somos los malos? 🤖',
+          'ee_dev_name': '¡Buen intento, yo escribí esto! 👨‍💻',
+          'ee_screaming': '¡¡DEJA DE GRITAR!! 🙉',
+          'ee_min_enemy': '¿Con quién peleas? ¿Tus demonios internos? 👻',
+          'ee_confused': 'Error: El comandante está confundido. 😵‍💫',
+          'ee_no_name_spam': '¡¡EN SERIO, SOLO ESCRIBE UN NOMBRE!! 🤬',
+          'ee_dizzy': '¡Deja de girar! ¡La tripulación está vomitando! 🤢',
+          'ee_indecisive': '¡Decídete! ¡La flota está exhausta! 🥵',
+          'ee_ocd': '¡Ya está en blanco! ¿Qué estás borrando? 📄',
+          'ee_impatient':
+              '¿No ves la advertencia ROJA? ¡Despliega correctamente primero! 😡',
+          'ee_e_or_f': 'Espera... ¿eso es E o F? 😵‍💫',
+          'ee_friendly_fire': '¡Capitán! ¡Ese es NUESTRO barco! 🤬',
+          'ee_feed_fish':
+              '¡Ya fallamos ahí! ¡Deja de alimentar a los peces! 🐟',
+
+          // --- MAIN MENU ---
+          'game_title': 'BATALLA\nNAVAL',
           'mission_briefing': 'REPORTE DE MISIÓN',
           'commander_name': 'IDENTIFICADOR',
           'local_campaign': 'CAMPAÑA LOCAL (VS BOTS)',
@@ -512,7 +566,7 @@ class AppTranslations extends Translations {
           'defending': 'DEFENDIENDO: MI SECTOR',
           'targeting': 'APUNTANDO: @name',
           'ammo_ready': 'MUNICIÓN: ',
-          'ammo_legend': '🟦 FLOTA   🟧 BONO   🩵 FIJADO',
+          'ammo_legend': '🟦 FLOTA   🟧 BONO   🩵 FIJADO',
           'targets_locked': 'OBJETIVOS FIJADOS',
           'fire_all': '¡DISPARAR!',
           'turn_announce': 'TURNO DE @name',
@@ -531,25 +585,19 @@ class AppTranslations extends Translations {
           // --- BATTLE LOGS ---
           'battle_log': 'REGISTRO DE BATALLA',
           'casual_block': '¡Sector ya revelado! (Modo Casual activado)',
-
           'wasted_shot': '⚠️ [TÚ] ¡Disparo desperdiciado en sector revelado!',
           'wasted_shot_bot': '🤣 [@shooter] desperdició un disparo!',
-
           'log_sunk_me': '🎉 [TÚ] hundiste el barco de @target (Tamaño @size)',
           'log_sunk_enemy': '💥 [@shooter] hundió el barco de @target',
           'log_sunk_you': '🚨 [@shooter] hundió TU barco',
-
           'log_hit_me': '🎯 [TÚ] impactaste el barco de @target',
           'log_hit_enemy': '🎯 [@shooter] impactó el barco de @target',
           'log_hit_you': '⚠️ [@shooter] impactó TU barco',
-
           'log_turret_me': '🛡️ [TÚ] destruiste la torreta de @target',
           'log_turret_enemy': '🛡️ [@shooter] destruyó la torreta de @target',
           'log_turret_you': '🧨 [@shooter] destruyó TU torreta',
-
           'log_hardcore_hit': '🎯 [?] Impacto en @target (Estructura oculta)',
           'log_hardcore_miss': '💦 [?] Fallo en @target',
-
           'log_reallife_hit': '🎯 [@shooter] impactó a @target en @coord',
           'log_reallife_miss': '💦 [@shooter] falló a @target en @coord',
           'log_reallife_sunk': '💥 [@shooter] hundió a @target en @coord',
@@ -593,11 +641,31 @@ class AppTranslations extends Translations {
           'horz': '横',
           'vert': '縦',
 
-          // --- MAIN MENU ---
-          'game_title': 'ペーパー\n海戦',
+          // --- EASTER EGGS ---
           'ee_sub': '潜水艦配備完了！ ⚓',
           'ee_rocket': '宇宙軍出撃！ 🚀',
           'ee_boat': '基本に帰還！ ⛵',
+          'ee_rubsarb': '伝説のクリエイターを認識しました！ 🫡',
+          'ee_johnwick': '奴らはあなたの犬を奪った… 復讐せよ！ ✏️',
+          'ee_pirate': 'ヤアーッ！略奪の準備はいいか、船長？ 🏴‍☠️',
+          'ee_devmode_joke': '開発者モード… なんちゃって！ 💻',
+          'ee_max_enemy': '敵は最大7人まで！海全体とは戦えません！ 🌊',
+          'ee_bot_name': '待って、俺たちが悪者なのか？ 🤖',
+          'ee_dev_name': 'いい試みだが、コードは私が書いた！ 👨‍💻',
+          'ee_screaming': '叫ぶのをやめろ！！ 🙉',
+          'ee_min_enemy': '誰と戦うの？虚無と？ 👻',
+          'ee_confused': 'システムエラー: 指揮官が混乱しています 😵‍💫',
+          'ee_no_name_spam': 'いい加減に名前を入力しろ！！ 🤬',
+          'ee_dizzy': '回すのをやめろ！乗組員が吐いている！ 🤢',
+          'ee_indecisive': '早く決めてくれ！艦隊はクタクタだ！ 🥵',
+          'ee_ocd': 'もう空っぽだぞ！何を消そうとしてるんだ！ 📄',
+          'ee_impatient': '赤い警告が見えないのか？まずはちゃんと配置しろ！ 😡',
+          'ee_e_or_f': '待って… それE？それともF？ 😵‍💫',
+          'ee_friendly_fire': '船長！それは味方の船です！！ 🤬',
+          'ee_feed_fish': 'すでに外れています！魚に餌をやるのはやめて！ 🐟',
+
+          // --- MAIN MENU ---
+          'game_title': 'ペーパー\n海戦',
           'mission_briefing': 'ミッション概要',
           'commander_name': '指揮官コールサイン',
           'local_campaign': 'ローカル (VS ボット)',
@@ -693,7 +761,7 @@ class AppTranslations extends Translations {
           'defending': '防衛中: 私のセクター',
           'targeting': 'ターゲット: @name',
           'ammo_ready': '弾薬: ',
-          'ammo_legend': '🟦 艦隊   🟧 ボーナス   🩵 ロック中',
+          'ammo_legend': '🟦 艦隊   🟧 ボーナス   🩵 ロック中',
           'targets_locked': 'ターゲットロック完了',
           'fire_all': '全弾発射！',
           'turn_announce': '@name のターン',
@@ -710,25 +778,19 @@ class AppTranslations extends Translations {
           // --- BATTLE LOGS ---
           'battle_log': 'バトルログ',
           'casual_block': '既に判明しているセクターです！',
-
           'wasted_shot': '⚠️ [あなた] 既に判明しているセクターに無駄撃ち！',
           'wasted_shot_bot': '🤣 [@shooter] が既知のセクターに無駄撃ち！',
-
           'log_sunk_me': '🎉 [あなた] が @target の船を撃沈！ (サイズ @size)',
           'log_sunk_enemy': '💥 [@shooter] が @target の船を撃沈！',
           'log_sunk_you': '🚨 [@shooter] が [あなた] の船を撃沈！',
-
           'log_hit_me': '🎯 [あなた] が @target の船に命中！',
           'log_hit_enemy': '🎯 [@shooter] が @target の船に命中！',
           'log_hit_you': '⚠️ [@shooter] が [あなた] の船に命中！',
-
           'log_turret_me': '🛡️ [あなた] が @target の砲塔を破壊！',
           'log_turret_enemy': '🛡️ [@shooter] が @target の砲塔を破壊！',
           'log_turret_you': '🧨 [@shooter] が [あなた] の砲塔を破壊！',
-
           'log_hardcore_hit': '🎯 [?] @target に命中！（詳細非表示）',
           'log_hardcore_miss': '💦 [?] @target への攻撃ミス！',
-
           'log_reallife_hit': '🎯 [@shooter] が @target の @coord に命中',
           'log_reallife_miss': '💦 [@shooter] が @target の @coord でミス',
           'log_reallife_sunk': '💥 [@shooter] が @target の @coord で撃沈',

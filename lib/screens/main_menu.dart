@@ -12,6 +12,7 @@ import '../utils/constants.dart';
 import '../widgets/shared/animated_paper_bg.dart';
 import '../widgets/dialogs/multiplayer_dialog.dart';
 import '../widgets/dialogs/real_life_warning_dialog.dart';
+import '../widgets/shared/floating_joke_widget.dart';
 
 enum BoardSize { standard, large, huge }
 
@@ -46,9 +47,28 @@ class _MainMenuScreenState extends State<MainMenuScreen>
   final MultiplayerController mpCtrl = Get.put(MultiplayerController());
   late SoundController _sound;
 
+  final GlobalKey _logoKey = GlobalKey();
+  final GlobalKey _nameKey = GlobalKey();
+  final GlobalKey _assistKey = GlobalKey();
+  final GlobalKey _enemyCounterKey = GlobalKey();
+  final GlobalKey _startBtnKey = GlobalKey();
+  final GlobalKey _versionKey = GlobalKey();
+
+  // --- Easter Egg State Variables ---
   int _logoTapCount = 0;
   IconData _currentVehicleIcon = Icons.directions_boat_outlined;
-  OverlayEntry? _activeEasterEgg;
+
+  int _versionTapCount = 0;
+  String _versionText = "v1.0.0 - Commander Edition";
+
+  int _maxEnemyTapCount = 0;
+  int _minEnemyTapCount = 0;
+  String _lastSecretName = "";
+
+  int _assistTapCount = 0;
+  DateTime? _lastAssistTapTime;
+
+  int _emptyNameSpamCount = 0;
 
   @override
   void initState() {
@@ -64,35 +84,95 @@ class _MainMenuScreenState extends State<MainMenuScreen>
     if (Get.isRegistered<GameController>()) {
       Get.find<GameController>().vehicleTheme = VehicleTheme.boat;
     }
+
+    _nameController.addListener(_checkSecretNames);
   }
 
   @override
   void dispose() {
     _animController.dispose();
+    _nameController.removeListener(_checkSecretNames);
     _nameController.dispose();
     _nameFocusNode.dispose();
     super.dispose();
+  }
+
+  void _checkSecretNames() {
+    final name = _nameController.text.trim().toUpperCase();
+
+    if (name == "RUBSARB" && _lastSecretName != "RUBSARB") {
+      _lastSecretName = "RUBSARB";
+      _triggerEasterEgg('ee_rubsarb'.tr, _nameKey, customIcon: Icons.campaign);
+    } else if (name == "JOHN WICK" && _lastSecretName != "JOHN WICK") {
+      _lastSecretName = "JOHN WICK";
+      setState(() {
+        enemyCount = 7;
+        botDifficulty = BotDifficulty.hard;
+      });
+      _triggerEasterEgg('ee_johnwick'.tr, _nameKey, customIcon: Icons.pets);
+    } else if (name == "PIRATE" && _lastSecretName != "PIRATE") {
+      _lastSecretName = "PIRATE";
+      _triggerEasterEgg('ee_pirate'.tr, _nameKey, customIcon: Icons.anchor);
+    } else if ((name == "BOT" || name == "AI") && _lastSecretName != name) {
+      _lastSecretName = name;
+      _triggerEasterEgg('ee_bot_name'.tr, _nameKey,
+          customIcon: Icons.smart_toy);
+    } else if ((name == "DEV" || name == "ADMIN") && _lastSecretName != name) {
+      _lastSecretName = name;
+      _triggerEasterEgg('ee_dev_name'.tr, _nameKey,
+          customIcon: Icons.admin_panel_settings);
+    } else if (name == "AAAAAAAAAAAA" && _lastSecretName != "AAAAAAAAAAAA") {
+      _lastSecretName = "AAAAAAAAAAAA";
+      _triggerEasterEgg('ee_screaming'.tr, _nameKey,
+          customIcon: Icons.volume_off);
+    }
+  }
+
+  void _handleAssistChange(AssistLevel val) {
+    setState(() => assistLevel = val);
+
+    DateTime now = DateTime.now();
+    if (_lastAssistTapTime != null &&
+        now.difference(_lastAssistTapTime!).inMilliseconds < 500) {
+      _assistTapCount++;
+      if (_assistTapCount > 8) {
+        _triggerEasterEgg('ee_confused'.tr, _assistKey, customIcon: Icons.loop);
+        _assistTapCount = 0;
+      }
+    } else {
+      _assistTapCount = 1;
+    }
+    _lastAssistTapTime = now;
   }
 
   bool _validateName() {
     if (_nameController.text.trim().isEmpty) {
       _sound.vibrateHeavy();
       _sound.playError();
-      Get.snackbar(
-        'attention'.tr,
-        'err_empty_name'.tr,
-        backgroundColor: const Color(0xFFFDFBF7),
-        colorText: AppColors.redPen,
-        borderColor: AppColors.redPen,
-        borderWidth: 2,
-        margin: const EdgeInsets.all(16),
-        icon: const Icon(Icons.warning_amber_rounded,
-            color: AppColors.redPen, size: 28),
-        snackPosition: SnackPosition.TOP,
-      );
+
+      _emptyNameSpamCount++;
+      if (_emptyNameSpamCount >= 5) {
+        _triggerEasterEgg('ee_no_name_spam'.tr, _startBtnKey,
+            customIcon: Icons.sentiment_very_dissatisfied);
+        _emptyNameSpamCount = 0;
+      } else {
+        Get.snackbar(
+          'attention'.tr,
+          'err_empty_name'.tr,
+          backgroundColor: const Color(0xFFFDFBF7),
+          colorText: AppColors.redPen,
+          borderColor: AppColors.redPen,
+          borderWidth: 2,
+          margin: const EdgeInsets.all(16),
+          icon: const Icon(Icons.warning_amber_rounded,
+              color: AppColors.redPen, size: 28),
+          snackPosition: SnackPosition.TOP,
+        );
+      }
       _nameFocusNode.requestFocus();
       return false;
     }
+    _emptyNameSpamCount = 0;
     return true;
   }
 
@@ -102,7 +182,9 @@ class _MainMenuScreenState extends State<MainMenuScreen>
     proceedToGame() {
       _sound.vibrateHeavy();
       _sound.playClick();
-      final gameCtrl = Get.find<GameController>();
+
+      final gameCtrl = Get.put(GameController());
+
       gameCtrl.botDifficulty = botDifficulty;
       gameCtrl.assistLevel = assistLevel;
       Get.toNamed('/placement', arguments: {
@@ -183,13 +265,27 @@ class _MainMenuScreenState extends State<MainMenuScreen>
               Positioned(
                 bottom: 12,
                 left: 20,
-                child: Text(
-                  "v1.0.0 - Commander Edition",
-                  style: TextStyle(
-                      color: AppColors.ink.withOpacity(0.5),
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1),
+                child: GestureDetector(
+                  key: _versionKey,
+                  onTap: () {
+                    _versionTapCount++;
+                    if (_versionTapCount == 7) {
+                      setState(() {
+                        _versionText = "v1.0.0 - 🦄 GOAT Edition";
+                      });
+                      _triggerEasterEgg('ee_devmode_joke'.tr, _versionKey,
+                          customIcon: Icons.code);
+                      _versionTapCount = 0;
+                    }
+                  },
+                  child: Text(
+                    _versionText,
+                    style: TextStyle(
+                        color: AppColors.ink.withOpacity(0.5),
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1),
+                  ),
                 ),
               ),
             ],
@@ -204,6 +300,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         GestureDetector(
+          key: _logoKey,
           onTap: _handleLogoTap,
           behavior: HitTestBehavior.opaque,
           child: AnimatedBuilder(
@@ -364,7 +461,9 @@ class _MainMenuScreenState extends State<MainMenuScreen>
 
   Widget _buildCommanderInput() {
     return PaperContainer(
+      padding: EdgeInsets.zero,
       child: TextField(
+        key: _nameKey,
         controller: _nameController,
         focusNode: _nameFocusNode,
         textAlign: TextAlign.center,
@@ -428,6 +527,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
           _buildConfigRow(
               'assist_level'.tr,
               CustomSegmentedControl<AssistLevel>(
+                key: _assistKey,
                 selectedValue: assistLevel,
                 activeColor: AppColors.redPen,
                 items: {
@@ -436,7 +536,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                   AssistLevel.hardcore: 'ast_hardcore'.tr,
                   AssistLevel.realLife: 'ast_reallife'.tr,
                 },
-                onChanged: (val) => setState(() => assistLevel = val),
+                onChanged: (val) => _handleAssistChange(val),
               )),
           _buildConfigRow(
               'grid_size'.tr,
@@ -458,6 +558,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
               const SizedBox(width: 20),
               Expanded(
                 child: ElevatedButton.icon(
+                  key: _startBtnKey,
                   onPressed: _handleStartLocalCampaign,
                   icon: const Icon(Icons.rocket_launch, color: AppColors.paper),
                   label: FittedBox(
@@ -514,6 +615,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                 letterSpacing: 1.2)),
         const SizedBox(height: 8),
         Container(
+          key: _enemyCounterKey,
           decoration: BoxDecoration(
             color: Colors.white,
             border: Border.all(color: AppColors.ink, width: 2),
@@ -533,6 +635,17 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                   if (enemyCount > 1) {
                     _sound.playClick();
                     enemyCount--;
+                    _maxEnemyTapCount = 0;
+                    _minEnemyTapCount = 0;
+                  } else {
+                    _minEnemyTapCount++;
+                    if (_minEnemyTapCount == 5) {
+                      _triggerEasterEgg('ee_min_enemy'.tr, _enemyCounterKey,
+                          customIcon: Icons.psychology);
+                      _minEnemyTapCount = 0;
+                    } else {
+                      _sound.vibrateLight();
+                    }
                   }
                 }),
               ),
@@ -552,6 +665,17 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                   if (enemyCount < 7) {
                     _sound.playClick();
                     enemyCount++;
+                    _maxEnemyTapCount = 0;
+                    _minEnemyTapCount = 0;
+                  } else {
+                    _maxEnemyTapCount++;
+                    if (_maxEnemyTapCount == 5) {
+                      _triggerEasterEgg('ee_max_enemy'.tr, _enemyCounterKey,
+                          customIcon: Icons.warning_amber_rounded);
+                      _maxEnemyTapCount = 0;
+                    } else {
+                      _sound.vibrateLight();
+                    }
                   }
                 }),
               ),
@@ -626,51 +750,47 @@ class _MainMenuScreenState extends State<MainMenuScreen>
       if (_logoTapCount == 7) {
         _currentVehicleIcon = Icons.anchor;
         gameCtrl.vehicleTheme = VehicleTheme.submarine;
-        _triggerEasterEgg('ee_sub'.tr);
+        _triggerEasterEgg('ee_sub'.tr, _logoKey);
       } else if (_logoTapCount == 14) {
         _currentVehicleIcon = Icons.rocket_launch_outlined;
         gameCtrl.vehicleTheme = VehicleTheme.space;
-        _triggerEasterEgg('ee_rocket'.tr);
+        _triggerEasterEgg('ee_rocket'.tr, _logoKey);
       } else if (_logoTapCount == 21) {
         _currentVehicleIcon = Icons.directions_boat_outlined;
         gameCtrl.vehicleTheme = VehicleTheme.boat;
         _logoTapCount = 0;
-        _triggerEasterEgg('ee_boat'.tr);
+        _triggerEasterEgg('ee_boat'.tr, _logoKey);
       } else {
         _sound.playClick();
       }
     });
   }
 
-  void _triggerEasterEgg(String message) {
+  void _triggerEasterEgg(String message, GlobalKey anchorKey,
+      {IconData? customIcon}) {
     _sound.vibrateHeavy();
 
-    if (_activeEasterEgg != null) {
-      _activeEasterEgg?.remove();
-      _activeEasterEgg = null;
-    }
+    final context = anchorKey.currentContext;
+    if (context == null) return;
+
+    final RenderBox box = context.findRenderObject() as RenderBox;
+    final Offset topCenter = box.localToGlobal(Offset(box.size.width / 2, 0));
 
     final overlayState = Overlay.of(context);
-    _activeEasterEgg = OverlayEntry(
-      builder: (context) => EasterEggToast(
+    late OverlayEntry entry;
+
+    entry = OverlayEntry(
+      builder: (context) => FloatingJokeWidget(
         message: message,
-        icon: _currentVehicleIcon,
-        onClose: () {
-          if (mounted && _activeEasterEgg != null) {
-            _activeEasterEgg?.remove();
-            _activeEasterEgg = null;
-          }
-        },
+        icon: customIcon ?? _currentVehicleIcon,
+        startPosition: topCenter,
+        onComplete: () => entry.remove(),
       ),
     );
 
-    overlayState.insert(_activeEasterEgg!);
+    overlayState.insert(entry);
   }
 }
-
-// ==========================================
-// SHARED UI COMPONENTS (Updated to match SettingsScreen)
-// ==========================================
 
 class PaperContainer extends StatelessWidget {
   final Widget child;
@@ -796,124 +916,6 @@ class CustomSegmentedControl<T> extends StatelessWidget {
             ),
           );
         }),
-      ),
-    );
-  }
-}
-
-class EasterEggToast extends StatefulWidget {
-  final String message;
-  final IconData icon;
-  final VoidCallback onClose;
-
-  const EasterEggToast({
-    super.key,
-    required this.message,
-    required this.icon,
-    required this.onClose,
-  });
-
-  @override
-  State<EasterEggToast> createState() => _EasterEggToastState();
-}
-
-class _EasterEggToastState extends State<EasterEggToast>
-    with TickerProviderStateMixin {
-  late AnimationController _slideController;
-  late AnimationController _pulseController;
-
-  @override
-  void initState() {
-    super.initState();
-    _slideController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 800));
-    _pulseController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 1000))
-      ..repeat(reverse: true);
-
-    _slideController.forward();
-
-    Future.delayed(const Duration(seconds: 3), () async {
-      if (mounted) {
-        await _slideController.reverse();
-        widget.onClose();
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _slideController.dispose();
-    _pulseController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      top: MediaQuery.of(context).padding.top + 16,
-      left: 20,
-      right: 20,
-      child: Material(
-        color: Colors.transparent,
-        child: SlideTransition(
-          position: Tween<Offset>(begin: const Offset(0, -2), end: Offset.zero)
-              .animate(CurvedAnimation(
-                  parent: _slideController, curve: Curves.elasticOut)),
-          child: PaperContainer(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Row(
-              children: [
-                ScaleTransition(
-                  scale: Tween<double>(begin: 0.85, end: 1.15).animate(
-                      CurvedAnimation(
-                          parent: _pulseController, curve: Curves.easeInOut)),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: const BoxDecoration(
-                      color: AppColors.ink,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black26,
-                            offset: Offset(2, 2),
-                            blurRadius: 4)
-                      ],
-                    ),
-                    child: Icon(widget.icon, color: Colors.white, size: 28),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'roger_that'.tr,
-                        style: const TextStyle(
-                          color: AppColors.ink,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 16,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        widget.message,
-                        style: TextStyle(
-                          color: AppColors.ink.withOpacity(0.8),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
