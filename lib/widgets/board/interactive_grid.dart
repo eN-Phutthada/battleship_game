@@ -7,7 +7,7 @@ import '../../state/sound_controller.dart';
 import '../../models/game_models.dart';
 import '../../utils/constants.dart';
 import '../shared/connected_ship_piece.dart';
-import '../shared/floating_joke_widget.dart'; // 👈 Import ตัวนี้มาแทนที่
+import '../shared/floating_joke_widget.dart';
 
 class InteractiveGridWidget extends StatefulWidget {
   final GameController game;
@@ -35,7 +35,7 @@ class _InteractiveGridWidgetState extends State<InteractiveGridWidget> {
   Offset? _lastTapPosition;
 
   // --- Easter Egg Trackers ---
-  bool _isCursedEFBoard = false; // ถ้าสุ่มได้ true แถว E กับ F จะสลับกัน
+  bool _isCursedEFBoard = false;
   int _efTapCount = 0;
 
   final Map<int, int> _friendlyFireCount = {};
@@ -44,8 +44,8 @@ class _InteractiveGridWidgetState extends State<InteractiveGridWidget> {
   @override
   void initState() {
     super.initState();
-    // สุ่มความน่าจะเป็น 15% ที่กระดานนี้ แถว E กับ F จะสลับตัวอักษรกัน (อิงตาม Hash ของเกมเพื่อไม่ให้มันกระพริบตอน Scroll)
     _isCursedEFBoard = Random(widget.game.hashCode).nextDouble() < 0.15;
+    // _isCursedEFBoard = true; // 🥚 เปิดใช้ฟีเจอร์นี้ถาวร เพราะสนุกดี
   }
 
   void _triggerJoke(String message, IconData icon) {
@@ -126,7 +126,6 @@ class _InteractiveGridWidgetState extends State<InteractiveGridWidget> {
 
                       if (c == 0) {
                         String rowChar = String.fromCharCode(64 + r);
-                        // 🥚 Easter Egg: สลับ E กับ F
                         if (_isCursedEFBoard) {
                           if (r == 5) rowChar = 'F';
                           if (r == 6) rowChar = 'E';
@@ -151,11 +150,9 @@ class _InteractiveGridWidgetState extends State<InteractiveGridWidget> {
 
                       return InkWell(
                         onTapDown: (details) {
-                          _lastTapPosition = details
-                              .globalPosition; // 👈 เก็บพิกัดไว้เด้ง Joke
+                          _lastTapPosition = details.globalPosition;
                         },
                         onTap: () {
-                          // 🥚 Easter Egg: กดแถว E หรือ F บ่อยๆ
                           if (!isMyBoard && (r == 5 || r == 6)) {
                             _efTapCount++;
                             if (_efTapCount >= 6) {
@@ -167,22 +164,22 @@ class _InteractiveGridWidgetState extends State<InteractiveGridWidget> {
                           if (widget.isMyTurn &&
                               !isMyBoard &&
                               !widget.targetPlayer.isDefeated) {
-                            // 🥚 Easter Egg: ยิงซ้ำที่น้ำ (ให้อาหารปลา)
-                            if (cell.isRevealed && cell.entity == Entity.none) {
+                            if (cell.isRevealed &&
+                                cell.entity == Entity.none &&
+                                widget.game.assistLevel != AssistLevel.casual) {
                               _feedFishCount[boardIdx] =
                                   (_feedFishCount[boardIdx] ?? 0) + 1;
                               if (_feedFishCount[boardIdx]! >= 3) {
                                 _triggerJoke('ee_feed_fish'.tr, Icons.set_meal);
                                 _feedFishCount[boardIdx] = 0;
-                              } else {
-                                widget.playSound();
                               }
+                              widget.game.toggleLockTarget(
+                                  widget.targetPlayer.id, boardIdx);
                             } else {
                               widget.game.toggleLockTarget(
                                   widget.targetPlayer.id, boardIdx);
                             }
                           } else if (isMyBoard && widget.isMyTurn) {
-                            // 🥚 Easter Egg: กดยิงเรือฝั่งตัวเอง (Friendly Fire)
                             if (cell.entity == Entity.ship) {
                               _friendlyFireCount[boardIdx] =
                                   (_friendlyFireCount[boardIdx] ?? 0) + 1;

@@ -31,14 +31,14 @@ class AppTranslations extends Translations {
           'ee_screaming': 'STOP SCREAMING!! 🙉',
           'ee_min_enemy': 'Who are you fighting? Your inner demons? 👻',
           'ee_confused': 'System error: Commander is confused. 😵‍💫',
-          'ee_no_name_spam': 'SERIOUSLY, JUST TYPE A NAME!! 🤬',
+          'ee_no_name_spam': 'Keyboard broken? Just type a name, please! ⌨️',
           'ee_dizzy': 'Stop spinning! The crew is throwing up! 🤢',
           'ee_indecisive': 'Make up your mind! The fleet is exhausted! 🥵',
           'ee_ocd': 'It\'s already blank! What are you erasing?! 📄',
-          'ee_impatient':
-              'Can\'t you see the RED warning? Deploy correctly first! 😡',
+          'ee_impatient': 'Hold your seahorses! Fix the red warning first! 🐎',
           'ee_e_or_f': 'Wait... is that E or F? 😵‍💫',
-          'ee_friendly_fire': 'Captain! That\'s our OWN ship!! 🤬',
+          'ee_friendly_fire':
+              'Captain, do you need new glasses? That\'s our ship! 👓',
           'ee_feed_fish': 'We already missed! Stop feeding the fishes! 🐟',
 
           // --- MAIN MENU ---
@@ -150,7 +150,7 @@ class AppTranslations extends Translations {
           'defending': 'DEFENDING: MY SECTOR',
           'targeting': 'TARGETING: @name',
           'ammo_ready': 'AMMO: ',
-          'ammo_legend': '🟦 FLEET   🟧 BONUS   🩵 LOCKED',
+          'ammo_legend': '🟦 FLEET   🟧 BONUS   🩵 LOCKED',
           'targets_locked': 'TARGETS LOCKED',
           'fire_all': 'FIRE ALL!',
           'turn_announce': "@name's TURN",
@@ -241,13 +241,13 @@ class AppTranslations extends Translations {
           'ee_screaming': 'เลิกแหกปากได้แล้ววว!! 🙉',
           'ee_min_enemy': 'จะสู้กับใคร? สู้กับความว่างเปล่าหรอ? 👻',
           'ee_confused': 'ระบบรวน: ผู้บัญชาการกำลังสับสน 😵‍💫',
-          'ee_no_name_spam': 'ก็บอกให้พิมพ์ชื่อก่อนไงเล่า!! 🤬',
+          'ee_no_name_spam': 'นิ้วล็อคหรอจ๊ะ พิมพ์ชื่อให้ชื่นใจหน่อยเถอะ! 😅',
           'ee_dizzy': 'หยุดหมุนโว้ยยย! ลูกเรืออ้วกแตกหมดแล้ว! 🤢',
           'ee_indecisive': 'เลือกสักทีเถอะ! จัดแถวใหม่จนทหารหอบแล้ว! 🥵',
           'ee_ocd': 'กระดานมันก็ว่างอยู่แล้วไง จะลบอะไรนักหนา! 📄',
-          'ee_impatient': 'ใจร้อนจังโว้ย! อ่านคำเตือนสีแดงด้านบนก่อนไหม! 😡',
+          'ee_impatient': 'ใจเย็นวัยรุ่น! แวะอ่านคำเตือนสีแดงๆ ข้างบนก่อนนะ 🛑',
           'ee_e_or_f': 'เดี๋ยวนะ แถว E หรือ F วะเนี่ย? 😵‍💫',
-          'ee_friendly_fire': 'กัปตัน! นั่นเรือฝั่งเราโว้ยย!! 🤬',
+          'ee_friendly_fire': 'กัปตันตัดแว่นไหม นั่นเรือฝั่งเราเองงง! 👓',
           'ee_feed_fish': 'ตรงนั้นยิงพลาดไปแล้ว! จะให้อาหารปลาหรือไง! 🐟',
 
           // --- MAIN MENU ---
@@ -358,7 +358,7 @@ class AppTranslations extends Translations {
           'defending': 'ป้องกัน: น่านน้ำของเรา',
           'targeting': 'ล็อกเป้า: @name',
           'ammo_ready': 'กระสุน: ',
-          'ammo_legend': '🟦 กองเรือ   🟧 โบนัส   🩵 ล็อกเป้า',
+          'ammo_legend': '🟦 กองเรือ   🟧 โบนัส   🩵 ล็อกเป้า',
           'targets_locked': 'ล็อกเป้าหมายแล้ว',
           'fire_all': 'ยิงทั้งหมด!',
           'turn_announce': "เทิร์นของ @name",
@@ -448,14 +448,16 @@ class AppTranslations extends Translations {
           'ee_screaming': '¡¡DEJA DE GRITAR!! 🙉',
           'ee_min_enemy': '¿Con quién peleas? ¿Tus demonios internos? 👻',
           'ee_confused': 'Error: El comandante está confundido. 😵‍💫',
-          'ee_no_name_spam': '¡¡EN SERIO, SOLO ESCRIBE UN NOMBRE!! 🤬',
+          'ee_no_name_spam':
+              '¿Teclado roto? ¡Solo escribe un nombre, porfa! ⌨️',
           'ee_dizzy': '¡Deja de girar! ¡La tripulación está vomitando! 🤢',
           'ee_indecisive': '¡Decídete! ¡La flota está exhausta! 🥵',
           'ee_ocd': '¡Ya está en blanco! ¿Qué estás borrando? 📄',
           'ee_impatient':
-              '¿No ves la advertencia ROJA? ¡Despliega correctamente primero! 😡',
+              '¡Frena un poco, velocista! Arregla la advertencia roja primero 🛑',
           'ee_e_or_f': 'Espera... ¿eso es E o F? 😵‍💫',
-          'ee_friendly_fire': '¡Capitán! ¡Ese es NUESTRO barco! 🤬',
+          'ee_friendly_fire':
+              'Capitán, ¿necesita gafas nuevas? ¡Ese es nuestro barco! 👓',
           'ee_feed_fish':
               '¡Ya fallamos ahí! ¡Deja de alimentar a los peces! 🐟',
 
@@ -566,7 +568,7 @@ class AppTranslations extends Translations {
           'defending': 'DEFENDIENDO: MI SECTOR',
           'targeting': 'APUNTANDO: @name',
           'ammo_ready': 'MUNICIÓN: ',
-          'ammo_legend': '🟦 FLOTA   🟧 BONO   🩵 FIJADO',
+          'ammo_legend': '🟦 FLOTA   🟧 BONO   🩵 FIJADO',
           'targets_locked': 'OBJETIVOS FIJADOS',
           'fire_all': '¡DISPARAR!',
           'turn_announce': 'TURNO DE @name',
@@ -655,13 +657,13 @@ class AppTranslations extends Translations {
           'ee_screaming': '叫ぶのをやめろ！！ 🙉',
           'ee_min_enemy': '誰と戦うの？虚無と？ 👻',
           'ee_confused': 'システムエラー: 指揮官が混乱しています 😵‍💫',
-          'ee_no_name_spam': 'いい加減に名前を入力しろ！！ 🤬',
+          'ee_no_name_spam': 'キーボード壊れてる？名前を入力してね！ ⌨️',
           'ee_dizzy': '回すのをやめろ！乗組員が吐いている！ 🤢',
           'ee_indecisive': '早く決めてくれ！艦隊はクタクタだ！ 🥵',
           'ee_ocd': 'もう空っぽだぞ！何を消そうとしてるんだ！ 📄',
-          'ee_impatient': '赤い警告が見えないのか？まずはちゃんと配置しろ！ 😡',
+          'ee_impatient': '落ち着いて！上の赤い警告を直してから出発しよう 🛑',
           'ee_e_or_f': '待って… それE？それともF？ 😵‍💫',
-          'ee_friendly_fire': '船長！それは味方の船です！！ 🤬',
+          'ee_friendly_fire': '船長、メガネいりますか？それ味方ですよ！ 👓',
           'ee_feed_fish': 'すでに外れています！魚に餌をやるのはやめて！ 🐟',
 
           // --- MAIN MENU ---
@@ -761,7 +763,7 @@ class AppTranslations extends Translations {
           'defending': '防衛中: 私のセクター',
           'targeting': 'ターゲット: @name',
           'ammo_ready': '弾薬: ',
-          'ammo_legend': '🟦 艦隊   🟧 ボーナス   🩵 ロック中',
+          'ammo_legend': '🟦 艦隊   🟧 ボーナス   🩵 ロック中',
           'targets_locked': 'ターゲットロック完了',
           'fire_all': '全弾発射！',
           'turn_announce': '@name のターン',
