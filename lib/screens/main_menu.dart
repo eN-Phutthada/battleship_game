@@ -63,7 +63,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
   int _logoTapCount = 0;
   IconData _currentVehicleIcon = Icons.directions_boat_outlined;
   int _versionTapCount = 0;
-  String _versionText = "v1.0.0 - Commander Edition";
+  String _versionText = "v1.0 - Commander Edition";
   int _maxEnemyTapCount = 0;
   int _minEnemyTapCount = 0;
   String _lastSecretName = "";
@@ -327,7 +327,7 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                     _versionTapCount++;
                     if (_versionTapCount == 7) {
                       setState(() {
-                        _versionText = "v1.0.0 - 🦄 GOAT Edition";
+                        _versionText = "v1.0 - 🦄 GOAT Edition";
                       });
                       _triggerEasterEgg('ee_devmode_joke'.tr, _versionKey,
                           customIcon: Icons.code);
