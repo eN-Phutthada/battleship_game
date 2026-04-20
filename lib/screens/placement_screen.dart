@@ -30,38 +30,83 @@ class PlacementScreen extends StatelessWidget {
             child: GetBuilder<PlacementController>(
               init: PlacementController(),
               builder: (ctrl) {
+                // แยกส่วน Grid ตรงกลางออกมาเพื่อให้ง่ายต่อการสลับ Layout
+                Widget centerGrid = Column(
+                  children: [
+                    _StatusHeader(ctrl: ctrl),
+                    Expanded(child: _AnimatedPaperGrid(ctrl: ctrl)),
+                    AnimatedSize(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOut,
+                      child: ctrl.currentTool == PlacementTool.ship
+                          ? _ShipOptionsBar(ctrl: ctrl)
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
+                );
+
                 return Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      SidebarContainer(
-                        width: 80,
-                        child: _LeftSidebar(ctrl: ctrl),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        flex: 6,
-                        child: Column(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      // ใช้จุดตัด (Breakpoint) ที่ 650px สำหรับการแสดงผล Mobile
+                      final bool isMobile = constraints.maxWidth < 650;
+
+                      if (isMobile) {
+                        return Column(
                           children: [
-                            _StatusHeader(ctrl: ctrl),
-                            Expanded(child: _AnimatedPaperGrid(ctrl: ctrl)),
-                            AnimatedSize(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                              child: ctrl.currentTool == PlacementTool.ship
-                                  ? _ShipOptionsBar(ctrl: ctrl)
-                                  : const SizedBox.shrink(),
+                            Expanded(flex: 5, child: centerGrid),
+                            const SizedBox(height: 12),
+                            Expanded(
+                              flex: 2, // ให้พื้นที่แถบเครื่องมือด้านล่าง
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Expanded(
+                                    child: SidebarContainer(
+                                      child: _LeftSidebar(ctrl: ctrl),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: SidebarContainer(
+                                      child: _RightSidebar(ctrl: ctrl),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      SidebarContainer(
-                        width: 120,
-                        child: _RightSidebar(ctrl: ctrl),
-                      ),
-                    ],
+                        );
+                      }
+
+                      // Layout สำหรับ Tablet / Desktop / Web
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SidebarContainer(
+                            width: 90,
+                            child: _LeftSidebar(ctrl: ctrl),
+                          ),
+                          const SizedBox(width: 16),
+                          Flexible(
+                            flex: 8,
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                  maxWidth:
+                                      800), // ล็อคความกว้างไม่ให้กระดานใหญ่เกินไป
+                              child: centerGrid,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          SidebarContainer(
+                            width: 140,
+                            child: _RightSidebar(ctrl: ctrl),
+                          ),
+                        ],
+                      );
+                    },
                   ),
                 );
               },
@@ -76,10 +121,10 @@ class PlacementScreen extends StatelessWidget {
 // --- Layout & Sidebar Components ---
 
 class SidebarContainer extends StatelessWidget {
-  final double width;
+  final double? width; // เปลี่ยนเป็น Optional เพื่อรองรับการยืดบน Mobile
   final Widget child;
 
-  const SidebarContainer({super.key, required this.width, required this.child});
+  const SidebarContainer({super.key, this.width, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -110,34 +155,37 @@ class _LeftSidebar extends StatelessWidget {
                   color: AppColors.ink, fontWeight: FontWeight.w900)),
           const Divider(color: AppColors.ink, thickness: 1),
           Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                children: [
-                  const SizedBox(height: 8),
-                  _ToolButton(
-                    ctrl: ctrl,
-                    icon: Icons.landscape,
-                    label: "${'land'.tr}\n${ctrl.placedLand}/${ctrl.maxLand}",
-                    tool: PlacementTool.land,
-                  ),
-                  const SizedBox(height: 12),
-                  _ToolButton(
-                    ctrl: ctrl,
-                    icon: Icons.fort,
-                    label:
-                        "${'turret'.tr}\n${ctrl.placedTurrets}/${ctrl.maxTurrets}",
-                    tool: PlacementTool.turret,
-                  ),
-                  const SizedBox(height: 12),
-                  _ToolButton(
-                    ctrl: ctrl,
-                    icon: Icons.directions_boat,
-                    label:
-                        "${'fleet'.tr}\n${ctrl.placedShipsCount}/${ctrl.fleetDefinition.length}",
-                    tool: PlacementTool.ship,
-                  ),
-                ],
+            child: Scrollbar(
+              thumbVisibility: true,
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 8),
+                    _ToolButton(
+                      ctrl: ctrl,
+                      icon: Icons.landscape,
+                      label: "${'land'.tr}\n${ctrl.placedLand}/${ctrl.maxLand}",
+                      tool: PlacementTool.land,
+                    ),
+                    const SizedBox(height: 12),
+                    _ToolButton(
+                      ctrl: ctrl,
+                      icon: Icons.fort,
+                      label:
+                          "${'turret'.tr}\n${ctrl.placedTurrets}/${ctrl.maxTurrets}",
+                      tool: PlacementTool.turret,
+                    ),
+                    const SizedBox(height: 12),
+                    _ToolButton(
+                      ctrl: ctrl,
+                      icon: Icons.directions_boat,
+                      label:
+                          "${'fleet'.tr}\n${ctrl.placedShipsCount}/${ctrl.fleetDefinition.length}",
+                      tool: PlacementTool.ship,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -245,27 +293,30 @@ class _RightSidebarState extends State<_RightSidebar> {
                   color: AppColors.ink, fontWeight: FontWeight.w900)),
           const Divider(color: AppColors.ink, thickness: 1),
           Expanded(
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Column(
-                children: [
-                  const SizedBox(height: 8),
-                  _CommandButton(
-                    key: _autoKey,
-                    onPressed: _handleAuto,
-                    icon: Icons.casino,
-                    label: 'auto'.tr,
-                    color: AppColors.ink,
-                  ),
-                  const SizedBox(height: 12),
-                  _CommandButton(
-                    key: _clearKey,
-                    onPressed: _handleClear,
-                    icon: Icons.delete_forever,
-                    label: 'clear'.tr,
-                    color: AppColors.redPen,
-                  ),
-                ],
+            child: Scrollbar(
+              thumbVisibility: true,
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 8),
+                    _CommandButton(
+                      key: _autoKey,
+                      onPressed: _handleAuto,
+                      icon: Icons.casino,
+                      label: 'auto'.tr,
+                      color: AppColors.ink,
+                    ),
+                    const SizedBox(height: 12),
+                    _CommandButton(
+                      key: _clearKey,
+                      onPressed: _handleClear,
+                      icon: Icons.delete_forever,
+                      label: 'clear'.tr,
+                      color: AppColors.redPen,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -305,10 +356,14 @@ class _RightSidebarState extends State<_RightSidebar> {
                 ),
                 if (!widget.ctrl.isBoardValid)
                   Positioned.fill(
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: _handleDisabledEngage,
-                      child: Container(),
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors
+                          .basic, // เปลี่ยน Cursor เมาส์เมื่อปุ่มโดนล็อค
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: _handleDisabledEngage,
+                        child: Container(),
+                      ),
                     ),
                   ),
               ],
@@ -438,32 +493,37 @@ class _ShipOptionsBarState extends State<_ShipOptionsBar> {
                 final bool isSelected = widget.ctrl.selectedShipSize == size;
                 final bool isAvailable = count > 0;
 
-                return GestureDetector(
-                  onTap:
-                      isAvailable ? () => widget.ctrl.selectShip(size) : null,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: !isAvailable
-                          ? Colors.grey.withOpacity(0.2)
-                          : (isSelected ? AppColors.ink : Colors.white),
-                      border: Border.all(
-                        color:
-                            !isAvailable ? Colors.transparent : AppColors.ink,
-                        width: 1.5,
-                      ),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      "L$size (x$count)",
-                      style: TextStyle(
+                return MouseRegion(
+                  cursor: isAvailable
+                      ? SystemMouseCursors.click
+                      : SystemMouseCursors.basic,
+                  child: GestureDetector(
+                    onTap:
+                        isAvailable ? () => widget.ctrl.selectShip(size) : null,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
                         color: !isAvailable
-                            ? Colors.grey
-                            : (isSelected ? Colors.white : AppColors.ink),
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+                            ? Colors.grey.withOpacity(0.2)
+                            : (isSelected ? AppColors.ink : Colors.white),
+                        border: Border.all(
+                          color:
+                              !isAvailable ? Colors.transparent : AppColors.ink,
+                          width: 1.5,
+                        ),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        "L$size (x$count)",
+                        style: TextStyle(
+                          color: !isAvailable
+                              ? Colors.grey
+                              : (isSelected ? Colors.white : AppColors.ink),
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -549,6 +609,7 @@ class _AnimatedPaperGrid extends StatelessWidget {
               if (cell == null) return const SizedBox.shrink();
 
               return InkWell(
+                // InkWell มี Cursor โค้งและ Hover ให้บน Web อยู่แล้ว
                 onTap: () => ctrl.handleTap(boardIdx),
                 splashColor: AppColors.ink.withOpacity(0.3),
                 child: AnimatedContainer(
@@ -678,36 +739,41 @@ class _ToolButton extends StatelessWidget {
     final Color contentColor =
         isSelected ? AppColors.ink : AppColors.ink.withOpacity(0.6);
 
-    return GestureDetector(
-      onTap: () => ctrl.setTool(tool),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color:
-              isSelected ? AppColors.ink.withOpacity(0.1) : Colors.transparent,
-          border: Border.all(
-            color: isSelected ? AppColors.ink : AppColors.ink.withOpacity(0.2),
-            width: 2,
-          ),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: contentColor, size: 28),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: contentColor,
-                fontSize: 10,
-                fontWeight: FontWeight.bold,
-              ),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () => ctrl.setTool(tool),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppColors.ink.withOpacity(0.1)
+                : Colors.transparent,
+            border: Border.all(
+              color:
+                  isSelected ? AppColors.ink : AppColors.ink.withOpacity(0.2),
+              width: 2,
             ),
-          ],
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: contentColor, size: 28),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: contentColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

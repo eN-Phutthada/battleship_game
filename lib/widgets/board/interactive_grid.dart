@@ -45,7 +45,6 @@ class _InteractiveGridWidgetState extends State<InteractiveGridWidget> {
   void initState() {
     super.initState();
     _isCursedEFBoard = Random(widget.game.hashCode).nextDouble() < 0.15;
-    // _isCursedEFBoard = true; // 🥚 เปิดใช้ฟีเจอร์นี้ถาวร เพราะสนุกดี
   }
 
   void _triggerJoke(String message, IconData icon) {

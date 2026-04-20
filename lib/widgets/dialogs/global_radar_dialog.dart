@@ -244,10 +244,12 @@ class RadarThumbWidget extends StatelessWidget {
                         if (hideEnemyRadar && !isMe) {
                           String? manual =
                               game.manualMarkers["${player.id}_$i"];
-                          if (manual == 'X')
+                          if (manual == 'X') {
                             marker = _buildXIcon(color: Colors.red);
-                          if (manual == 'O')
+                          }
+                          if (manual == 'O') {
                             marker = _buildOIcon(color: Colors.black54);
+                          }
                         }
 
                         return Container(

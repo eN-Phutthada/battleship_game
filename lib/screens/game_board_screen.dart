@@ -160,71 +160,100 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                   }
                 }
 
+                // สกัด Widget แต่ละคอลัมน์ออกมาให้ง่ายต่อการจัด Layout
+                Widget leftPanel = _PaperPanel(
+                  child: LeftSidebarWidget(
+                    game: game,
+                    playSound: _playSound,
+                    onShowRadar: () => Get.dialog(
+                        GlobalRadarDialog(game: game, playSound: _playSound)),
+                  ),
+                );
+
+                Widget centerPanel = Column(
+                  children: [
+                    _TargetHeader(viewTarget: viewTarget),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: InteractiveGridWidget(
+                        game: game,
+                        targetPlayer: viewTarget,
+                        isMyTurn: isMyTurn,
+                        transformCtrl: _transformCtrl,
+                        onConstraintsBuilt: (c) => _viewportConstraints = c,
+                        playSound: _playSound,
+                      ),
+                    ),
+                    AmmoStatusWidget(game: game),
+                    if (game.assistLevel == AssistLevel.realLife &&
+                        viewTarget.id != 0)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text('hint_reallife'.tr,
+                            style: const TextStyle(
+                                color: AppColors.ink,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                                fontStyle: FontStyle.italic)),
+                      )
+                  ],
+                );
+
+                Widget rightPanel = _PaperPanel(
+                  child: Column(
+                    children: [
+                      CommandConsoleWidget(game: game, playSound: _playSound),
+                      const HitLogsWidget(),
+                    ],
+                  ),
+                );
+
                 return Stack(
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(
-                            flex: 2,
-                            child: _PaperPanel(
-                              child: LeftSidebarWidget(
-                                game: game,
-                                playSound: _playSound,
-                                onShowRadar: () => Get.dialog(GlobalRadarDialog(
-                                    game: game, playSound: _playSound)),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            flex: 5,
-                            child: Column(
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          // Breakpoint สำหรับ Mobile (ถ้ากว้างน้อยกว่า 850px จะเปลี่ยนแนว)
+                          bool isMobile = constraints.maxWidth < 850;
+
+                          if (isMobile) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                _TargetHeader(viewTarget: viewTarget),
-                                const SizedBox(height: 8),
                                 Expanded(
-                                  child: InteractiveGridWidget(
-                                    game: game,
-                                    targetPlayer: viewTarget,
-                                    isMyTurn: isMyTurn,
-                                    transformCtrl: _transformCtrl,
-                                    onConstraintsBuilt: (c) =>
-                                        _viewportConstraints = c,
-                                    playSound: _playSound,
+                                  flex: 5,
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Expanded(flex: 2, child: leftPanel),
+                                      const SizedBox(width: 8),
+                                      Expanded(flex: 5, child: centerPanel),
+                                    ],
                                   ),
                                 ),
-                                AmmoStatusWidget(game: game),
-                                if (game.assistLevel == AssistLevel.realLife &&
-                                    viewTarget.id != 0)
-                                  Padding(
-                                    padding: const EdgeInsets.only(top: 8.0),
-                                    child: Text('hint_reallife'.tr,
-                                        style: const TextStyle(
-                                            color: AppColors.ink,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
-                                            fontStyle: FontStyle.italic)),
-                                  )
+                                const SizedBox(height: 8),
+                                Expanded(
+                                  flex: 3,
+                                  child: rightPanel,
+                                ),
                               ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            flex: 3,
-                            child: _PaperPanel(
-                              child: Column(
-                                children: [
-                                  CommandConsoleWidget(
-                                      game: game, playSound: _playSound),
-                                  const HitLogsWidget(),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
+                            );
+                          }
+
+                          // Layout สำหรับ Tablet / Desktop / Web
+                          return Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(flex: 2, child: leftPanel),
+                              const SizedBox(width: 12),
+                              Expanded(flex: 5, child: centerPanel),
+                              const SizedBox(width: 12),
+                              Expanded(flex: 3, child: rightPanel),
+                            ],
+                          );
+                        },
                       ),
                     ),
                     if (game.isTurnTransition)
@@ -383,7 +412,6 @@ class _LoadingRadarScreenState extends State<_LoadingRadarScreen>
     super.dispose();
   }
 
-  // Dev Mode cheat activation
   void _handleSecretTap() {
     final DateTime now = DateTime.now();
     if (_lastSecretTap == null ||
@@ -418,44 +446,51 @@ class _LoadingRadarScreenState extends State<_LoadingRadarScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          GestureDetector(
-            onTap: _handleSecretTap,
-            child: AnimatedBuilder(
-              animation: _radarController,
-              builder: (context, child) {
-                final val = _radarController.value;
-                return Transform.scale(
-                  scale: 0.5 + (val * 1.5),
-                  child: Opacity(
-                      opacity: 1.0 - val,
-                      child: const Icon(Icons.radar,
-                          color: AppColors.ink, size: 50)),
-                );
-              },
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: _handleSecretTap,
+              child: AnimatedBuilder(
+                animation: _radarController,
+                builder: (context, child) {
+                  final val = _radarController.value;
+                  return Transform.scale(
+                    scale: 0.5 + (val * 1.5),
+                    child: Opacity(
+                        opacity: 1.0 - val,
+                        child: const Icon(Icons.radar,
+                            color: AppColors.ink, size: 50)),
+                  );
+                },
+              ),
             ),
           ),
           const SizedBox(height: 30),
-          GestureDetector(
-            onTap: () {
-              widget.playSound();
-              setState(() {
-                _jokeIndex = (_jokeIndex + 1) % _loadingJokes.length;
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                  color: Colors.white,
-                  border: Border.all(color: AppColors.ink, width: 2),
-                  boxShadow: const [
-                    BoxShadow(color: Colors.black12, offset: Offset(4, 4))
-                  ]),
-              child: Text(_loadingJokes[_jokeIndex],
-                  style: const TextStyle(
-                      color: AppColors.ink,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 2)),
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () {
+                widget.playSound();
+                setState(() {
+                  _jokeIndex = (_jokeIndex + 1) % _loadingJokes.length;
+                });
+              },
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: AppColors.ink, width: 2),
+                    boxShadow: const [
+                      BoxShadow(color: Colors.black12, offset: Offset(4, 4))
+                    ]),
+                child: Text(_loadingJokes[_jokeIndex],
+                    style: const TextStyle(
+                        color: AppColors.ink,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 2)),
+              ),
             ),
           ),
         ],

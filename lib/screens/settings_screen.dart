@@ -61,64 +61,70 @@ class SettingsScreen extends StatelessWidget {
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 650),
                     child: GetBuilder<SoundController>(builder: (sound) {
-                      return ListView(
-                        physics: const BouncingScrollPhysics(),
-                        padding: const EdgeInsets.all(24),
-                        children: [
-                          _buildPaperCard(
-                            title: 'language'.tr,
-                            icon: Icons.language,
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: _buildLanguageControl(),
+                      return Scrollbar(
+                        thumbVisibility: true,
+                        child: ListView(
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.all(24),
+                          children: [
+                            _buildPaperCard(
+                              title: 'language'.tr,
+                              icon: Icons.language,
+                              child: Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: _buildLanguageControl(),
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 28),
-                          _buildPaperCard(
-                            title: 'AUDIO',
-                            icon: Icons.volume_up,
-                            child: Column(
-                              children: [
-                                _buildSliderRow(
-                                  icon: sound.bgmVolume == 0
-                                      ? Icons.music_off
-                                      : Icons.music_note,
-                                  label: 'bgm_volume'.tr,
-                                  value: sound.bgmVolume,
-                                  onChanged: sound.setBgmVolume,
+                            const SizedBox(height: 28),
+                            _buildPaperCard(
+                              title: 'AUDIO',
+                              icon: Icons.volume_up,
+                              child: Column(
+                                children: [
+                                  _buildSliderRow(
+                                    icon: sound.bgmVolume == 0
+                                        ? Icons.music_off
+                                        : Icons.music_note,
+                                    label: 'bgm_volume'.tr,
+                                    value: sound.bgmVolume,
+                                    onChanged: sound.setBgmVolume,
+                                  ),
+                                  const Divider(
+                                      color: AppColors.ink,
+                                      thickness: 2,
+                                      height: 1),
+                                  _buildSliderRow(
+                                    icon: sound.sfxVolume == 0
+                                        ? Icons.volume_off
+                                        : Icons.volume_up,
+                                    label: 'sfx_volume'.tr,
+                                    value: sound.sfxVolume,
+                                    onChanged: (val) {
+                                      sound.setSfxVolume(val);
+                                      if (val > 0 && !sound.isSfxMuted) {
+                                        sound.playClick();
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 28),
+                            _buildPaperCard(
+                              title: 'SYSTEM',
+                              icon: Icons.vibration,
+                              child: MouseRegion(
+                                cursor: SystemMouseCursors.click,
+                                child: _buildSwitchRow(
+                                  label: 'haptics_feedback'.tr,
+                                  value: sound.hapticsEnabled,
+                                  onChanged: (val) => sound.toggleHaptics(),
                                 ),
-                                const Divider(
-                                    color: AppColors.ink,
-                                    thickness: 2,
-                                    height: 1),
-                                _buildSliderRow(
-                                  icon: sound.sfxVolume == 0
-                                      ? Icons.volume_off
-                                      : Icons.volume_up,
-                                  label: 'sfx_volume'.tr,
-                                  value: sound.sfxVolume,
-                                  onChanged: (val) {
-                                    sound.setSfxVolume(val);
-                                    if (val > 0 && !sound.isSfxMuted) {
-                                      sound.playClick();
-                                    }
-                                  },
-                                ),
-                              ],
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 28),
-                          _buildPaperCard(
-                            title: 'SYSTEM',
-                            icon: Icons.vibration,
-                            child: _buildSwitchRow(
-                              label: 'haptics_feedback'.tr,
-                              value: sound.hapticsEnabled,
-                              onChanged: (val) => sound.toggleHaptics(),
-                            ),
-                          ),
-                          const SizedBox(height: 40),
-                        ],
+                            const SizedBox(height: 40),
+                          ],
+                        ),
                       );
                     }),
                   ),
@@ -325,12 +331,12 @@ class SettingsScreen extends StatelessWidget {
                   fontSize: 16)),
           Switch(
             value: value,
-            activeColor: Colors.white,
+            activeThumbColor: Colors.white,
             activeTrackColor: AppColors.ink,
             inactiveThumbColor: AppColors.ink,
             inactiveTrackColor: Colors.white,
-            trackOutlineColor: MaterialStateProperty.all(AppColors.ink),
-            trackOutlineWidth: MaterialStateProperty.all(2.0),
+            trackOutlineColor: WidgetStateProperty.all(AppColors.ink),
+            trackOutlineWidth: WidgetStateProperty.all(2.0),
             onChanged: onChanged,
           ),
         ],

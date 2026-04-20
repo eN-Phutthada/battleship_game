@@ -271,23 +271,26 @@ class _MainMenuScreenState extends State<MainMenuScreen>
             children: [
               LayoutBuilder(
                 builder: (context, constraints) {
-                  bool isMobile = constraints.maxWidth < 800;
+                  bool isMobile = constraints.maxWidth < 850;
 
                   Widget brandingSection = _buildBrandingSection(isMobile);
                   Widget formSection = _buildFormSection();
 
                   if (isMobile) {
-                    return SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 24),
-                      child: Column(
-                        children: [
-                          brandingSection,
-                          const SizedBox(height: 32),
-                          const Divider(color: AppColors.ink, thickness: 2),
-                          const SizedBox(height: 32),
-                          formSection,
-                        ],
+                    return Scrollbar(
+                      thumbVisibility: true,
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 24),
+                        child: Column(
+                          children: [
+                            brandingSection,
+                            const SizedBox(height: 32),
+                            const Divider(color: AppColors.ink, thickness: 2),
+                            const SizedBox(height: 32),
+                            formSection,
+                          ],
+                        ),
                       ),
                     );
                   }
@@ -304,12 +307,16 @@ class _MainMenuScreenState extends State<MainMenuScreen>
                       Expanded(
                         flex: 5,
                         child: Center(
-                          child: SingleChildScrollView(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 40, vertical: 20),
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(maxWidth: 500),
-                              child: formSection,
+                          child: Scrollbar(
+                            thumbVisibility: true,
+                            child: SingleChildScrollView(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 40, vertical: 20),
+                              child: ConstrainedBox(
+                                constraints:
+                                    const BoxConstraints(maxWidth: 550),
+                                child: formSection,
+                              ),
                             ),
                           ),
                         ),
@@ -321,26 +328,29 @@ class _MainMenuScreenState extends State<MainMenuScreen>
               Positioned(
                 bottom: 12,
                 left: 20,
-                child: GestureDetector(
-                  key: _versionKey,
-                  onTap: () {
-                    _versionTapCount++;
-                    if (_versionTapCount == 7) {
-                      setState(() {
-                        _versionText = "v1.0 - 🦄 GOAT Edition";
-                      });
-                      _triggerEasterEgg('ee_devmode_joke'.tr, _versionKey,
-                          customIcon: Icons.code);
-                      _versionTapCount = 0;
-                    }
-                  },
-                  child: Text(
-                    _versionText,
-                    style: TextStyle(
-                        color: AppColors.ink.withOpacity(0.5),
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1),
+                child: MouseRegion(
+                  cursor: SystemMouseCursors.click,
+                  child: GestureDetector(
+                    key: _versionKey,
+                    onTap: () {
+                      _versionTapCount++;
+                      if (_versionTapCount == 7) {
+                        setState(() {
+                          _versionText = "v1.0 - 🦄 GOAT Edition";
+                        });
+                        _triggerEasterEgg('ee_devmode_joke'.tr, _versionKey,
+                            customIcon: Icons.code);
+                        _versionTapCount = 0;
+                      }
+                    },
+                    child: Text(
+                      _versionText,
+                      style: TextStyle(
+                          color: AppColors.ink.withOpacity(0.5),
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1),
+                    ),
                   ),
                 ),
               ),
@@ -357,23 +367,26 @@ class _MainMenuScreenState extends State<MainMenuScreen>
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        GestureDetector(
-          key: _logoKey,
-          onTap: _handleLogoTap,
-          behavior: HitTestBehavior.opaque,
-          child: AnimatedBuilder(
-            animation: _animController,
-            builder: (context, child) {
-              final value = _animController.value * 2 * pi;
-              return Transform.translate(
-                offset: Offset(0, 8 * sin(value)),
-                child: Transform.rotate(
-                  angle: -0.1 + (0.05 * cos(value)),
-                  child: Icon(_currentVehicleIcon,
-                      size: isMobile ? 80 : 100, color: AppColors.ink),
-                ),
-              );
-            },
+        MouseRegion(
+          cursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            key: _logoKey,
+            onTap: _handleLogoTap,
+            behavior: HitTestBehavior.opaque,
+            child: AnimatedBuilder(
+              animation: _animController,
+              builder: (context, child) {
+                final value = _animController.value * 2 * pi;
+                return Transform.translate(
+                  offset: Offset(0, 8 * sin(value)),
+                  child: Transform.rotate(
+                    angle: -0.1 + (0.05 * cos(value)),
+                    child: Icon(_currentVehicleIcon,
+                        size: isMobile ? 80 : 120, color: AppColors.ink),
+                  ),
+                );
+              },
+            ),
           ),
         ),
         const SizedBox(height: 16),

@@ -35,30 +35,35 @@ class HitLogsWidget extends StatelessWidget {
                 ),
                 const Divider(color: AppColors.ink, thickness: 1),
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: game.hitLogs.length,
-                    itemBuilder: (context, index) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: TweenAnimationBuilder(
-                          key: ValueKey('log_${game.hitLogs.length}_$index'),
-                          tween: Tween<double>(begin: -10, end: 0),
-                          duration: const Duration(milliseconds: 300),
-                          curve: Curves.easeOut,
-                          builder: (context, val, child) => Transform.translate(
-                              offset: Offset(val, 0),
-                              child: Opacity(
-                                  opacity: 1.0 - (val / -10),
-                                  child: Text("> ${game.hitLogs[index]}",
-                                      style: const TextStyle(
-                                          color: AppColors.redPen,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w900),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis))),
-                        ),
-                      );
-                    },
+                  child: Scrollbar(
+                    thumbVisibility: true,
+                    child: ListView.builder(
+                      itemCount: game.hitLogs.length,
+                      itemBuilder: (context, index) {
+                        return Padding(
+                          padding: const EdgeInsets.only(
+                              bottom: 8.0, right: 8.0), // กันที่ให้ scrollbar
+                          child: TweenAnimationBuilder(
+                            key: ValueKey('log_${game.hitLogs.length}_$index'),
+                            tween: Tween<double>(begin: -10, end: 0),
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOut,
+                            builder: (context, val, child) =>
+                                Transform.translate(
+                                    offset: Offset(val, 0),
+                                    child: Opacity(
+                                        opacity: 1.0 - (val / -10),
+                                        child: Text("> ${game.hitLogs[index]}",
+                                            style: const TextStyle(
+                                                color: AppColors.redPen,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.w900),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis))),
+                          ),
+                        );
+                      },
+                    ),
                   ),
                 ),
               ],
