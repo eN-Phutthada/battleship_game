@@ -1,9 +1,68 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 
 import '../state/sound_controller.dart';
 import '../utils/constants.dart';
 import '../widgets/shared/animated_paper_bg.dart';
+
+// --- Settings Controller ---
+class SettingsController extends GetxController {
+  bool showGridLabels = true;
+  bool highFpsEnabled = true;
+
+  @override
+  void onInit() {
+    super.onInit();
+    _initDisplayMode();
+  }
+
+  Future<void> _initDisplayMode() async {
+    if (Platform.isAndroid && highFpsEnabled) {
+      try {
+        await FlutterDisplayMode.setHighRefreshRate();
+      } catch (e) {
+        debugPrint("DisplayMode init error: $e");
+      }
+    }
+  }
+
+  void toggleGridLabels() {
+    showGridLabels = !showGridLabels;
+    _playClick();
+    update(); // อัปเดต UI ทันที
+  }
+
+  Future<void> toggleHighFps() async {
+    highFpsEnabled = !highFpsEnabled;
+    _playClick();
+    update();
+
+    if (Platform.isAndroid) {
+      try {
+        if (highFpsEnabled) {
+          await FlutterDisplayMode.setHighRefreshRate();
+        } else {
+          final List<DisplayMode> modes = await FlutterDisplayMode.supported;
+          final DisplayMode standardMode = modes.firstWhere(
+            (m) => m.refreshRate >= 59.0 && m.refreshRate <= 61.0,
+            orElse: () => DisplayMode.auto,
+          );
+          await FlutterDisplayMode.setPreferredMode(standardMode);
+        }
+      } catch (e) {
+        debugPrint("DisplayMode toggle error: $e");
+      }
+    }
+  }
+
+  void _playClick() {
+    if (Get.isRegistered<SoundController>()) {
+      Get.find<SoundController>().playClick();
+    }
+  }
+}
 
 // --- Main Screen ---
 class SettingsScreen extends StatelessWidget {
@@ -17,8 +76,9 @@ class SettingsScreen extends StatelessWidget {
     final localeMap = {
       'en': const Locale('en', 'US'),
       'th': const Locale('th', 'TH'),
-      'es': const Locale('es', 'ES'),
       'ja': const Locale('ja', 'JP'),
+      'zh': const Locale('zh', 'CN'),
+      'ko': const Locale('ko', 'KR'),
     };
     Get.updateLocale(localeMap[langCode] ?? const Locale('en', 'US'));
   }
@@ -61,70 +121,102 @@ class SettingsScreen extends StatelessWidget {
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 650),
                     child: GetBuilder<SoundController>(builder: (sound) {
-                      return Scrollbar(
-                        thumbVisibility: true,
-                        child: ListView(
-                          physics: const BouncingScrollPhysics(),
-                          padding: const EdgeInsets.all(24),
-                          children: [
-                            _buildPaperCard(
-                              title: 'language'.tr,
-                              icon: Icons.language,
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: _buildLanguageControl(),
-                              ),
-                            ),
-                            const SizedBox(height: 28),
-                            _buildPaperCard(
-                              title: 'AUDIO',
-                              icon: Icons.volume_up,
-                              child: Column(
-                                children: [
-                                  _buildSliderRow(
-                                    icon: sound.bgmVolume == 0
-                                        ? Icons.music_off
-                                        : Icons.music_note,
-                                    label: 'bgm_volume'.tr,
-                                    value: sound.bgmVolume,
-                                    onChanged: sound.setBgmVolume,
+                      return GetBuilder<SettingsController>(
+                        // ✨ จุดสำคัญ: กำหนดให้ permanent เป็น true เพื่อให้จำค่าไว้ตลอดการเล่นเกม
+                        init: Get.put(SettingsController(), permanent: true),
+                        builder: (settings) {
+                          return Scrollbar(
+                            thumbVisibility: true,
+                            child: ListView(
+                              physics: const BouncingScrollPhysics(),
+                              padding: const EdgeInsets.all(24),
+                              children: [
+                                _buildPaperCard(
+                                  title: 'language'.tr,
+                                  icon: Icons.language,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: _buildLanguageControl(),
                                   ),
-                                  const Divider(
-                                      color: AppColors.ink,
-                                      thickness: 2,
-                                      height: 1),
-                                  _buildSliderRow(
-                                    icon: sound.sfxVolume == 0
-                                        ? Icons.volume_off
-                                        : Icons.volume_up,
-                                    label: 'sfx_volume'.tr,
-                                    value: sound.sfxVolume,
-                                    onChanged: (val) {
-                                      sound.setSfxVolume(val);
-                                      if (val > 0 && !sound.isSfxMuted) {
-                                        sound.playClick();
-                                      }
-                                    },
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 28),
-                            _buildPaperCard(
-                              title: 'SYSTEM',
-                              icon: Icons.vibration,
-                              child: MouseRegion(
-                                cursor: SystemMouseCursors.click,
-                                child: _buildSwitchRow(
-                                  label: 'haptics_feedback'.tr,
-                                  value: sound.hapticsEnabled,
-                                  onChanged: (val) => sound.toggleHaptics(),
                                 ),
-                              ),
+                                const SizedBox(height: 28),
+                                _buildPaperCard(
+                                  title: 'gameplay'.tr,
+                                  icon: Icons.videogame_asset,
+                                  child: Column(
+                                    children: [
+                                      _buildSwitchRow(
+                                        label: 'show_coordinates'.tr,
+                                        value: settings.showGridLabels,
+                                        onChanged: (_) =>
+                                            settings.toggleGridLabels(),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 28),
+                                _buildPaperCard(
+                                  title: 'AUDIO',
+                                  icon: Icons.volume_up,
+                                  child: Column(
+                                    children: [
+                                      _buildSliderRow(
+                                        icon: sound.bgmVolume == 0
+                                            ? Icons.music_off
+                                            : Icons.music_note,
+                                        label: 'bgm_volume'.tr,
+                                        value: sound.bgmVolume,
+                                        onChanged: sound.setBgmVolume,
+                                      ),
+                                      const Divider(
+                                          color: AppColors.ink,
+                                          thickness: 2,
+                                          height: 1),
+                                      _buildSliderRow(
+                                        icon: sound.sfxVolume == 0
+                                            ? Icons.volume_off
+                                            : Icons.volume_up,
+                                        label: 'sfx_volume'.tr,
+                                        value: sound.sfxVolume,
+                                        onChanged: (val) {
+                                          sound.setSfxVolume(val);
+                                          if (val > 0 && !sound.isSfxMuted) {
+                                            sound.playClick();
+                                          }
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 28),
+                                _buildPaperCard(
+                                  title: 'SYSTEM',
+                                  icon: Icons.memory,
+                                  child: Column(
+                                    children: [
+                                      _buildSwitchRow(
+                                        label: 'haptic_feedback'.tr,
+                                        value: sound.hapticsEnabled,
+                                        onChanged: (_) => sound.toggleHaptics(),
+                                      ),
+                                      const Divider(
+                                          color: AppColors.ink,
+                                          thickness: 2,
+                                          height: 1),
+                                      _buildSwitchRow(
+                                        label: 'high_fps'.tr,
+                                        value: settings.highFpsEnabled,
+                                        onChanged: (_) =>
+                                            settings.toggleHighFps(),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 40),
+                              ],
                             ),
-                            const SizedBox(height: 40),
-                          ],
-                        ),
+                          );
+                        },
                       );
                     }),
                   ),
@@ -137,7 +229,6 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  // --- UI Components ---
   Widget _buildBackButton() {
     return InkWell(
       onTap: () {
@@ -197,52 +288,74 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Widget _buildLanguageControl() {
-    final items = {'en': 'English', 'th': 'ไทย', 'es': 'Español', 'ja': '日本語'};
+    final items = {
+      'en': 'English',
+      'ja': '日本語',
+      'ko': '한국어',
+      'th': 'ไทย',
+      'zh': '中文',
+    };
     final selectedValue = Get.locale?.languageCode ?? 'en';
     final keys = items.keys.toList();
 
-    return Container(
-      decoration: BoxDecoration(
-        border: Border.all(color: AppColors.ink, width: 2),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        children: List.generate(keys.length, (index) {
-          final key = keys[index];
-          final isSelected = key == selectedValue;
-          final isLast = index == keys.length - 1;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.ink, width: 2),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: List.generate(keys.length, (index) {
+              final key = keys[index];
+              final isSelected = key == selectedValue;
+              final isLast = index == keys.length - 1;
 
-          return Expanded(
-            child: InkWell(
-              onTap: () => _changeLanguage(key),
-              child: Container(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
-                decoration: BoxDecoration(
-                  color: isSelected ? AppColors.ink : Colors.transparent,
-                  border: Border(
-                    right: isLast
-                        ? BorderSide.none
-                        : const BorderSide(color: AppColors.ink, width: 2),
-                  ),
-                ),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    items[key]!,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: isSelected ? Colors.white : AppColors.ink,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
+              return Expanded(
+                child: InkWell(
+                  onTap: () => _changeLanguage(key),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.ink : Colors.transparent,
+                      border: Border(
+                        right: isLast
+                            ? BorderSide.none
+                            : const BorderSide(color: AppColors.ink, width: 2),
+                      ),
+                    ),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        items[key]!,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: isSelected ? Colors.white : AppColors.ink,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ),
-          );
-        }),
-      ),
+              );
+            }),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'ai_translated_disclaimer'.tr,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: AppColors.ink.withOpacity(0.6),
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+      ],
     );
   }
 
@@ -319,33 +432,37 @@ class SettingsScreen extends StatelessWidget {
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label,
-              style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  color: AppColors.ink,
-                  fontSize: 16)),
-          Switch(
-            value: value,
-            activeThumbColor: Colors.white,
-            activeTrackColor: AppColors.ink,
-            inactiveThumbColor: AppColors.ink,
-            inactiveTrackColor: Colors.white,
-            trackOutlineColor: WidgetStateProperty.all(AppColors.ink),
-            trackOutlineWidth: WidgetStateProperty.all(2.0),
-            onChanged: onChanged,
-          ),
-        ],
+    return InkWell(
+      onTap: () => onChanged(!value),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(label,
+                  style: const TextStyle(
+                      fontWeight: FontWeight.w900,
+                      color: AppColors.ink,
+                      fontSize: 15)),
+            ),
+            Switch(
+              value: value,
+              activeThumbColor: Colors.white,
+              activeTrackColor: AppColors.ink,
+              inactiveThumbColor: AppColors.ink,
+              inactiveTrackColor: Colors.white,
+              trackOutlineColor: WidgetStateProperty.all(AppColors.ink),
+              trackOutlineWidth: WidgetStateProperty.all(2.0),
+              onChanged: onChanged,
+            ),
+          ],
+        ),
       ),
     );
   }
 }
 
-// --- Custom Shapes ---
 class _CustomThumbShape extends SliderComponentShape {
   @override
   Size getPreferredSize(bool isEnabled, bool isDiscrete) => const Size(24, 24);

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_displaymode/flutter_displaymode.dart';
 import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -11,8 +12,10 @@ import 'utils/constants.dart';
 import 'utils/translations.dart';
 
 // Entry Point
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  await setHighRefreshRate();
 
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
@@ -23,6 +26,22 @@ void main() {
     Get.put(GameController());
     runApp(const BattleshipApp());
   });
+}
+
+Future<void> setHighRefreshRate() async {
+  try {
+    final List<DisplayMode> modes = await FlutterDisplayMode.supported;
+
+    final DisplayMode highRefreshMode = modes.firstWhere(
+      (m) => m.refreshRate >= 120,
+      orElse: () =>
+          modes.reduce((a, b) => a.refreshRate > b.refreshRate ? a : b),
+    );
+
+    await FlutterDisplayMode.setPreferredMode(highRefreshMode);
+  } catch (e) {
+    debugPrint("ไม่สามารถเปิดโหมด 120fps ได้: $e");
+  }
 }
 
 // Main Application

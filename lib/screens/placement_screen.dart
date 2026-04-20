@@ -921,14 +921,16 @@ class _ToolButton extends StatelessWidget {
             children: [
               Icon(icon, color: contentColor, size: 24),
               const SizedBox(width: 4),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  label.replaceAll('\n', ' '),
-                  style: TextStyle(
-                    color: contentColor,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label.replaceAll('\n', ' '),
+                    style: TextStyle(
+                      color: contentColor,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
@@ -1001,12 +1003,16 @@ class _CommandButton extends StatelessWidget {
             children: [
               Icon(icon, color: color, size: 20),
               const SizedBox(width: 4),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  label,
-                  style: TextStyle(
-                      color: color, fontWeight: FontWeight.bold, fontSize: 12),
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                        color: color,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12),
+                  ),
                 ),
               ),
             ],

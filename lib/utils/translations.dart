@@ -15,6 +15,8 @@ class AppTranslations extends Translations {
           'size': 'SIZE:',
           'horz': 'HORZ',
           'vert': 'VERT',
+          'ai_translated_disclaimer':
+              'Translated by AI. May contain inaccuracies.',
 
           // --- EASTER EGGS ---
           'ee_sub': 'Submarine deployed! ⚓',
@@ -72,6 +74,9 @@ class AppTranslations extends Translations {
           'bgm_volume': 'MUSIC VOLUME',
           'sfx_volume': 'EFFECTS VOLUME',
           'language': 'LANGUAGE',
+          'gameplay': 'GAMEPLAY',
+          'show_coordinates': 'SHOW GRID LABELS (A-J, 1-10)',
+          'high_fps': '120Hz HIGH REFRESH RATE',
 
           // --- MULTIPLAYER LOBBY ---
           'network_battle': 'NETWORK BATTLE (PvP)',
@@ -230,6 +235,8 @@ class AppTranslations extends Translations {
           'size': 'ขนาด:',
           'horz': 'แนวนอน',
           'vert': 'แนวตั้ง',
+          'ai_translated_disclaimer':
+              'แปลภาษาโดย AI (อาจมีความคลาดเคลื่อนในบางจุด)',
 
           // --- EASTER EGGS ---
           'ee_sub': 'ปลดล็อกเรือดำน้ำสำเร็จ! ⚓',
@@ -286,6 +293,9 @@ class AppTranslations extends Translations {
           'bgm_volume': 'ระดับเสียงดนตรี',
           'sfx_volume': 'ระดับเสียงเอฟเฟกต์',
           'language': 'ภาษา (Language)',
+          'gameplay': 'การเล่น (GAMEPLAY)',
+          'show_coordinates': 'แสดงตัวอักษรพิกัดกระดาน (A-J, 1-10)',
+          'high_fps': 'โหมดลื่นไหล 120Hz (กินแบตขึ้น)',
 
           // --- MULTIPLAYER LOBBY ---
           'network_battle': 'รบออนไลน์ (PvP)',
@@ -431,221 +441,6 @@ class AppTranslations extends Translations {
         },
 
         // ==========================================
-        // 🇪🇸 SPANISH (es_ES)
-        // ==========================================
-        'es_ES': {
-          // --- COMMON ---
-          'attention': '¡ATENCIÓN!',
-          'roger_that': 'RECIBIDO',
-          'stay': 'QUEDARSE',
-          'retreat': 'RETIRADA',
-          'size': 'TAMAÑO:',
-          'horz': 'HORZ',
-          'vert': 'VERT',
-
-          // --- EASTER EGGS ---
-          'ee_sub': '¡Submarino desplegado! ⚓',
-          'ee_rocket': '¡Fuerza espacial lista! 🚀',
-          'ee_boat': '¡De vuelta a lo básico! ⛵',
-          'ee_rubsarb': '¡Creador legendario reconocido! 🫡',
-          'ee_johnwick': 'Se llevaron a tu perro... ¡Véngalo! ✏️',
-          'ee_pirate': '¡Yarrr! ¿Listo para saquear, Capitán? 🏴‍☠️',
-          'ee_devmode_joke': 'Modo desarrollador... ¡es broma! 💻',
-          'ee_max_enemy':
-              '¡Máximo 7 enemigos! ¡No puedes luchar contra todo el océano! 🌊',
-          'ee_bot_name': 'Espera, ¿somos los malos? 🤖',
-          'ee_dev_name': '¡Buen intento, yo escribí esto! 👨‍💻',
-          'ee_screaming': '¡¡DEJA DE GRITAR!! 🙉',
-          'ee_min_enemy': '¿Con quién peleas? ¿Tus demonios internos? 👻',
-          'ee_confused': 'Error: El comandante está confundido. 😵‍💫',
-          'ee_no_name_spam':
-              '¿Teclado roto? ¡Solo escribe un nombre, porfa! ⌨️',
-          'ee_dizzy': '¡Deja de girar! ¡La tripulación está vomitando! 🤢',
-          'ee_indecisive': '¡Decídete! ¡La flota está exhausta! 🥵',
-          'ee_ocd': '¡Ya está en blanco! ¿Qué estás borrando? 📄',
-          'ee_impatient':
-              '¡Frena un poco, velocista! Arregla la advertencia roja primero 🛑',
-          'ee_e_or_f': 'Espera... ¿eso es E o F? 😵‍💫',
-          'ee_friendly_fire':
-              'Capitán, ¿necesita gafas nuevas? ¡Ese es nuestro barco! 👓',
-          'ee_feed_fish':
-              '¡Ya fallamos ahí! ¡Deja de alimentar a los peces! 🐟',
-          'ee_turn_e_or_f': '¡TU TURNO!\n(Espera, ¿es E o F? 🧐)',
-          'ee_loading_1': 'Discutiendo si es E o F... 🤷‍♂️',
-          'ee_loading_2': 'Submarinos voladores en camino... 🛸',
-          'ee_loading_3': 'Girando el barco hasta vomitar... 🤢',
-          'ee_loading_4': 'RUBSARB Beta Test Mark 1.1 🛠️',
-
-          // --- MAIN MENU ---
-          'game_title': 'BATALLA\nNAVAL',
-          'mission_briefing': 'REPORTE DE MISIÓN',
-          'commander_name': 'IDENTIFICADOR',
-          'local_campaign': 'CAMPAÑA LOCAL (VS BOTS)',
-          'enemies': 'ENEMIGOS:',
-          'bot_speed': 'VELOCIDAD AI',
-          'speed_slow': 'LENTO',
-          'speed_normal': 'NORMAL',
-          'speed_fast': 'RÁPIDO',
-          'difficulty': 'DIFICULTAD',
-          'diff_easy': 'FÁCIL',
-          'diff_normal': 'NORMAL',
-          'diff_hard': 'DIFÍCIL',
-          'assist_level': 'ASISTENCIA',
-          'ast_casual': 'CASUAL',
-          'ast_standard': 'ESTÁNDAR',
-          'ast_hardcore': 'EXTREMO',
-          'ast_reallife': 'VIDA REAL',
-          'grid_size': 'TAMAÑO DE LA CUADRÍCULA',
-          'engage_bots': 'ATACAR BOTS',
-          'settings': 'AJUSTES',
-          'haptic_feedback': 'VIBRACIÓN',
-          'bgm_volume': 'VOLUMEN MÚSICA',
-          'sfx_volume': 'VOLUMEN EFECTOS',
-          'language': 'IDIOMA',
-
-          // --- MULTIPLAYER LOBBY ---
-          'network_battle': 'BATALLA EN RED (PvP)',
-          'lan_desc': 'Juega con amigos en la misma red Wi-Fi (LAN)',
-          'host_join': 'CREAR / UNIRSE',
-          'coming_soon': 'El módulo multijugador está en construcción.',
-          'network_lobby': 'LOBBY DE RED',
-          'your_ip': 'TU IP:',
-          'host_game_btn': 'CREAR PARTIDA',
-          'host_desc': 'Inicia una nueva sesión\ne invita aliados',
-          'quick_scan': 'ESCANEO RÁPIDO',
-          'no_signals': 'Sin señales activas...',
-          'join_via_ip': 'O UNIRSE POR IP',
-          'join_btn': 'UNIRSE',
-          'room_open': 'SALA ABIERTA EN: @ip',
-          'connected_station': 'CONECTADO A LA ESTACIÓN',
-          'you_tag': 'TÚ',
-          'abandon_btn': 'ABORTAR',
-          'leave_btn': 'SALIR',
-          'start_mission': 'INICIAR MISIÓN',
-          'waiting_commander': 'ESPERANDO AL COMANDANTE...',
-
-          // --- HOW TO PLAY (HELP) ---
-          'how_to_play': 'CÓMO JUGAR',
-          'deployment_phase': 'FASE DE DESPLIEGUE:',
-          'help_step_1':
-              'Dibuja bloques de Tierra según la cuadrícula (Máx 2 islas)',
-          'help_step_2': 'Despliega Torretas en Tierra',
-          'help_step_3': 'Despliega todos los Barcos en Agua',
-          'ammo_legend_title': 'LEYENDA DE MUNICIÓN:',
-          'ammo_legend_desc':
-              ' 🟦 Munición Base\n 🟧 Bono por Tierra\n 🩵 Objetivo Fijado',
-          'combat_rules': 'REGLAS DE COMBATE:',
-          'rule_1':
-              '💥 Munición por turno = 1 (Base) + Torretas Activas + Bono',
-          'rule_2': '🎯 Salva: ¡Fija objetivos, luego DISPARA TODO!',
-          'rule_3': '⚖️ Regla: Distribuye tus disparos equitativamente.',
-
-          'help_diff_title': 'DIFICULTAD DEL BOT:',
-          'help_diff_easy':
-              '🟢 FÁCIL: Dispara al azar. Puede desperdiciar munición.',
-          'help_diff_normal':
-              '🟡 NORMAL: Dispara al azar pero evita sectores revelados.',
-          'help_diff_hard':
-              '🔴 DIFÍCIL: ¡El Cazador! Enfoca el fuego alrededor del objetivo.',
-
-          'help_assist_title': 'NIVELES DE ASISTENCIA:',
-          'help_ast_casual':
-              '🟢 CASUAL: El tablero recuerda todo. Evita disparos repetidos. Registros detallados.',
-          'help_ast_standard':
-              '🟡 ESTÁNDAR: Los fallos desaparecen. Pierdes munición si repites. Registros detallados.',
-          'help_ast_hardcore':
-              '🔴 EXTREMO: Tierra enemiga y fallos ocultos. Pierdes munición si repites. Registros vagos.',
-          'help_ast_reallife':
-              '⚫ VIDA REAL: Tablero ciego. Mantén presionado para marcar X/O. Registros por coordenadas.',
-
-          // --- PLACEMENT PHASE ---
-          'tools': 'HERRAMIENTAS',
-          'land': 'TIERRA',
-          'turret': 'TORRETA',
-          'fleet': 'FLOTA',
-          'command': 'COMANDO',
-          'auto': 'AUTO',
-          'clear': 'LIMPIAR',
-          'engage': 'INICIAR',
-          'req_land': 'Faltan @count bloques de tierra',
-          'req_turret': 'Faltan @count torretas',
-          'req_ship': 'Despliega todos los barcos',
-          'req_island': '¡Tierra muy dispersa! (Máx 2 islas)',
-          'all_ready': '¡SISTEMAS LISTOS!',
-
-          // --- GAME BOARD ---
-          'targets': 'OBJETIVOS',
-          'global_radar': 'RADAR GLOBAL',
-          'radar_desc': 'Solo se rastrean impactos y flotas aliadas',
-          'close_radar': 'CERRAR RADAR',
-          'my_fleet': 'MI FLOTA',
-          'me': 'YO',
-          'defending': 'DEFENDIENDO: MI SECTOR',
-          'targeting': 'APUNTANDO: @name',
-          'ammo_ready': 'MUNICIÓN: ',
-          'ammo_legend': '🟦 FLOTA   🟧 BONO   🩵 FIJADO',
-          'targets_locked': 'OBJETIVOS FIJADOS',
-          'fire_all': '¡DISPARAR!',
-          'turn_announce': 'TURNO DE @name',
-          'hint_reallife':
-              '💡 PISTA: Toca (turno enemigo) o mantén presionado para marcar X/O. El juego se pausa.',
-          'btn_ack': 'ENTENDIDO',
-          'simulating': 'SIMULANDO DESPLIEGUE ENEMIGO...',
-          'distribute_shots': '¡Debes distribuir los disparos equitativamente!',
-          'abort_title': '¿ABORTAR MISIÓN?',
-          'abort_desc':
-              '¿Seguro que quieres retirarte? Se perderá el progreso.',
-          'war_over': 'LA GUERRA HA TERMINADO',
-          'wins': '¡@name GANA!',
-          'return_base': 'VOLVER A LA BASE',
-
-          // --- BATTLE LOGS ---
-          'battle_log': 'REGISTRO DE BATALLA',
-          'casual_block': '¡Sector ya revelado! (Modo Casual activado)',
-          'wasted_shot': '⚠️ [TÚ] ¡Disparo desperdiciado en sector revelado!',
-          'wasted_shot_bot': '🤣 [@shooter] desperdició un disparo!',
-          'log_sunk_me': '🎉 [TÚ] hundiste el barco de @target (Tamaño @size)',
-          'log_sunk_enemy': '💥 [@shooter] hundió el barco de @target',
-          'log_sunk_you': '🚨 [@shooter] hundió TU barco',
-          'log_hit_me': '🎯 [TÚ] impactaste el barco de @target',
-          'log_hit_enemy': '🎯 [@shooter] impactó el barco de @target',
-          'log_hit_you': '⚠️ [@shooter] impactó TU barco',
-          'log_turret_me': '🛡️ [TÚ] destruiste la torreta de @target',
-          'log_turret_enemy': '🛡️ [@shooter] destruyó la torreta de @target',
-          'log_turret_you': '🧨 [@shooter] destruyó TU torreta',
-          'log_hardcore_hit': '🎯 [?] Impacto en @target (Estructura oculta)',
-          'log_hardcore_miss': '💦 [?] Fallo en @target',
-          'log_reallife_hit': '🎯 [@shooter] impactó a @target en @coord',
-          'log_reallife_miss': '💦 [@shooter] falló a @target en @coord',
-          'log_reallife_sunk': '💥 [@shooter] hundió a @target en @coord',
-          'log_reallife_land':
-              '⛰️ [@shooter] dio en tierra de @target en @coord',
-
-          // --- ERRORS ---
-          'err_empty_name':
-              '¡Por favor, ingrese su identificador de comandante!',
-          'err_max_land': '¡Límite máximo de bloques de tierra alcanzado!',
-          'err_land_on_ship': '¡No se puede colocar tierra sobre un barco!',
-          'err_turret_on_water': '¡Las torretas deben construirse en tierra!',
-          'err_max_turret': '¡Límite máximo de torretas alcanzado!',
-          'err_ship_on_land':
-              '¡Los barcos deben colocarse en el agua (no sobre tierra)!',
-          'err_ship_overlap': '¡Los barcos no pueden superponerse!',
-          'err_ship_out_of_bounds':
-              '¡Barco fuera de los límites!\n🔄 Intenta rotarlo.',
-
-          // --- CREDITS & WARNINGS ---
-          'credits': 'CRÉDITOS:',
-          'credit_desc':
-              'Reglas del juego inspiradas en RUBSARB production\n"เรือรบรุ่นหนูลองยา : Battleship Beta Test Mark 1.1" (YouTube)',
-          'rl_warning_title': '🚨 ADVERTENCIA: MODO VIDA REAL',
-          'rl_warning_desc':
-              'En este modo, el sistema NO registrará automáticamente tus impactos o fallos.\n\nDebes recordarlos o marcarlos manualmente MANTENIENDO PRESIONADO en la cuadrícula.\n\n¿Estás listo para el desafío?',
-          'accept_btn': 'ACEPTAR',
-          'cancel_btn': 'CANCELAR',
-        },
-
-        // ==========================================
         // 🇯🇵 JAPANESE (ja_JP)
         // ==========================================
         'ja_JP': {
@@ -657,6 +452,7 @@ class AppTranslations extends Translations {
           'size': 'サイズ:',
           'horz': '横',
           'vert': '縦',
+          'ai_translated_disclaimer': 'AIによる翻訳です。不正確な場合があります。',
 
           // --- EASTER EGGS ---
           'ee_sub': '潜水艦配備完了！ ⚓',
@@ -712,6 +508,9 @@ class AppTranslations extends Translations {
           'bgm_volume': 'BGM 音量',
           'sfx_volume': '効果音 音量',
           'language': '言語 (Language)',
+          'gameplay': 'ゲームプレイ',
+          'show_coordinates': '座標を表示 (A-J, 1-10)',
+          'high_fps': '120Hz 高リフレッシュレート',
 
           // --- MULTIPLAYER LOBBY ---
           'network_battle': 'ネットワークバトル (PvP)',
@@ -837,6 +636,407 @@ class AppTranslations extends Translations {
               'このモードでは、システムは敵ボードのヒットやミスを自動的に記録しません。\n\n自分で覚えるか、グリッドを「長押し」して手動でマークする必要があります。\n\n究極の挑戦の準備はできていますか？',
           'accept_btn': '挑戦する',
           'cancel_btn': 'キャンセル',
+        },
+
+        // ==========================================
+        // 🇨🇳 CHINESE (Simplified - zh_CN)
+        // ==========================================
+        'zh_CN': {
+          // --- COMMON ---
+          'attention': '注意！',
+          'roger_that': '收到',
+          'stay': '留下',
+          'retreat': '撤退',
+          'size': '尺寸:',
+          'horz': '水平',
+          'vert': '垂直',
+          'ai_translated_disclaimer': '由 AI 提供翻译，可能存在误差。',
+
+          // --- EASTER EGGS ---
+          'ee_sub': '潜艇已部署！ ⚓',
+          'ee_rocket': '太空部队已部署！ 🚀',
+          'ee_boat': '回归经典！ ⛵',
+          'ee_rubsarb': '致敬传奇创作者！ 🫡',
+          'ee_johnwick': '他们带走了你的狗... 帮它报仇！ ✏️',
+          'ee_pirate': '呀哈！准备好掠夺了吗，船长？ 🏴‍☠️',
+          'ee_devmode_joke': '开发者模式... 开玩笑的！ 💻',
+          'ee_max_enemy': '最多7个敌人！你不能和整个海洋作战！ 🌊',
+          'ee_bot_name': '等等，难道我们才是反派？ 🤖',
+          'ee_dev_name': '想得美，这代码是我写的！ 👨‍💻',
+          'ee_screaming': '别叫了！！ 🙉',
+          'ee_min_enemy': '你在和谁战斗？你内心的恶魔吗？ 👻',
+          'ee_confused': '系统错误：指挥官已混乱。 😵‍💫',
+          'ee_no_name_spam': '键盘坏了吗？请随便输入个名字！ ⌨️',
+          'ee_dizzy': '别转了！船员都吐了！ 🤢',
+          'ee_indecisive': '快做决定！舰队都累坏了！ 🥵',
+          'ee_ocd': '已经空了！你还在擦什么？！ 📄',
+          'ee_impatient:': '别急！先解决上面的红色警告！ 🛑',
+          'ee_e_or_f': '等等... 那是E还是F？ 😵‍💫',
+          'ee_friendly_fire': '长官，您需要配副新眼镜吗？那是我们的船！ 👓',
+          'ee_feed_fish': '我们已经打偏了！别再喂鱼了！ 🐟',
+          'ee_turn_e_or_f': '轮到你了！\n(等等，是E还是F来着？ 🧐)',
+          'ee_loading_1': '正在争论是E还是F... 🤷‍♂️',
+          'ee_loading_2': '会飞的潜艇正在靠近... 🛸',
+          'ee_loading_3': '把船转到吐为止... 🤢',
+          'ee_loading_4': 'RUBSARB Beta Test Mark 1.1 🛠️',
+
+          // --- MAIN MENU ---
+          'game_title': '纸上\n海战',
+          'mission_briefing': '任务简报',
+          'commander_name': '指挥官代号',
+          'local_campaign:': '本地战役 (VS 电脑)',
+          'enemies': '敌人数量:',
+          'bot_speed': '电脑速度',
+          'speed_slow': '慢速',
+          'speed_normal': '正常',
+          'speed_fast': '快速',
+          'difficulty': '电脑难度',
+          'diff_easy': '简单',
+          'diff_normal': '正常',
+          'diff_hard': '困难',
+          'assist_level': '辅助等级',
+          'ast_casual': '休闲',
+          'ast_standard': '标准',
+          'ast_hardcore': '硬核',
+          'ast_reallife': '真实模式',
+          'grid_size': '网格尺寸',
+          'engage_bots': '开始交战',
+          'settings': '设置',
+          'haptic_feedback': '振动反馈',
+          'bgm_volume': '音乐音量',
+          'sfx_volume': '音效音量',
+          'language': '语言',
+          'gameplay': '游戏设置',
+          'show_coordinates': '显示坐标 (A-J, 1-10)',
+          'high_fps': '120Hz 高刷新率',
+
+          // --- MULTIPLAYER LOBBY ---
+          'network_battle': '局域网对战 (PvP)',
+          'lan_desc': '在同一个 Wi-Fi (LAN) 下与朋友对战',
+          'host_join': '创建 / 加入',
+          'coming_soon': '多人模式正在建设中。',
+          'network_lobby': '网络大厅',
+          'your_ip': '你的 IP:',
+          'host_game_btn': '创建游戏',
+          'host_desc': '开始新会话\n并邀请盟友',
+          'quick_scan': '快速扫描',
+          'no_signals': '未发现活动信号...',
+          'join_via_ip': '或通过 IP 加入',
+          'join_btn': '加入',
+          'room_open': '房间已开启：@ip',
+          'connected_station': '已连接至战斗站',
+          'you_tag': '你',
+          'abandon_btn': '中止',
+          'leave_btn': '离开',
+          'start_mission': '开始任务',
+          'waiting_commander': '等待指挥官就绪...',
+
+          // --- HOW TO PLAY (HELP) ---
+          'how_to_play': '游戏玩法',
+          'deployment_phase': '部署阶段:',
+          'help_step_1': '根据网格限制绘制陆地（最多2个岛屿）',
+          'help_step_2': '在陆地上部署炮塔',
+          'help_step_3': '在水面上部署所有船只',
+          'ammo_legend_title': '弹药图例:',
+          'ammo_legend_desc': ' 🟦 基础舰队弹药\n 🟧 陆地奖励弹药\n 🩵 已锁定目标',
+          'combat_rules': '战斗规则:',
+          'rule_1': '💥 每回合弹药 = 1 (基础) + 存活的炮塔 + 陆地奖励',
+          'rule_2': '🎯 齐射：使用可用弹药锁定多个目标，然后全弹发射！',
+          'rule_3': '⚖️ 规则：你必须将炮火均匀分配给所有存活的敌人（禁止集火）。',
+
+          'help_diff_title': '电脑难度:',
+          'help_diff_easy': '🟢 简单：随机射击。可能会将弹药浪费在已暴露的区域。',
+          'help_diff_normal': '🟡 正常：随机射击，但会主动避开已暴露的区域。',
+          'help_diff_hard': '🔴 困难：猎手！集中火力攻击击中的目标，快速击沉船只。',
+
+          'help_assist_title': '辅助等级:',
+          'help_ast_casual': '🟢 休闲：记录所有标记。防止在已暴露区域浪费弹药。详细的战斗日志。',
+          'help_ast_standard': '🟡 标准：未命中的标记会消失。可能会在已暴露区域浪费弹药。详细的战斗日志。',
+          'help_ast_hardcore': '🔴 硬核：隐藏未命中和敌方陆地。可能会浪费弹药。模糊的战斗日志。',
+          'help_ast_reallife': '⚫ 真实模式：完全盲眼的棋盘。长按可手动标记 X/O。基于坐标的日志。',
+
+          // --- PLACEMENT PHASE ---
+          'tools': '工具',
+          'land': '陆地',
+          'turret': '炮塔',
+          'fleet': '舰队',
+          'command': '命令',
+          'auto': '自动',
+          'clear': '清除',
+          'engage': '交战',
+          'req_land': '还需要 @count 个陆地模块',
+          'req_turret': '还需要 @count 个炮塔',
+          'req_ship': '部署所有船只以继续',
+          'req_island': '陆地过于分散！（最多2个岛屿）',
+          'all_ready': '所有系统准备就绪！',
+
+          // --- GAME BOARD ---
+          'targets': '目标',
+          'global_radar': '全局雷达',
+          'radar_desc': '仅追踪你的舰队和对敌人的成功打击。',
+          'close_radar': '关闭雷达',
+          'my_fleet': '我的舰队',
+          'me': '我',
+          'defending': '防守中：我的区域',
+          'targeting': '瞄准：@name',
+          'ammo_ready': '弹药：',
+          'ammo_legend': '🟦 舰队   🟧 奖励   🩵 锁定',
+          'targets_locked': '目标已锁定',
+          'fire_all': '全弹发射！',
+          'turn_announce': '@name 的回合',
+          'hint_reallife': '💡 提示：点击（在敌人回合时）或长按以标记 X/O。游戏在电脑回合后暂停以供记录。',
+          'btn_ack': '确认完毕 (结束回合)',
+          'simulating': '正在模拟敌人部署...',
+          'distribute_shots': '你必须将炮火均匀分配给所有存活的目标！',
+          'abort_title': '中止任务？',
+          'abort_desc': '你确定要撤退到主菜单吗？所有进度将丢失。',
+          'war_over': '战争结束',
+          'wins': '@name 获胜！',
+          'return_base': '返回基地',
+
+          // --- BATTLE LOGS ---
+          'battle_log': '战斗日志',
+          'casual_block': '该区域已暴露！（休闲模式可防止浪费弹药）',
+          'wasted_shot': '⚠️ [你] 在已暴露的区域浪费了一发炮弹！',
+          'wasted_shot_bot': '🤣 [@shooter] 在已知区域浪费了一发炮弹！',
+          'log_sunk_me': '🎉 [你] 完全击沉了 @target 的船只！(尺寸 @size)',
+          'log_sunk_enemy': '💥 [@shooter] 击沉了 @target 的船只！',
+          'log_sunk_you': '🚨 [@shooter] 击沉了 你的 船只！',
+          'log_hit_me': '🎯 [你] 击中了 @target 的船只！',
+          'log_hit_enemy': '🎯 [@shooter] 击中了 @target 的船只！',
+          'log_hit_you': '⚠️ [@shooter] 击中了 你的 船只！',
+          'log_turret_me': '🛡️ [你] 摧毁了 @target 的炮塔！',
+          'log_turret_enemy': '🛡️ [@shooter] 摧毁了 @target 的炮塔！',
+          'log_turret_you': '🧨 [@shooter] 摧毁了 你的 炮塔！',
+          'log_hardcore_hit': '🎯 [?] 确认击中 @target！(结构隐藏)',
+          'log_hardcore_miss': '💦 [?] 对 @target 的攻击未命中！',
+          'log_reallife_hit': '🎯 [@shooter] 击中 @target 的 @coord 坐标',
+          'log_reallife_miss': '💦 [@shooter] 未击中 @target 的 @coord 坐标',
+          'log_reallife_sunk': '💥 [@shooter] 在 @coord 坐标击沉了 @target',
+          'log_reallife_land': '⛰️ [@shooter] 击中了 @target 的陆地，坐标 @coord',
+
+          // --- ERRORS ---
+          'err_empty_name': '请输入指挥官代号！',
+          'err_max_land': '已达到陆地模块上限！',
+          'err_land_on_ship': '不能将陆地放置在船只上！',
+          'err_turret_on_water': '炮塔必须建在陆地上！',
+          'err_max_turret': '已达到炮塔上限！',
+          'err_ship_on_land': '船只必须部署在水面上（不能在陆地上）！',
+          'err_ship_overlap': '船只不能相互重叠！',
+          'err_ship_out_of_bounds': '船只超出边界！\n🔄 尝试旋转它。',
+
+          // --- CREDITS & WARNINGS ---
+          'credits': '致谢：',
+          'credit_desc':
+              '游戏规则灵感来自 RUBSARB production\n"เรือรบรุ่นหนูลองยา : Battleship Beta Test Mark 1.1" (YouTube)',
+          'rl_warning_title': '🚨 真实模式警告',
+          'rl_warning_desc':
+              '在此模式下，系统将不会自动记录您在敌人棋盘上的命中或未命中。\n\n您必须记住它们，或通过在网格上"长按"来手动标记。\n\n您准备好迎接终极挑战了吗？',
+          'accept_btn': '接受',
+          'cancel_btn': '取消',
+        },
+
+        // ==========================================
+        // 🇰🇷 KOREAN (ko_KR)
+        // ==========================================
+        'ko_KR': {
+          // --- COMMON ---
+          'attention': '주의!',
+          'roger_that': '확인',
+          'stay': '머물기',
+          'retreat': '후퇴',
+          'size': '크기:',
+          'horz': '가로',
+          'vert': '세로',
+          'ai_translated_disclaimer': 'AI가 번역했습니다. 오류가 있을 수 있습니다.',
+
+          // --- EASTER EGGS ---
+          'ee_sub': '잠수함 배치 완료! ⚓',
+          'ee_rocket': '우주군 배치 완료! 🚀',
+          'ee_boat': '기본으로 복귀! ⛵',
+          'ee_rubsarb': '전설의 제작자를 인식했습니다! 🫡',
+          'ee_johnwick': '그들이 당신의 개를 훔쳐갔습니다... 복수하세요! ✏️',
+          'ee_pirate': '야르! 약탈할 준비가 되었나요, 선장님? 🏴‍☠️',
+          'ee_devmode_joke': '개발자 모드... 농담입니다! 💻',
+          'ee_max_enemy': '적은 최대 7명! 바다 전체와 싸울 수는 없습니다! 🌊',
+          'ee_bot_name': '잠깐, 우리가 악당인가요? 🤖',
+          'ee_dev_name': '좋은 시도였지만, 코드는 제가 썼습니다! 👨‍💻',
+          'ee_screaming': '그만 소리 질러요!! 🙉',
+          'ee_min_enemy': '누구랑 싸우고 있나요? 내면의 악마? 👻',
+          'ee_confused': '시스템 오류: 지휘관이 혼란에 빠졌습니다. 😵‍💫',
+          'ee_no_name_spam': '키보드 고장났어요? 제발 이름 좀 적어주세요! ⌨️',
+          'ee_dizzy': '그만 돌려요! 선원들이 토하고 있어요! 🤢',
+          'ee_indecisive': '빨리 결정하세요! 함대가 지쳤습니다! 🥵',
+          'ee_ocd': '이미 비어 있습니다! 뭘 지우려는 거죠?! 📄',
+          'ee_impatient': '진정하세요! 먼저 빨간색 경고부터 해결하세요! 🛑',
+          'ee_e_or_f': '잠깐... 저게 E인가요 F인가요? 😵‍💫',
+          'ee_friendly_fire': '선장님 안경 필요하세요? 저건 우리 배입니다! 👓',
+          'ee_feed_fish': '이미 빗나갔습니다! 물고기 밥 좀 그만 줘요! 🐟',
+          'ee_turn_e_or_f': '당신 차례입니다!\n(잠깐, E였나 F였나? 🧐)',
+          'ee_loading_1': 'E인지 F인지 논쟁 중... 🤷‍♂️',
+          'ee_loading_2': '날아다니는 잠수함 접근 중... 🛸',
+          'ee_loading_3': '토할 때까지 배를 돌리는 중... 🤢',
+          'ee_loading_4': 'RUBSARB Beta Test Mark 1.1 🛠️',
+
+          // --- MAIN MENU ---
+          'game_title': '페이퍼\n배틀쉽',
+          'mission_briefing': '임무 브리핑',
+          'commander_name': '지휘관 콜사인',
+          'local_campaign': '로컬 캠페인 (VS 봇)',
+          'enemies': '적 수:',
+          'bot_speed': '봇 속도',
+          'speed_slow': '느림',
+          'speed_normal': '보통',
+          'speed_fast': '빠름',
+          'difficulty': '봇 난이도',
+          'diff_easy': '쉬움',
+          'diff_normal': '보통',
+          'diff_hard': '어려움',
+          'assist_level': '지원 레벨',
+          'ast_casual': '캐주얼',
+          'ast_standard': '스탠다드',
+          'ast_hardcore': '하드코어',
+          'ast_reallife': '리얼 라이프',
+          'grid_size': '그리드 크기',
+          'engage_bots': '전투 시작',
+          'settings': '설정',
+          'haptic_feedback': '진동 햅틱',
+          'bgm_volume': '음악 볼륨',
+          'sfx_volume': '효과음 볼륨',
+          'language': '언어 (Language)',
+          'gameplay': '게임플레이',
+          'show_coordinates': '그리드 좌표 표시 (A-J, 1-10)',
+          'high_fps': '120Hz 고주사율',
+
+          // --- MULTIPLAYER LOBBY ---
+          'network_battle': '네트워크 배틀 (PvP)',
+          'lan_desc': '같은 Wi-Fi(LAN)에서 친구들과 플레이하세요',
+          'host_join': '방 만들기 / 참여',
+          'coming_soon': '멀티플레이어 모드는 현재 개발 중입니다.',
+          'network_lobby': '네트워크 로비',
+          'your_ip': '당신의 IP:',
+          'host_game_btn': '게임 생성',
+          'host_desc': '새 세션을 시작하고\n동맹을 초대하세요',
+          'quick_scan': '빠른 스캔',
+          'no_signals': '활성 신호 없음...',
+          'join_via_ip': '또는 IP로 참여',
+          'join_btn': '참여',
+          'room_open': '열린 방: @ip',
+          'connected_station': '배틀스테이션에 연결됨',
+          'you_tag': '당신',
+          'abandon_btn': '중단',
+          'leave_btn': '나가기',
+          'start_mission': '임무 시작',
+          'waiting_commander': '지휘관을 기다리는 중...',
+
+          // --- HOW TO PLAY (HELP) ---
+          'how_to_play': '게임 방법',
+          'deployment_phase': '배치 페이즈:',
+          'help_step_1': '그리드 용량에 따라 육지를 그립니다 (최대 2개의 섬)',
+          'help_step_2': '육지에 포탑 배치',
+          'help_step_3': '물 위에 모든 배 배치',
+          'ammo_legend_title': '탄약 범례:',
+          'ammo_legend_desc': ' 🟦 함대 기본 탄약\n 🟧 육지 보너스\n 🩵 타겟 고정됨',
+          'combat_rules': '전투 규칙:',
+          'rule_1': '💥 턴당 탄약 = 1 (기본) + 활성화된 포탑 + 육지 보너스',
+          'rule_2': '🎯 일제 사격: 보유한 탄약으로 타겟을 고정한 뒤 전탄 발사!',
+          'rule_3': '⚖️ 규칙: 살아있는 모든 적에게 사격을 균등하게 분배해야 합니다 (집중 공격 금지).',
+
+          'help_diff_title': '봇 난이도:',
+          'help_diff_easy': '🟢 쉬움: 무작위로 사격합니다. 이미 확인된 곳에 탄약을 낭비할 수 있습니다.',
+          'help_diff_normal': '🟡 보통: 무작위로 사격하지만 확인된 구역은 피합니다.',
+          'help_diff_hard': '🔴 어려움: 헌터! 타겟을 맞추면 주변을 집중 공격하여 배를 빨리 침몰시킵니다.',
+
+          'help_assist_title': '지원 레벨:',
+          'help_ast_casual':
+              '🟢 캐주얼: 보드가 모든 마크를 기억합니다. 무의미한 사격을 방지합니다. 상세한 전투 로그.',
+          'help_ast_standard':
+              '🟡 스탠다드: 빗나간 마크가 사라집니다. 무의미한 사격이 가능합니다. 상세한 전투 로그.',
+          'help_ast_hardcore':
+              '🔴 하드코어: 빗나감과 적의 육지가 숨겨집니다. 탄약 낭비가 가능합니다. 모호한 전투 로그.',
+          'help_ast_reallife':
+              '⚫ 리얼 라이프: 완전한 블라인드 보드입니다. 길게 눌러 수동으로 X/O를 마크하세요.',
+
+          // --- PLACEMENT PHASE ---
+          'tools': '도구',
+          'land': '육지',
+          'turret': '포탑',
+          'fleet': '함대',
+          'command': '명령',
+          'auto': '자동',
+          'clear': '초기화',
+          'engage': '전투 시작',
+          'req_land': '@count개의 육지 블록이 더 필요합니다',
+          'req_turret': '@count개의 포탑이 더 필요합니다',
+          'req_ship': '모든 배를 배치해야 진행할 수 있습니다',
+          'req_island': '육지가 너무 흩어져 있습니다! (최대 2개의 섬)',
+          'all_ready': '모든 시스템 준비 완료!',
+
+          // --- GAME BOARD ---
+          'targets': '타겟',
+          'global_radar': '글로벌 레이더',
+          'radar_desc': '당신의 함대와 명중한 적만 표시됩니다.',
+          'close_radar': '레이더 닫기',
+          'my_fleet': '나의 함대',
+          'me': '나',
+          'defending': '방어 중: 나의 구역',
+          'targeting': '타겟팅: @name',
+          'ammo_ready': '탄약: ',
+          'ammo_legend': '🟦 함대   🟧 보너스   🩵 고정됨',
+          'targets_locked': '타겟 고정됨',
+          'fire_all': '전탄 발사!',
+          'turn_announce': '@name의 턴',
+          'hint_reallife':
+              '💡 힌트: 탭(적의 턴 동안) 또는 길게 눌러 X/O를 마크하세요. 기록을 위해 일시정지됩니다.',
+          'btn_ack': '확인 (턴 종료)',
+          'simulating': '적의 배치를 시뮬레이션 중...',
+          'distribute_shots': '살아있는 모든 타겟에 사격을 균등하게 분배해야 합니다!',
+          'abort_title': '임무를 중단하시겠습니까?',
+          'abort_desc': '메인 메뉴로 후퇴하시겠습니까? 모든 진행 상황이 사라집니다.',
+          'war_over': '전쟁 종료',
+          'wins': '@name 승리!',
+          'return_base': '기지로 귀환',
+
+          // --- BATTLE LOGS ---
+          'battle_log': '전투 로그',
+          'casual_block': '이미 확인된 구역입니다! (캐주얼 모드 보호)',
+          'wasted_shot': '⚠️ [당신] 이미 확인된 구역에 탄약을 낭비했습니다!',
+          'wasted_shot_bot': '🤣 [@shooter] 이미 아는 구역에 탄약을 낭비했습니다!',
+          'log_sunk_me': '🎉 [당신]이 @target의 배를 완전히 침몰시켰습니다! (크기 @size)',
+          'log_sunk_enemy': '💥 [@shooter]이(가) @target의 배를 침몰시켰습니다!',
+          'log_sunk_you': '🚨 [@shooter]이(가) 당신의 배를 침몰시켰습니다!',
+          'log_hit_me': '🎯 [당신]이 @target의 배를 맞췄습니다!',
+          'log_hit_enemy': '🎯 [@shooter]이(가) @target의 배를 맞췄습니다!',
+          'log_hit_you': '⚠️ [@shooter]이(가) 당신의 배를 맞췄습니다!',
+          'log_turret_me': '🛡️ [당신]이 @target의 포탑을 파괴했습니다!',
+          'log_turret_enemy': '🛡️ [@shooter]이(가) @target의 포탑을 파괴했습니다!',
+          'log_turret_you': '🧨 [@shooter]이(가) 당신의 포탑을 파괴했습니다!',
+          'log_hardcore_hit': '🎯 [?] @target 명중 확인! (구조 숨김)',
+          'log_hardcore_miss': '💦 [?] @target 공격 빗나감!',
+          'log_reallife_hit': '🎯 [@shooter]이(가) @coord에서 @target 명중',
+          'log_reallife_miss': '💦 [@shooter]이(가) @coord에서 @target 빗나감',
+          'log_reallife_sunk': '💥 [@shooter]이(가) @coord에서 @target 침몰시킴',
+          'log_reallife_land': '⛰️ [@shooter]이(가) @coord에서 @target의 육지 타격',
+
+          // --- ERRORS ---
+          'err_empty_name': '지휘관 콜사인을 입력해주세요!',
+          'err_max_land': '육지 블록 할당량에 도달했습니다!',
+          'err_land_on_ship': '배 위에 육지를 배치할 수 없습니다!',
+          'err_turret_on_water': '포탑은 육지에 배치해야 합니다!',
+          'err_max_turret': '포탑 할당량에 도달했습니다!',
+          'err_ship_on_land': '배는 물에만 배치해야 합니다 (육지 불가)!',
+          'err_ship_overlap': '배는 서로 겹칠 수 없습니다!',
+          'err_ship_out_of_bounds': '배가 경계를 벗어났습니다!\n🔄 회전시켜 보세요.',
+
+          // --- CREDITS & WARNINGS ---
+          'credits': '제작진:',
+          'credit_desc':
+              '게임 규칙은 RUBSARB production의\n"เรือรบรุ่นหนูลองยา : Battleship Beta Test Mark 1.1" (YouTube)에서 영감을 받았습니다.',
+          'rl_warning_title': '🚨 리얼 라이프 모드 경고',
+          'rl_warning_desc':
+              '이 모드에서는 시스템이 적 보드에 명중이나 빗나감을 자동으로 기록하지 않습니다.\n\n그리드를 길게 눌러 수동으로 기록하거나 직접 기억해야 합니다.\n\n궁극의 도전을 시작하시겠습니까?',
+          'accept_btn': '수락',
+          'cancel_btn': '취소',
         },
       };
 }

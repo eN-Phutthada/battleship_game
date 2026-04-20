@@ -4,7 +4,7 @@ import '../../utils/constants.dart';
 import '../../state/sound_controller.dart';
 import '../../state/game_controller.dart';
 import '../../state/multiplayer_controller.dart';
-import '../../screens/main_menu.dart'; // นำเข้าเพื่อเรียกใช้ BoardSize และ CustomSegmentedControl
+import '../../screens/main_menu.dart';
 import 'real_life_warning_dialog.dart';
 
 class MultiplayerDialog extends StatefulWidget {
@@ -21,7 +21,6 @@ class _MultiplayerDialogState extends State<MultiplayerDialog> {
   final MultiplayerController mpCtrl = Get.find<MultiplayerController>();
   final SoundController _sound = Get.find<SoundController>();
 
-  // สถานะเก็บขนาดกระดานในหน้า Dialog
   BoardSize _boardSize = BoardSize.standard;
 
   @override
@@ -55,8 +54,7 @@ class _MultiplayerDialogState extends State<MultiplayerDialog> {
               const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           child: Container(
             padding: const EdgeInsets.all(24),
-            constraints: const BoxConstraints(
-                maxWidth: 550, maxHeight: 750), // ขยาย maxHeight รับ Settings
+            constraints: const BoxConstraints(maxWidth: 550, maxHeight: 750),
             decoration: BoxDecoration(
                 color: AppColors.paper,
                 border: Border.all(color: AppColors.ink, width: 3),
@@ -350,7 +348,7 @@ class _MultiplayerDialogState extends State<MultiplayerDialog> {
               _buildConfigRow(
                 'assist_level'.tr,
                 IgnorePointer(
-                  ignoring: !mpCtrl.isHosting.value, // ล็อคปุ่มถ้าไม่ใช่ Host
+                  ignoring: !mpCtrl.isHosting.value,
                   child: Opacity(
                     opacity: mpCtrl.isHosting.value ? 1.0 : 0.5,
                     child: CustomSegmentedControl<AssistLevel>(
@@ -364,7 +362,6 @@ class _MultiplayerDialogState extends State<MultiplayerDialog> {
                       },
                       onChanged: (val) {
                         mpCtrl.currentAssistLevel.value = val;
-                        // ระบบ MultiplayerController ควรส่งค่าใหม่นี้ไปให้ Client ด้วย
                       },
                     ),
                   ),
@@ -373,11 +370,11 @@ class _MultiplayerDialogState extends State<MultiplayerDialog> {
               _buildConfigRow(
                 'grid_size'.tr,
                 IgnorePointer(
-                  ignoring: !mpCtrl.isHosting.value, // ล็อคปุ่มถ้าไม่ใช่ Host
+                  ignoring: !mpCtrl.isHosting.value,
                   child: Opacity(
                     opacity: mpCtrl.isHosting.value ? 1.0 : 0.5,
                     child: CustomSegmentedControl<BoardSize>(
-                      selectedValue: _boardSize, // ใช้ตัวแปร Local ในหน้านี้
+                      selectedValue: _boardSize,
                       activeColor: Colors.green[800]!,
                       items: {
                         BoardSize.standard: BoardSize.standard.label,
@@ -386,8 +383,6 @@ class _MultiplayerDialogState extends State<MultiplayerDialog> {
                       },
                       onChanged: (val) {
                         setState(() => _boardSize = val);
-                        // หมายเหตุ: หาก Controller ของคุณมีการเก็บ boardSize ด้วย
-                        // สามารถเรียก mpCtrl.currentBoardSize.value = val; ได้ที่นี่เลย
                       },
                     ),
                   ),
@@ -486,10 +481,6 @@ class _MultiplayerDialogState extends State<MultiplayerDialog> {
                           _checkRealLifeMode(mpCtrl.currentAssistLevel.value,
                               () {
                             _sound.playClick();
-
-                            // ส่งข้อมูล Grid Size ที่เลือกล่าสุดไปให้ Controller ประมวลผลตอนเริ่มเกม
-                            // หมายเหตุ: โค้ดเดิมคือ mpCtrl.broadcastStart() คุณอาจต้องแก้ไขฟังก์ชัน
-                            // ใน Controller ให้รองรับการรับค่า cols, rows ด้วย (ถ้ายังไม่มี)
                             mpCtrl.broadcastStart();
                           });
                         }
@@ -521,7 +512,7 @@ class _MultiplayerDialogState extends State<MultiplayerDialog> {
     );
   }
 
-  // --- Helper Widget สำหรับหัวข้อการตั้งค่า ---
+  // --- Helper Widget ---
   Widget _buildConfigRow(String title, Widget control) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

@@ -8,6 +8,7 @@ import '../../models/game_models.dart';
 import '../../utils/constants.dart';
 import '../shared/connected_ship_piece.dart';
 import '../shared/floating_joke_widget.dart';
+import '../../screens/settings_screen.dart';
 
 class InteractiveGridWidget extends StatefulWidget {
   final GameController game;
@@ -92,6 +93,14 @@ class _InteractiveGridWidgetState extends State<InteractiveGridWidget> {
         (widget.game.assistLevel == AssistLevel.hardcore ||
             widget.game.assistLevel == AssistLevel.realLife);
 
+    final settings = Get.put(SettingsController(), permanent: true);
+    final bool showLabels = settings.showGridLabels;
+
+    final int displayCols =
+        showLabels ? widget.game.columns + 1 : widget.game.columns;
+    final int displayRows =
+        showLabels ? widget.game.rows + 1 : widget.game.rows;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
       child: LayoutBuilder(
@@ -104,7 +113,7 @@ class _InteractiveGridWidgetState extends State<InteractiveGridWidget> {
             boundaryMargin: EdgeInsets.zero,
             child: Center(
               child: AspectRatio(
-                aspectRatio: (widget.game.columns + 1) / (widget.game.rows + 1),
+                aspectRatio: displayCols / displayRows,
                 child: Container(
                   decoration: BoxDecoration(
                       border: Border.all(
@@ -113,26 +122,28 @@ class _InteractiveGridWidgetState extends State<InteractiveGridWidget> {
                   child: GridView.builder(
                     physics: const NeverScrollableScrollPhysics(),
                     gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: widget.game.columns + 1),
-                    itemCount:
-                        (widget.game.columns + 1) * (widget.game.rows + 1),
+                        crossAxisCount: displayCols),
+                    itemCount: displayCols * displayRows,
                     itemBuilder: (context, index) {
-                      int r = index ~/ (widget.game.columns + 1);
-                      int c = index % (widget.game.columns + 1);
+                      int r = index ~/ displayCols;
+                      int c = index % displayCols;
 
-                      if (r == 0 && c == 0) return const SizedBox();
-                      if (r == 0) return GridHeaderCell('$c');
-
-                      if (c == 0) {
-                        String rowChar = String.fromCharCode(64 + r);
-                        if (_isCursedEFBoard) {
-                          if (r == 5) rowChar = 'F';
-                          if (r == 6) rowChar = 'E';
+                      if (showLabels) {
+                        if (r == 0 && c == 0) return const SizedBox();
+                        if (r == 0) return GridHeaderCell('$c');
+                        if (c == 0) {
+                          String rowChar = String.fromCharCode(64 + r);
+                          if (_isCursedEFBoard) {
+                            if (r == 5) rowChar = 'F';
+                            if (r == 6) rowChar = 'E';
+                          }
+                          return GridHeaderCell(rowChar);
                         }
-                        return GridHeaderCell(rowChar);
+                        r -= 1;
+                        c -= 1;
                       }
 
-                      int boardIdx = (r - 1) * widget.game.columns + (c - 1);
+                      int boardIdx = r * widget.game.columns + c;
                       Cell cell = widget.targetPlayer.board[boardIdx]!;
 
                       bool showLand = false;
@@ -152,7 +163,7 @@ class _InteractiveGridWidgetState extends State<InteractiveGridWidget> {
                           _lastTapPosition = details.globalPosition;
                         },
                         onTap: () {
-                          if (!isMyBoard && (r == 5 || r == 6)) {
+                          if (!isMyBoard && showLabels && (r == 4 || r == 5)) {
                             _efTapCount++;
                             if (_efTapCount >= 6) {
                               _triggerJoke('ee_e_or_f'.tr, Icons.spellcheck);
