@@ -180,7 +180,6 @@ class ThemedLandPiece extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 1. เช็คทิศทางตรง (เชื่อมต่อ 4 ทิศ)
     bool hasTop = board[index - columns]?.terrain == Terrain.land;
     bool hasBottom = board[index + columns]?.terrain == Terrain.land;
     bool hasLeft =
@@ -188,7 +187,6 @@ class ThemedLandPiece extends StatelessWidget {
     bool hasRight = ((index + 1) % columns != 0) &&
         board[index + 1]?.terrain == Terrain.land;
 
-    // 2. เช็คทิศทแยงมุม (เพื่อแก้บัค 270 องศา)
     bool hasTopLeft = (index % columns != 0) &&
         board[index - columns - 1]?.terrain == Terrain.land;
     bool hasTopRight = ((index + 1) % columns != 0) &&
@@ -223,7 +221,6 @@ class ThemedLandPiece extends StatelessWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // เลเยอร์หลัก: พื้นแผ่นดินและการเชื่อมต่อ
         Container(
           margin: EdgeInsets.only(
             top: hasTop ? 0 : 2,
@@ -256,8 +253,6 @@ class ThemedLandPiece extends StatelessWidget {
           ),
           child: _buildSubtleTexture(theme),
         ),
-
-        // เลเยอร์เจาะช่อง: วาดขอบเข้ามุมในกรณี 270 องศา (รูปร่าง L-Shape)
         if (hasTop && hasLeft && !hasTopLeft)
           _buildInnerCorner(
             top: 0,
@@ -298,7 +293,6 @@ class ThemedLandPiece extends StatelessWidget {
     );
   }
 
-  // วิดเจ็ตสำหรับแปะทับมุมใน 270 องศา เพื่อดัดขอบให้โค้งมนพอดี
   Widget _buildInnerCorner({
     double? top,
     double? bottom,
@@ -317,11 +311,10 @@ class ThemedLandPiece extends StatelessWidget {
       left: left,
       right: right,
       child: Container(
-        width: 4, // ระยะ 4px คือผลรวมของ Margin(2) + Border(2) พอดีเป๊ะ
+        width: 4,
         height: 4,
         decoration: BoxDecoration(
-          color:
-              AppColors.paper, // ใช้สีพื้นกระดาษเหมือนเจาะทะลุไปหา Background
+          color: AppColors.paper,
           borderRadius: radius,
           border: Border(
             top: borderTop

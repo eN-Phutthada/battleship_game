@@ -43,14 +43,12 @@ class HowToPlayScreen extends StatelessWidget {
               Expanded(
                 child: Center(
                   child: ConstrainedBox(
-                    constraints: const BoxConstraints(
-                        maxWidth: 1000), // ล็อคความกว้างสูงสุด
+                    constraints: const BoxConstraints(maxWidth: 1000),
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         bool isMobile = constraints.maxWidth < 800;
                         return Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 24),
-                          // เพิ่ม Scrollbar ครอบ Layout ไว้
                           child: Scrollbar(
                             thumbVisibility: true,
                             child: isMobile
@@ -97,9 +95,7 @@ class HowToPlayScreen extends StatelessWidget {
   Widget _buildMobileLayout() {
     return ListView(
       physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.symmetric(
-          vertical: 24,
-          horizontal: 8), // เพิ่ม horizontal padding เล็กน้อยกัน Scrollbar บัง
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
       children: [
         _buildDeploymentCard(),
         const SizedBox(height: 32),

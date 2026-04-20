@@ -53,8 +53,6 @@ class _FloatingJokeWidgetState extends State<FloatingJokeWidget>
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
 
-    // คำนวณเปอร์เซ็นต์แกน X (-1.0 ซ้ายสุด, 0.0 ตรงกลาง, 1.0 ขวาสุด)
-    // เว้นระยะขอบ 10px ให้ไม่ล้นจอ
     double alignX =
         ((widget.startPosition.dx - 10) / (screenWidth - 20)) * 2 - 1;
     alignX = alignX.clamp(-1.0, 1.0);

@@ -160,7 +160,6 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                   }
                 }
 
-                // สกัด Widget แต่ละคอลัมน์ออกมาให้ง่ายต่อการจัด Layout
                 Widget leftPanel = _PaperPanel(
                   child: LeftSidebarWidget(
                     game: game,
@@ -214,7 +213,6 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                       padding: const EdgeInsets.all(8.0),
                       child: LayoutBuilder(
                         builder: (context, constraints) {
-                          // Breakpoint สำหรับ Mobile (ถ้ากว้างน้อยกว่า 850px จะเปลี่ยนแนว)
                           bool isMobile = constraints.maxWidth < 850;
 
                           if (isMobile) {
@@ -242,7 +240,7 @@ class _GameBoardScreenState extends State<GameBoardScreen>
                             );
                           }
 
-                          // Layout สำหรับ Tablet / Desktop / Web
+                          // Layout Tablet / Desktop / Web
                           return Row(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
@@ -333,7 +331,7 @@ class _TurnTransitionOverlay extends StatelessWidget {
     String displayText = game.turnTransitionMessage;
 
     if (isMyTurn && Random().nextDouble() > 0.85) {
-      displayText = "ถึงตาคุณแล้ว!\n(สรุป E หรือ F นะ? 🧐)";
+      displayText = 'ee_turn_e_or_f'.tr;
     }
 
     return Container(
@@ -391,10 +389,10 @@ class _LoadingRadarScreenState extends State<_LoadingRadarScreen>
 
   List<String> get _loadingJokes => [
         'simulating'.tr,
-        'กำลังเถียงกันว่า E หรือ F... 🤷‍♂️',
-        'เรือดำน้ำบินได้กำลังมา... 🛸',
-        'หมุนเรือจนกว่าจะอ้วก... 🤢',
-        'RUBSARB Beta Test Mark 1.1 🛠️',
+        'ee_loading_1'.tr,
+        'ee_loading_2'.tr,
+        'ee_loading_3'.tr,
+        'ee_loading_4'.tr,
       ];
 
   @override

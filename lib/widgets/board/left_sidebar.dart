@@ -65,7 +65,6 @@ class LeftSidebarWidget extends StatelessWidget {
                   fontWeight: FontWeight.w900,
                   fontSize: 16)),
           const SizedBox(height: 2),
-          // แก้ไข: ใส่ FittedBox ป้องกัน Tag ความยากล้น
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Row(
@@ -168,7 +167,6 @@ class LeftSidebarWidget extends StatelessWidget {
                               Padding(
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 4),
-                                // แก้ไข: ใส่ FittedBox ป้องกันจำนวนเรือ/ป้อมล้น
                                 child: FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Row(
@@ -323,7 +321,6 @@ class LeftSidebarWidget extends StatelessWidget {
                   color: Colors.white,
                   border: Border.all(color: AppColors.ink, width: 1.5),
                   borderRadius: BorderRadius.circular(4)),
-              // แก้ไข: ใส่ FittedBox ป้องกันข้อความสปีดล้น
               child: FittedBox(
                 fit: BoxFit.scaleDown,
                 child: Row(

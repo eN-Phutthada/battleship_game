@@ -12,14 +12,12 @@ class RealLifeWarningDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: Colors.transparent,
-      // เพิ่ม insetPadding เพื่อป้องกันไม่ให้ Dialog ขยายเต็มจอบนหน้าจอมือถือขนาดเล็ก
       insetPadding: const EdgeInsets.all(24),
       child: Container(
         padding: const EdgeInsets.all(24),
-        // ปรับขนาด maxHeight เล็กน้อยเผื่อเนื้อหาที่ยาวขึ้น
         constraints: const BoxConstraints(maxWidth: 450, maxHeight: 450),
         decoration: BoxDecoration(
-          color: const Color(0xFFFDFBF7), // AppColors.paper (or variant)
+          color: AppColors.paper,
           border: Border.all(color: AppColors.redPen, width: 4),
           borderRadius: BorderRadius.circular(8),
           boxShadow: const [
@@ -40,19 +38,16 @@ class RealLifeWarningDialog extends StatelessWidget {
                     letterSpacing: 1.2)),
             const Divider(color: AppColors.redPen, thickness: 2, height: 24),
             Expanded(
-              // 1. เพิ่ม Scrollbar เพื่อให้ฝั่ง Web/Desktop ใช้เมาส์ลากได้ชัดเจน
               child: Scrollbar(
                 thumbVisibility: true,
                 child: SingleChildScrollView(
-                  // 2. เพิ่ม BouncingScrollPhysics ให้การเลื่อนดูนุ่มนวลและเป็นธรรมชาติ
                   physics: const BouncingScrollPhysics(),
-                  // 3. เพิ่ม padding แนวนอนเล็กน้อยเพื่อไม่ให้ตัวหนังสือชิด Scrollbar เกินไป
                   padding: const EdgeInsets.symmetric(horizontal: 8),
                   child: Text('rl_warning_desc'.tr,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                           color: AppColors.ink,
-                          fontSize: 14, // ปรับขนาด font ขึ้นเล็กน้อยให้อ่านง่าย
+                          fontSize: 14,
                           fontWeight: FontWeight.bold,
                           height: 1.5)),
                 ),
@@ -68,7 +63,6 @@ class RealLifeWarningDialog extends StatelessWidget {
                       Get.back();
                     },
                     style: OutlinedButton.styleFrom(
-                        // 4. เพิ่ม padding แนวนอนให้ปุ่มสูงขึ้น คลิกด้วยเมาส์หรือนิ้วได้ง่ายกว่าเดิม
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         side: const BorderSide(color: AppColors.ink, width: 2)),
                     child: Text('cancel_btn'.tr,
@@ -85,7 +79,6 @@ class RealLifeWarningDialog extends StatelessWidget {
                       onProceed();
                     },
                     style: ElevatedButton.styleFrom(
-                        // เพิ่ม padding ให้ปุ่มสูงเท่ากัน
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         backgroundColor: AppColors.redPen),
                     child: Text('accept_btn'.tr,

@@ -30,7 +30,6 @@ class PlacementScreen extends StatelessWidget {
             child: GetBuilder<PlacementController>(
               init: PlacementController(),
               builder: (ctrl) {
-                // แยกส่วน Grid ตรงกลางออกมาเพื่อให้ง่ายต่อการสลับ Layout
                 Widget centerGrid = Column(
                   children: [
                     _StatusHeader(ctrl: ctrl),
@@ -49,38 +48,26 @@ class PlacementScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(8.0),
                   child: LayoutBuilder(
                     builder: (context, constraints) {
-                      // ใช้จุดตัด (Breakpoint) ที่ 650px สำหรับการแสดงผล Mobile
-                      final bool isMobile = constraints.maxWidth < 650;
+                      final bool isPortrait = constraints.maxWidth < 650 ||
+                          constraints.maxHeight > constraints.maxWidth;
 
-                      if (isMobile) {
+                      if (isPortrait) {
                         return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            Expanded(flex: 5, child: centerGrid),
+                            SidebarContainer(
+                              child: _HorizontalToolsBar(ctrl: ctrl),
+                            ),
                             const SizedBox(height: 12),
-                            Expanded(
-                              flex: 2, // ให้พื้นที่แถบเครื่องมือด้านล่าง
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.stretch,
-                                children: [
-                                  Expanded(
-                                    child: SidebarContainer(
-                                      child: _LeftSidebar(ctrl: ctrl),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: SidebarContainer(
-                                      child: _RightSidebar(ctrl: ctrl),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            Expanded(child: centerGrid),
+                            const SizedBox(height: 12),
+                            SidebarContainer(
+                              child: _BottomCommandBar(ctrl: ctrl),
                             ),
                           ],
                         );
                       }
 
-                      // Layout สำหรับ Tablet / Desktop / Web
                       return Row(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -93,9 +80,7 @@ class PlacementScreen extends StatelessWidget {
                           Flexible(
                             flex: 8,
                             child: ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                  maxWidth:
-                                      800), // ล็อคความกว้างไม่ให้กระดานใหญ่เกินไป
+                              constraints: const BoxConstraints(maxWidth: 800),
                               child: centerGrid,
                             ),
                           ),
@@ -121,7 +106,7 @@ class PlacementScreen extends StatelessWidget {
 // --- Layout & Sidebar Components ---
 
 class SidebarContainer extends StatelessWidget {
-  final double? width; // เปลี่ยนเป็น Optional เพื่อรองรับการยืดบน Mobile
+  final double? width;
   final Widget child;
 
   const SidebarContainer({super.key, this.width, required this.child});
@@ -204,7 +189,6 @@ class _RightSidebar extends StatefulWidget {
 }
 
 class _RightSidebarState extends State<_RightSidebar> {
-  // --- Easter Egg State ---
   int _autoSpamCount = 0;
   DateTime? _lastAutoTap;
   int _clearSpamCount = 0;
@@ -214,22 +198,17 @@ class _RightSidebarState extends State<_RightSidebar> {
   final GlobalKey _clearKey = GlobalKey();
   final GlobalKey _engageKey = GlobalKey();
 
-  // --- Handlers ---
   void _triggerJoke(String message, IconData icon, GlobalKey anchorKey) {
     if (Get.isRegistered<SoundController>()) {
       Get.find<SoundController>().vibrateHeavy();
       Get.find<SoundController>().playError();
     }
-
     final context = anchorKey.currentContext;
     if (context == null) return;
-
     final RenderBox box = context.findRenderObject() as RenderBox;
     final Offset topCenter = box.localToGlobal(Offset(box.size.width / 2, 0));
-
     final overlayState = Overlay.of(context);
     late OverlayEntry entry;
-
     entry = OverlayEntry(
       builder: (context) => FloatingJokeWidget(
         message: message,
@@ -238,13 +217,11 @@ class _RightSidebarState extends State<_RightSidebar> {
         onComplete: () => entry.remove(),
       ),
     );
-
     overlayState.insert(entry);
   }
 
   void _handleAuto() {
     widget.ctrl.autoDeploy();
-
     DateTime now = DateTime.now();
     if (_lastAutoTap != null &&
         now.difference(_lastAutoTap!).inMilliseconds < 800) {
@@ -357,8 +334,7 @@ class _RightSidebarState extends State<_RightSidebar> {
                 if (!widget.ctrl.isBoardValid)
                   Positioned.fill(
                     child: MouseRegion(
-                      cursor: SystemMouseCursors
-                          .basic, // เปลี่ยน Cursor เมาส์เมื่อปุ่มโดนล็อค
+                      cursor: SystemMouseCursors.basic,
                       child: GestureDetector(
                         behavior: HitTestBehavior.opaque,
                         onTap: _handleDisabledEngage,
@@ -367,6 +343,209 @@ class _RightSidebarState extends State<_RightSidebar> {
                     ),
                   ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HorizontalToolsBar extends StatelessWidget {
+  final PlacementController ctrl;
+  const _HorizontalToolsBar({required this.ctrl});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Expanded(
+            child: _ToolButton(
+              ctrl: ctrl,
+              icon: Icons.landscape,
+              label: "${'land'.tr} ${ctrl.placedLand}/${ctrl.maxLand}",
+              tool: PlacementTool.land,
+              isHorizontal: true,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _ToolButton(
+              ctrl: ctrl,
+              icon: Icons.fort,
+              label: "${'turret'.tr} ${ctrl.placedTurrets}/${ctrl.maxTurrets}",
+              tool: PlacementTool.turret,
+              isHorizontal: true,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _ToolButton(
+              ctrl: ctrl,
+              icon: Icons.directions_boat,
+              label:
+                  "${'fleet'.tr} ${ctrl.placedShipsCount}/${ctrl.fleetDefinition.length}",
+              tool: PlacementTool.ship,
+              isHorizontal: true,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BottomCommandBar extends StatefulWidget {
+  final PlacementController ctrl;
+  const _BottomCommandBar({required this.ctrl});
+
+  @override
+  State<_BottomCommandBar> createState() => _BottomCommandBarState();
+}
+
+class _BottomCommandBarState extends State<_BottomCommandBar> {
+  int _autoSpamCount = 0;
+  DateTime? _lastAutoTap;
+  int _clearSpamCount = 0;
+  int _impatientSpamCount = 0;
+
+  final GlobalKey _autoKey = GlobalKey();
+  final GlobalKey _clearKey = GlobalKey();
+  final GlobalKey _engageKey = GlobalKey();
+
+  void _triggerJoke(String message, IconData icon, GlobalKey anchorKey) {
+    if (Get.isRegistered<SoundController>()) {
+      Get.find<SoundController>().vibrateHeavy();
+      Get.find<SoundController>().playError();
+    }
+    final context = anchorKey.currentContext;
+    if (context == null) return;
+    final RenderBox box = context.findRenderObject() as RenderBox;
+    final Offset topCenter = box.localToGlobal(Offset(box.size.width / 2, 0));
+    final overlayState = Overlay.of(context);
+    late OverlayEntry entry;
+    entry = OverlayEntry(
+      builder: (context) => FloatingJokeWidget(
+        message: message,
+        icon: icon,
+        startPosition: topCenter,
+        onComplete: () => entry.remove(),
+      ),
+    );
+    overlayState.insert(entry);
+  }
+
+  void _handleAuto() {
+    widget.ctrl.autoDeploy();
+    DateTime now = DateTime.now();
+    if (_lastAutoTap != null &&
+        now.difference(_lastAutoTap!).inMilliseconds < 800) {
+      _autoSpamCount++;
+      if (_autoSpamCount == 6) {
+        _triggerJoke('ee_indecisive'.tr, Icons.sync_problem, _autoKey);
+        _autoSpamCount = 0;
+      }
+    } else {
+      _autoSpamCount = 1;
+    }
+    _lastAutoTap = now;
+  }
+
+  void _handleClear() {
+    if (widget.ctrl.placedShipsCount == 0 &&
+        widget.ctrl.placedTurrets == 0 &&
+        widget.ctrl.placedLand == 0) {
+      _clearSpamCount++;
+      if (_clearSpamCount == 4) {
+        _triggerJoke('ee_ocd'.tr, Icons.layers_clear, _clearKey);
+        _clearSpamCount = 0;
+      }
+    } else {
+      _clearSpamCount = 0;
+      widget.ctrl.clearAll();
+    }
+  }
+
+  void _handleDisabledEngage() {
+    _impatientSpamCount++;
+    if (_impatientSpamCount == 5) {
+      _triggerJoke('ee_impatient'.tr, Icons.warning_amber_rounded, _engageKey);
+      _impatientSpamCount = 0;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: _CommandButton(
+              key: _autoKey,
+              onPressed: _handleAuto,
+              icon: Icons.casino,
+              label: 'auto'.tr,
+              color: AppColors.ink,
+              isHorizontal: true,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _CommandButton(
+              key: _clearKey,
+              onPressed: _handleClear,
+              icon: Icons.delete_forever,
+              label: 'clear'.tr,
+              color: AppColors.redPen,
+              isHorizontal: true,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            flex: 2,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              height: 48,
+              child: Stack(
+                key: _engageKey,
+                fit: StackFit.expand,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: widget.ctrl.isBoardValid
+                        ? widget.ctrl.confirmPlacement
+                        : null,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: widget.ctrl.isBoardValid
+                          ? Colors.green[700]
+                          : Colors.grey.withOpacity(0.3),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                      padding: EdgeInsets.zero,
+                      disabledBackgroundColor: Colors.grey.withOpacity(0.3),
+                    ),
+                    icon: const Icon(Icons.rocket_launch, size: 20),
+                    label: Text('engage'.tr,
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w900)),
+                  ),
+                  if (!widget.ctrl.isBoardValid)
+                    Positioned.fill(
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.basic,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: _handleDisabledEngage,
+                          child: Container(),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
         ],
@@ -389,6 +568,7 @@ class _StatusHeader extends StatelessWidget {
         duration: const Duration(milliseconds: 300),
         child: Container(
           key: ValueKey(ctrl.validationMessage),
+          width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
           decoration: BoxDecoration(
             color: Colors.white,
@@ -477,16 +657,11 @@ class _ShipOptionsBarState extends State<_ShipOptionsBar> {
       ),
       child: Row(
         children: [
-          Text('size'.tr,
-              style: const TextStyle(
-                  color: AppColors.ink,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12)),
-          const SizedBox(width: 8),
           Expanded(
             child: Wrap(
               spacing: 8.0,
               runSpacing: 4.0,
+              alignment: WrapAlignment.center,
               children: widget.ctrl.fleetDefinition.toSet().map((size) {
                 final int count =
                     widget.ctrl.unplacedShips.where((s) => s == size).length;
@@ -609,7 +784,6 @@ class _AnimatedPaperGrid extends StatelessWidget {
               if (cell == null) return const SizedBox.shrink();
 
               return InkWell(
-                // InkWell มี Cursor โค้งและ Hover ให้บน Web อยู่แล้ว
                 onTap: () => ctrl.handleTap(boardIdx),
                 splashColor: AppColors.ink.withOpacity(0.3),
                 child: AnimatedContainer(
@@ -725,12 +899,14 @@ class _ToolButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final PlacementTool tool;
+  final bool isHorizontal;
 
   const _ToolButton({
     required this.ctrl,
     required this.icon,
     required this.label,
     required this.tool,
+    this.isHorizontal = false,
   });
 
   @override
@@ -739,26 +915,26 @@ class _ToolButton extends StatelessWidget {
     final Color contentColor =
         isSelected ? AppColors.ink : AppColors.ink.withOpacity(0.6);
 
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: () => ctrl.setTool(tool),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? AppColors.ink.withOpacity(0.1)
-                : Colors.transparent,
-            border: Border.all(
-              color:
-                  isSelected ? AppColors.ink : AppColors.ink.withOpacity(0.2),
-              width: 2,
-            ),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Column(
+    Widget content = isHorizontal
+        ? Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: contentColor, size: 24),
+              const SizedBox(width: 4),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label.replaceAll('\n', ' '),
+                  style: TextStyle(
+                    color: contentColor,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          )
+        : Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Icon(icon, color: contentColor, size: 28),
@@ -773,7 +949,28 @@ class _ToolButton extends StatelessWidget {
                 ),
               ),
             ],
+          );
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () => ctrl.setTool(tool),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? AppColors.ink.withOpacity(0.1)
+                : Colors.transparent,
+            border: Border.all(
+              color:
+                  isSelected ? AppColors.ink : AppColors.ink.withOpacity(0.2),
+              width: 2,
+            ),
+            borderRadius: BorderRadius.circular(6),
           ),
+          child: content,
         ),
       ),
     );
@@ -785,6 +982,7 @@ class _CommandButton extends StatelessWidget {
   final IconData icon;
   final String label;
   final Color color;
+  final bool isHorizontal;
 
   const _CommandButton({
     super.key,
@@ -792,31 +990,50 @@ class _CommandButton extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.color,
+    this.isHorizontal = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    Widget content = isHorizontal
+        ? Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 20),
+              const SizedBox(width: 4),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  label,
+                  style: TextStyle(
+                      color: color, fontWeight: FontWeight.bold, fontSize: 12),
+                ),
+              ),
+            ],
+          )
+        : Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: color, size: 24),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                    color: color, fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+            ],
+          );
+
     return OutlinedButton(
       onPressed: onPressed,
       style: OutlinedButton.styleFrom(
         backgroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
         side: BorderSide(color: color, width: 2),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        minimumSize: const Size(double.infinity, 0),
+        minimumSize: const Size(double.infinity, 48),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: color, size: 24),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-                color: color, fontWeight: FontWeight.bold, fontSize: 12),
-          ),
-        ],
-      ),
+      child: content,
     );
   }
 }

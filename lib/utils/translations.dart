@@ -40,6 +40,11 @@ class AppTranslations extends Translations {
           'ee_friendly_fire':
               'Captain, do you need new glasses? That\'s our ship! 👓',
           'ee_feed_fish': 'We already missed! Stop feeding the fishes! 🐟',
+          'ee_turn_e_or_f': 'YOUR TURN!\n(Wait, is it E or F? 🧐)',
+          'ee_loading_1': 'Arguing whether it\'s E or F... 🤷‍♂️',
+          'ee_loading_2': 'Flying submarines incoming... 🛸',
+          'ee_loading_3': 'Spinning the ship until we puke... 🤢',
+          'ee_loading_4': 'RUBSARB Beta Test Mark 1.1 🛠️',
 
           // --- MAIN MENU ---
           'game_title': 'PAPER\nBATTLESHIP',
@@ -249,6 +254,11 @@ class AppTranslations extends Translations {
           'ee_e_or_f': 'เดี๋ยวนะ แถว E หรือ F วะเนี่ย? 😵‍💫',
           'ee_friendly_fire': 'กัปตันตัดแว่นไหม นั่นเรือฝั่งเราเองงง! 👓',
           'ee_feed_fish': 'ตรงนั้นยิงพลาดไปแล้ว! จะให้อาหารปลาหรือไง! 🐟',
+          'ee_turn_e_or_f': 'ถึงตาคุณแล้ว!\n(สรุป E หรือ F นะ? 🧐)',
+          'ee_loading_1': 'กำลังเถียงกันว่า E หรือ F... 🤷‍♂️',
+          'ee_loading_2': 'เรือดำน้ำบินได้กำลังมา... 🛸',
+          'ee_loading_3': 'หมุนเรือจนกว่าจะอ้วก... 🤢',
+          'ee_loading_4': 'RUBSARB Beta Test Mark 1.1 🛠️',
 
           // --- MAIN MENU ---
           'game_title': 'ยุทธนาวี\nกระดาษ',
@@ -460,6 +470,11 @@ class AppTranslations extends Translations {
               'Capitán, ¿necesita gafas nuevas? ¡Ese es nuestro barco! 👓',
           'ee_feed_fish':
               '¡Ya fallamos ahí! ¡Deja de alimentar a los peces! 🐟',
+          'ee_turn_e_or_f': '¡TU TURNO!\n(Espera, ¿es E o F? 🧐)',
+          'ee_loading_1': 'Discutiendo si es E o F... 🤷‍♂️',
+          'ee_loading_2': 'Submarinos voladores en camino... 🛸',
+          'ee_loading_3': 'Girando el barco hasta vomitar... 🤢',
+          'ee_loading_4': 'RUBSARB Beta Test Mark 1.1 🛠️',
 
           // --- MAIN MENU ---
           'game_title': 'BATALLA\nNAVAL',
@@ -665,6 +680,11 @@ class AppTranslations extends Translations {
           'ee_e_or_f': '待って… それE？それともF？ 😵‍💫',
           'ee_friendly_fire': '船長、メガネいりますか？それ味方ですよ！ 👓',
           'ee_feed_fish': 'すでに外れています！魚に餌をやるのはやめて！ 🐟',
+          'ee_turn_e_or_f': 'あなたの番です！\n(待って、EだっけFだっけ？ 🧐)',
+          'ee_loading_1': 'EかFかで口論中... 🤷‍♂️',
+          'ee_loading_2': '空飛ぶ潜水艦が接近中... 🛸',
+          'ee_loading_3': '吐くまで船を回転中... 🤢',
+          'ee_loading_4': 'RUBSARB Beta Test Mark 1.1 🛠️',
 
           // --- MAIN MENU ---
           'game_title': 'ペーパー\n海戦',

@@ -15,59 +15,14 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
   SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]).then((_) {
     Get.put(GameController());
     runApp(const BattleshipApp());
   });
-}
-
-// Custom Transitions
-class ModernPremiumTransition extends CustomTransition {
-  @override
-  Widget buildTransition(
-      BuildContext context,
-      Curve? curve,
-      Alignment? alignment,
-      Animation<double> animation,
-      Animation<double> secondaryAnimation,
-      Widget child) {
-    return FadeTransition(
-      opacity: Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-      ),
-      child: ScaleTransition(
-        scale: Tween<double>(begin: 1.03, end: 1.0).animate(
-          CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-        ),
-        child: child,
-      ),
-    );
-  }
-}
-
-class CinematicPanTransition extends CustomTransition {
-  @override
-  Widget buildTransition(
-      BuildContext context,
-      Curve? curve,
-      Alignment? alignment,
-      Animation<double> animation,
-      Animation<double> secondaryAnimation,
-      Widget child) {
-    return FadeTransition(
-      opacity: animation,
-      child: SlideTransition(
-        position:
-            Tween<Offset>(begin: const Offset(0.05, 0.0), end: Offset.zero)
-                .animate(
-          CurvedAnimation(parent: animation, curve: Curves.easeOutQuart),
-        ),
-        child: child,
-      ),
-    );
-  }
 }
 
 // Main Application
@@ -98,19 +53,19 @@ class BattleshipApp extends StatelessWidget {
           name: '/',
           page: () => const MainMenuScreen(),
           transition: Transition.fadeIn,
-          transitionDuration: const Duration(milliseconds: 500),
+          transitionDuration: const Duration(milliseconds: 400),
         ),
         GetPage(
           name: '/placement',
           page: () => const PlacementScreen(),
-          customTransition: ModernPremiumTransition(),
-          transitionDuration: const Duration(milliseconds: 500),
+          transition: Transition.zoom,
+          transitionDuration: const Duration(milliseconds: 400),
         ),
         GetPage(
           name: '/game',
           page: () => const GameBoardScreen(),
-          customTransition: CinematicPanTransition(),
-          transitionDuration: const Duration(milliseconds: 600),
+          transition: Transition.rightToLeftWithFade,
+          transitionDuration: const Duration(milliseconds: 400),
         ),
       ],
     );

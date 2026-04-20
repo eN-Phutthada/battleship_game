@@ -41,8 +41,8 @@ class HitLogsWidget extends StatelessWidget {
                       itemCount: game.hitLogs.length,
                       itemBuilder: (context, index) {
                         return Padding(
-                          padding: const EdgeInsets.only(
-                              bottom: 8.0, right: 8.0), // กันที่ให้ scrollbar
+                          padding:
+                              const EdgeInsets.only(bottom: 8.0, right: 8.0),
                           child: TweenAnimationBuilder(
                             key: ValueKey('log_${game.hitLogs.length}_$index'),
                             tween: Tween<double>(begin: -10, end: 0),
